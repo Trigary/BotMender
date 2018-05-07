@@ -220,7 +220,7 @@ GameObject:
   - component: {fileID: 868167852}
   - component: {fileID: 868167850}
   m_Layer: 0
-  m_Name: Structure
+  m_Name: EditableStructure
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -7,12 +7,11 @@ namespace Assets.Scripts.Playing {
 	/// </summary>
 	[RequireComponent(typeof(CompleteStructure))]
 	public class HumanBotController : MonoBehaviour { //TODO camera controller which enables zooming
-		[Tooltip("The camera this controller should use.")]
-		public Camera Camera;
-
+		private Camera _camera;
 		private CompleteStructure _structure;
 
-		public void Start() {
+		public void Awake() {
+			_camera = Camera.main;
 			_structure = GetComponent<CompleteStructure>();
 		}
 
@@ -21,10 +20,10 @@ namespace Assets.Scripts.Playing {
 		public void Update() {
 			if (Input.GetButtonDown("Fire1")) {
 				RaycastHit hit;
-				if (Physics.Raycast(Camera.transform.position, Camera.transform.forward, out hit)) {
+				if (Physics.Raycast(_camera.transform.position, _camera.transform.forward, out hit)) {
 					_structure.Fire(hit.point);
 				} else {
-					_structure.Fire(Camera.transform.position + Camera.transform.forward * 10000);
+					_structure.Fire(_camera.transform.position + _camera.transform.forward * 10000);
 				}
 			}
 

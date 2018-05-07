@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using UnityEngine;
 using Assets.Scripts.Blocks;
 using Assets.Scripts.Blocks.Info;
@@ -13,16 +12,15 @@ namespace Assets.Scripts.Building {
 	/// </summary>
 	[RequireComponent(typeof(EditableStructure))]
 	public class BuildingController : MonoBehaviour {
-		[Tooltip("The camera this controller should use.")]
-		public Camera Camera;
-		
+		private Camera _camera;
 		private EditableStructure _structure;
 		private BlockType _blockType;
 		private byte _facingVariant;
 
 		//TODO changes selected facing, change selected new block location events?
 
-		public void Start() {
+		public void Awake() {
+			_camera = Camera.main;
 			_structure = GetComponent<EditableStructure>();
 			_blockType = BlockType.ArmorSlope1;
 		}
@@ -43,21 +41,17 @@ namespace Assets.Scripts.Building {
 			
 			//TODO remove
 			if (Input.GetButtonDown("Ability")) {
-				Debug.Log("Destroying");
-				StartCoroutine(Temp());
+				CompleteStructure complete = CompleteStructure.Create(_structure.Serialize());
+				if (complete == null) {
+					Debug.Log("Failed to create CompleteStructure");
+				} else {
+					complete.gameObject.AddComponent<HumanBotController>();
+					_camera.gameObject.AddComponent<PlayingCameraController>().Structure = complete;
+					Destroy(_camera.gameObject.GetComponent<BuildingCameraController>());
+					Destroy(gameObject);
+					Debug.Log("CompleteStructure created, EditableStructure destroyed");
+				}
 			}
-		}
-
-		private IEnumerator Temp() {
-			ulong[] data = _structure.Save();
-			GameObject structure = new GameObject("Structure");
-			CompleteStructure complete = structure.AddComponent<CompleteStructure>();
-			structure.AddComponent<HumanBotController>().Camera = Camera;
-			yield return new WaitForFixedUpdate();
-			
-			complete.Load(data);
-			Destroy(Camera.gameObject.GetComponent<CameraController>());
-			Destroy(gameObject);
 		}
 
 
@@ -117,7 +111,7 @@ namespace Assets.Scripts.Building {
 
 
 		private bool GetSelected(out RaycastHit hit) {
-			return Physics.Raycast(Camera.transform.position, Camera.transform.forward, out hit);
+			return Physics.Raycast(_camera.transform.position, _camera.transform.forward, out hit);
 		}
 	}
 }

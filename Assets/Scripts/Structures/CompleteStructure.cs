@@ -5,6 +5,7 @@ using Assets.Scripts.Blocks;
 using Assets.Scripts.Blocks.Info;
 using Assets.Scripts.Blocks.Live;
 using Assets.Scripts.Systems;
+using JetBrains.Annotations;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -21,7 +22,7 @@ namespace Assets.Scripts.Structures {
 		private readonly SystemStorage _systems = new SystemStorage();
 		private Rigidbody _body;
 
-		public void Start() {
+		public void Awake() {
 			_body = GetComponent<Rigidbody>();
 		}
 
@@ -29,41 +30,62 @@ namespace Assets.Scripts.Structures {
 
 		/// <summary>
 		/// Loads this structure using the given serialized blocks.
-		/// The data is treated as valid. Can only be called once.
+		/// Lazely validates the data and returns null, if it is found invalid.
+		/// Connection checks are NOT made, EditableStructure#Load should be used for that.
 		/// </summary>
 		// ReSharper disable once ParameterTypeCanBeEnumerable.Global
-		public void Load(ulong[] serialized) { //TODO static method instead which also creates the GameObject
-			Assert.IsTrue(MaxHealth == 0, "The load method can only be called once.");
-
-			foreach (ulong value in serialized) {
-				byte[] bytes = BitConverter.GetBytes(value);
-				BlockType type = BlockFactory.BlockTypes[BitConverter.ToUInt32(bytes, 4)];
-
-				BlockPosition position;
-				BlockPosition.FromComponents(bytes[0], bytes[1], bytes[2], out position);
-
-				BlockInfo info = BlockFactory.GetInfo(type);
-				SingleBlockInfo single = info as SingleBlockInfo;
-				RealLiveBlock block;
-				if (single != null) {
-					block = BlockFactory.MakeSingleLive(transform, single, bytes[3], position);
-				} else {
-					block = CreateMulti(position, (MultiBlockInfo)info, bytes[3]);
-				}
-
-				Health += info.Health;
-				Mass += info.Mass;
-				_blocks.Add(position, block);
-
-				IBotSystem system;
-				if (SystemFactory.Create(block, out system)) {
-					_systems.Add(position, system);
-				}
+		[CanBeNull]
+		public static CompleteStructure Create(ulong[] serialized, string gameObjectName = "CompleteStructure") {
+			CompleteStructure structure = new GameObject(gameObjectName).AddComponent<CompleteStructure>();
+			if (!structure.Deserialize(serialized)) {
+				Destroy(structure.gameObject);
+				return null;
 			}
 
-			MaxHealth = Health;
-			_systems.Finished();
-			ApplyCenterOfMass();
+			structure.MaxHealth = structure.Health;
+			structure._systems.Finished();
+			structure.ApplyCenterOfMass();
+			return structure;
+		}
+
+		// ReSharper disable once ParameterTypeCanBeEnumerable.Global
+		private bool Deserialize(ulong[] serialized) {
+			try {
+				foreach (ulong value in serialized) {
+					byte[] bytes = BitConverter.GetBytes(value);
+					uint type = BitConverter.ToUInt32(bytes, 4);
+					if (type >= BlockFactory.BlockTypes.Length) {
+						return false;
+					}
+
+					BlockPosition position;
+					if (!BlockPosition.FromComponents(bytes[0], bytes[1], bytes[2], out position)) {
+						return false;
+					}
+
+					BlockInfo info = BlockFactory.GetInfo(BlockFactory.BlockTypes[type]);
+					SingleBlockInfo single = info as SingleBlockInfo;
+					RealLiveBlock block;
+					if (single != null) {
+						block = BlockFactory.MakeSingleLive(transform, single, bytes[3], position);
+					} else {
+						block = CreateMulti(position, (MultiBlockInfo)info, bytes[3]);
+					}
+
+					Health += info.Health;
+					Mass += info.Mass;
+					_blocks.Add(position, block);
+
+					IBotSystem system;
+					if (SystemFactory.Create(block, out system)) {
+						_systems.Add(position, system);
+					}
+				}
+			} catch (Exception e) {
+				Debug.Log(e);
+				return false;
+			}
+			return true;
 		}
 
 		private LiveMultiBlockParent CreateMulti(BlockPosition position, MultiBlockInfo info, byte rotation) {
@@ -138,7 +160,7 @@ namespace Assets.Scripts.Structures {
 				center += real.transform.localPosition * real.Info.Mass;
 				mass += real.Info.Mass;
 			}
-			
+
 			center /= mass;
 			transform.position += center;
 			foreach (ILiveBlock block in _blocks.Values) {

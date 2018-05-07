@@ -7,10 +7,10 @@ namespace Assets.Editor.Blocks {
 		/// Rotating sides doesn't change the count of sides.
 		/// </summary>
 		[Test]
-		public void GetSides_FixedSideCount() {
+		public void RotateSides_FixedSideCount() {
 			const byte max = byte.MaxValue >> 2; //00 11 11 11
 			for (byte sideByte = 0; sideByte <= max; sideByte++) {
-				int count = BitCount (sideByte);
+				int count = BitCount(sideByte);
 				BlockSides sides = (BlockSides)sideByte;
 
 				for (int facingBit = 0; facingBit < 6; facingBit++) {
@@ -34,9 +34,10 @@ namespace Assets.Editor.Blocks {
 			for (int i = 0; i < 6; i++) {
 				count += (bits >> i) & 1;
 			}
-
 			return count;
 		}
+
+
 
 		/// <summary>
 		/// Some before-after sides have been specified manually.
@@ -88,12 +89,12 @@ namespace Assets.Editor.Blocks {
 			Assert.AreEqual(
 				BlockSides.Right | BlockSides.Top | BlockSides.Z,
 				Rotation.RotateSides(sides, Rotation.GetByte(facing, 1))
-			); //But was: left top Z
+			);
 
 			Assert.AreEqual(
 				BlockSides.Left | BlockSides.Top | BlockSides.Z,
 				Rotation.RotateSides(sides, Rotation.GetByte(facing, 3))
-			); //But was: right top Z
+			);
 		}
 	}
 }

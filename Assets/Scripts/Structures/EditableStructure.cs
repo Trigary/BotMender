@@ -132,13 +132,18 @@ namespace Assets.Scripts.Structures {
 		/// Data structure (each character represents 1 byte): XYZR TTTT
 		/// </summary>
 		// ReSharper disable once ReturnTypeCanBeEnumerable.Global
-		public ulong[] Save() {
-			RealPlacedBlock[] blocks = _blocks.Values.Where(data => data is RealPlacedBlock)
-				.Cast<RealPlacedBlock>()
-				.ToArray();
+		public ulong[] Serialize() {
+			int count = 0;
+			RealPlacedBlock[] blocks = new RealPlacedBlock[_blocks.Count];
+			foreach (IPlacedBlock block in _blocks.Values) {
+				RealPlacedBlock real = block as RealPlacedBlock;
+				if (real != null) {
+					blocks[count++] = real;
+				}
+			}
 
-			ulong[] array = new ulong[blocks.Length];
-			for (int index = 0; index < blocks.Length; index++) {
+			ulong[] array = new ulong[count];
+			for (int index = 0; index < count; index++) {
 				RealPlacedBlock block = blocks[index];
 				BlockPosition position = block.Position;
 
@@ -150,12 +155,15 @@ namespace Assets.Scripts.Structures {
 
 		/// <summary>
 		/// Overrides the current structure (read: removes all previous blocks) with the serialized one.
-		/// Returns false if the data is invalid. Catches all exceptions.
+		/// Completely validates the data and returns false, if it is invalid.
 		/// </summary>
 		// ReSharper disable once ParameterTypeCanBeEnumerable.Global
-		public bool Load(ulong[] serialized) {
-			foreach (RealPlacedBlock block in _blocks.Values.Where(data => data is RealPlacedBlock).Cast<RealPlacedBlock>().ToArray()) {
-				RemoveBlock(block);
+		public bool Deserialize(ulong[] serialized) {
+			foreach (IPlacedBlock block in _blocks.Values) {
+				RealPlacedBlock real = block as RealPlacedBlock;
+				if (real != null) {
+					RemoveBlock(real);
+				}
 			}
 
 			try {
