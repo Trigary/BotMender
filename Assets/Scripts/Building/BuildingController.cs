@@ -93,7 +93,7 @@ namespace Assets.Scripts.Building {
 			}
 		}
 
-		private void Delete() { //TODO check structure validity (connections)
+		private void Delete() {
 			RaycastHit hit;
 			if (!GetSelected(out hit)) {
 				return;
@@ -106,6 +106,7 @@ namespace Assets.Scripts.Building {
 			}
 
 			_structure.RemoveBlock(component.Position);
+			//TODO check structure validity (connections)
 		}
 
 

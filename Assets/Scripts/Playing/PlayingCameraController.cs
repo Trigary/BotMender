@@ -48,7 +48,7 @@ namespace Assets.Scripts.Playing {
 			if (deltaPitch != 0) {
 				float newPitch = _pitch + deltaPitch;
 				if (newPitch < MinPitch) {
-					deltaPitch = _pitch - MinPitch;
+					deltaPitch = MinPitch - _pitch;
 				} else if (newPitch > MaxPitch) {
 					deltaPitch = MaxPitch - _pitch;
 				}
@@ -61,7 +61,7 @@ namespace Assets.Scripts.Playing {
 			if (deltaZoom != 0) {
 				float newZoom = _zoom + deltaZoom;
 				if (newZoom < MinZoom) {
-					deltaZoom = _zoom - MinZoom;
+					deltaZoom = MinZoom - _zoom;
 				} else if (newZoom > MaxZoom) {
 					deltaZoom = MaxZoom - _zoom;
 				}

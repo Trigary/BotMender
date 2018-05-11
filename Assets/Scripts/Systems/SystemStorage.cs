@@ -81,11 +81,20 @@ namespace Assets.Scripts.Systems {
 		}
 
 		/// <summary>
+		/// Rotates the weapons.
+		/// </summary>
+		public void TrackTarget(Vector3 target) {
+			foreach (WeaponSystem system in _weapons) {
+				system.TrackTarget(target);
+			}
+		}
+
+		/// <summary>
 		/// Executes the weapon systems.
 		/// </summary>
-		public void Fire(Rigidbody bot, Vector3 target) {
+		public void FireWeapons(Rigidbody bot) {
 			foreach (WeaponSystem system in _weapons) {
-				system.Fire(bot, target);
+				system.FireWeapons(bot);
 			}
 		}
 

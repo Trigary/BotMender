@@ -181,10 +181,17 @@ namespace Assets.Scripts.Structures {
 		}
 
 		/// <summary>
+		/// Rotates the weapons.
+		/// </summary>
+		public void TrackTarget(Vector3 target) {
+			_systems.TrackTarget(target);
+		}
+
+		/// <summary>
 		/// Executes the weapon systems.
 		/// </summary>
-		public void Fire(Vector3 target) {
-			_systems.Fire(_body, target);
+		public void FireWeapons() {
+			_systems.FireWeapons(_body);
 		}
 
 		/// <summary>

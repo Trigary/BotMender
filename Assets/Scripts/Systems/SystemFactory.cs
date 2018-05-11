@@ -3,7 +3,9 @@ using Assets.Scripts.Blocks;
 using Assets.Scripts.Blocks.Live;
 using Assets.Scripts.Systems.Active;
 using Assets.Scripts.Systems.Propulsion;
+using Assets.Scripts.Systems.Weapon;
 using Boo.Lang;
+using UnityEngine;
 
 namespace Assets.Scripts.Systems {
 	/// <summary>
@@ -16,6 +18,7 @@ namespace Assets.Scripts.Systems {
 		static SystemFactory() { //Specify systems here
 			Add(BlockType.ArmorLong1, block => new UnrealAcceleratorSystem());
 			Add(BlockType.ArmorCorner1, block => new FullStopSystem());
+			Add(BlockType.ArmorSlope1, block => new LaserSystem(block.transform, Vector3.zero));
 		}
 
 

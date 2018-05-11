@@ -6,7 +6,7 @@ namespace Assets.Scripts.Playing {
 	/// Gives the player controls over the structure in play mode.
 	/// </summary>
 	[RequireComponent(typeof(CompleteStructure))]
-	public class HumanBotController : MonoBehaviour { //TODO camera controller which enables zooming
+	public class HumanBotController : MonoBehaviour {
 		private Camera _camera;
 		private CompleteStructure _structure;
 
@@ -18,13 +18,8 @@ namespace Assets.Scripts.Playing {
 
 
 		public void Update() {
-			if (Input.GetButtonDown("Fire1")) {
-				RaycastHit hit;
-				if (Physics.Raycast(_camera.transform.position, _camera.transform.forward, out hit)) {
-					_structure.Fire(hit.point);
-				} else {
-					_structure.Fire(_camera.transform.position + _camera.transform.forward * 10000);
-				}
+			if (Input.GetButton("Fire1")) {
+				_structure.FireWeapons();
 			}
 
 			if (Input.GetButtonDown("Ability")) {
@@ -33,6 +28,16 @@ namespace Assets.Scripts.Playing {
 		}
 
 		public void FixedUpdate() {
+			if (!Input.GetButton("FreeLook")) {
+				Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
+				RaycastHit hit;
+				if (Physics.Raycast(ray, out hit)) {
+					_structure.TrackTarget(hit.point);
+				} else {
+					_structure.TrackTarget(ray.origin + ray.direction * 10000);
+				}
+			}
+
 			_structure.MoveRotate(
 				Input.GetAxisRaw("Rightward"),
 				Input.GetAxisRaw("Upward"),
