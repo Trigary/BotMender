@@ -3,7 +3,6 @@ using Assets.Scripts.Blocks;
 using Assets.Scripts.Blocks.Live;
 using Assets.Scripts.Systems.Active;
 using Assets.Scripts.Systems.Propulsion;
-using Assets.Scripts.Systems.Weapon;
 using Boo.Lang;
 using UnityEngine;
 
@@ -12,13 +11,13 @@ namespace Assets.Scripts.Systems {
 	/// Creates new system instances.
 	/// </summary>
 	public static class SystemFactory {
-		private static readonly Dictionary<BlockType, Function<RealLiveBlock, IBotSystem>> Map =
-			new Dictionary<BlockType, Function<RealLiveBlock, IBotSystem>>();
+		private static readonly Dictionary<BlockType, Function<RealLiveBlock, BotSystem>> Map =
+			new Dictionary<BlockType, Function<RealLiveBlock, BotSystem>>();
 
 		static SystemFactory() { //Specify systems here
-			Add(BlockType.ArmorLong1, block => new UnrealAcceleratorSystem());
-			Add(BlockType.ArmorCorner1, block => new FullStopSystem());
-			Add(BlockType.ArmorSlope1, block => new LaserSystem(block.transform, Vector3.zero));
+			Add(BlockType.ArmorLong1, block => new UnrealAcceleratorSystem(block));
+			Add(BlockType.ArmorCorner1, block => new FullStopSystem(block));
+			Add(BlockType.ArmorSlope1, block => new ThrusterSystem(block, Vector3.zero, 1f));
 		}
 
 
@@ -26,8 +25,8 @@ namespace Assets.Scripts.Systems {
 		/// <summary>
 		/// Create a new system instance from the block if it's a system block.
 		/// </summary>
-		public static bool Create(RealLiveBlock block, out IBotSystem system) {
-			Function<RealLiveBlock, IBotSystem> function;
+		public static bool Create(RealLiveBlock block, out BotSystem system) {
+			Function<RealLiveBlock, BotSystem> function;
 			if (!Map.TryGetValue(block.Info.Type, out function)) {
 				system = null;
 				return false;
@@ -39,7 +38,7 @@ namespace Assets.Scripts.Systems {
 
 
 
-		private static void Add(BlockType type, Function<RealLiveBlock, IBotSystem> function) {
+		private static void Add(BlockType type, Function<RealLiveBlock, BotSystem> function) {
 			Map.Add(type, function);
 		}
 	}

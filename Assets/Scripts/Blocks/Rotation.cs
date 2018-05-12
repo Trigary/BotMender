@@ -57,6 +57,22 @@ namespace Assets.Scripts.Blocks {
 		}
 
 		/// <summary>
+		/// Returns the exact BlockSide the rotation is facing. If the axis is enough, use GetAmount(rotation, 3)
+		/// </summary>
+		public static BlockSides GetFacing(byte rotation) {
+			switch (GetAmount(rotation, 3)) {
+				case 0:
+					return GetAmount(rotation, 2) == 3 ? BlockSides.Right : BlockSides.Left;
+				case 1:
+					return GetAmount(rotation, 0) == 0 ? BlockSides.Top : BlockSides.Bottom;
+				case 2:
+					return GetAmount(rotation, 2) == 1 ? BlockSides.Front : BlockSides.Back;
+				default:
+					throw new AssertionException("Invalid rotation: " + rotation, null);
+			}
+		}
+
+		/// <summary>
 		/// Returns a Quaternion which represents the rotation specified by the byte.
 		/// </summary>
 		public static Quaternion GetQuaternion(byte rotation) {

@@ -1,8 +1,8 @@
-﻿using UnityEngine;
+﻿using Assets.Scripts.Blocks.Live;
+using UnityEngine;
 
 namespace Assets.Scripts.Systems {
-	public abstract class WeaponSystem : IBotSystem {
-		private readonly Transform _block;
+	public abstract class WeaponSystem : BotSystem {
 		private readonly Transform _turret;
 		private readonly Vector3 _turretOffset;
 		private readonly float _minPitch;
@@ -11,13 +11,12 @@ namespace Assets.Scripts.Systems {
 		protected Vector3 TurretHeading { get { return _turret.forward; } }
 		protected Vector3 TurretEnd { get { return _turret.position + _turret.rotation * _turretOffset; } }
 
-		protected WeaponSystem(Transform block, Vector3 offset, float yawLimit, float minPitch, float maxPitch) {
-			_block = block;
-			_turret = block.Find("Turret");
+		protected WeaponSystem(RealLiveBlock block, Vector3 offset, float yawLimit, float minPitch, float maxPitch) : base(block) {
+			_turret = block.transform.Find("Turret");
 			_turretOffset = offset;
-			_yawLimit = yawLimit;
 			_minPitch = minPitch;
 			_maxPitch = maxPitch;
+			_yawLimit = yawLimit;
 		}
 
 
@@ -26,8 +25,8 @@ namespace Assets.Scripts.Systems {
 
 
 		public void TrackTarget(Vector3 target) {
-			Vector3 direction = Quaternion.Inverse(_block.rotation) * (target - _turret.position);
-			Vector3 euler = Quaternion.LookRotation(direction, _block.up).eulerAngles;
+			Vector3 direction = Quaternion.Inverse(Block.transform.rotation) * (target - _turret.position);
+			Vector3 euler = Quaternion.LookRotation(direction, Block.transform.up).eulerAngles;
 			euler.x = ClampRotation(euler.x, _minPitch, _maxPitch);
 			euler.y = ClampRotation(euler.y, _yawLimit * -1, _yawLimit);
 			_turret.localRotation = Quaternion.Euler(euler);

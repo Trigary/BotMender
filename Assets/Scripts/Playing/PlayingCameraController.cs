@@ -38,7 +38,7 @@ namespace Assets.Scripts.Playing {
 
 
 
-		public void FixedUpdate() {
+		public void FixedUpdate() { //TODO just make camera the child of the bot - this isn't working
 			Vector3 center = Structure.transform.position;
 			center.y += VerticalOffset;
 			transform.RotateAround(center, Vector3.up, Input.GetAxisRaw("MouseX") * YawFactor);

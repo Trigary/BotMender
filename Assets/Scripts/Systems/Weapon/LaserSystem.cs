@@ -1,11 +1,10 @@
-﻿using UnityEngine;
+﻿using Assets.Scripts.Blocks.Live;
+using UnityEngine;
 
 namespace Assets.Scripts.Systems.Weapon {
 	public class LaserSystem : WeaponSystem {
-		public LaserSystem(Transform self, Vector3 offset) : base(self, offset, 120, -60, 30) {
+		public LaserSystem(RealLiveBlock block, Vector3 offset) : base(block, offset, 120, -60, 30) { }
 
-		}
-		
 
 
 		public override void FireWeapons(Rigidbody bot) {

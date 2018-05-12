@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Assets.Scripts.Blocks;
 using Assets.Scripts.Blocks.Info;
 using Assets.Scripts.Blocks.Live;
@@ -76,7 +75,7 @@ namespace Assets.Scripts.Structures {
 					Mass += info.Mass;
 					_blocks.Add(position, block);
 
-					IBotSystem system;
+					BotSystem system;
 					if (SystemFactory.Create(block, out system)) {
 						_systems.Add(position, system);
 					}

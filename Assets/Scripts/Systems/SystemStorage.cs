@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Assets.Scripts.Systems {
 	public class SystemStorage {
-		private readonly Dictionary<BlockPosition, IBotSystem> _systems = new Dictionary<BlockPosition, IBotSystem>();
+		private readonly Dictionary<BlockPosition, BotSystem> _systems = new Dictionary<BlockPosition, BotSystem>();
 		private readonly HashSet<PropulsionSystem> _propulsions = new HashSet<PropulsionSystem>();
 		private readonly HashSet<WeaponSystem> _weapons = new HashSet<WeaponSystem>();
 		private ActiveSystem _active;
@@ -15,7 +15,7 @@ namespace Assets.Scripts.Systems {
 		/// <summary>
 		/// Add a new system to the storage.
 		/// </summary>
-		public void Add(BlockPosition position, IBotSystem system) {
+		public void Add(BlockPosition position, BotSystem system) {
 			_systems.Add(position, system);
 
 			PropulsionSystem propulsion = system as PropulsionSystem;
@@ -47,7 +47,7 @@ namespace Assets.Scripts.Systems {
 		/// If a system is present at a position, remove it. Returns whether a system was removed.
 		/// </summary>
 		public bool TryRemove(BlockPosition position) {
-			IBotSystem system;
+			BotSystem system;
 			if (!_systems.TryGetValue(position, out system)) {
 				return false;
 			}
