@@ -1,5 +1,4 @@
-﻿using Assets.Scripts.Structures;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Assets.Scripts.Playing {
 	/// <summary>
@@ -21,27 +20,45 @@ namespace Assets.Scripts.Playing {
 		public const float MinZoom = 10f; //Furthest
 
 		[Tooltip("The structure the camera should follow.")]
-		public CompleteStructure Structure;
+		public Rigidbody Structure;
 
-		private Vector3 _lastStructure;
+		private Rigidbody _rigidbody;
+		private float _yaw;
 		private float _pitch = DefaultPitch;
 		private float _zoom = DefaultZoom;
 
-		public void Start() {
-			_lastStructure = Structure.transform.position;
-			transform.rotation = Quaternion.Euler(_pitch, 0, 0);
-			
-			transform.position = Structure.transform.position
-				+ Vector3.up * VerticalOffset
-				+ transform.forward * _zoom * -1;
+		public void Awake() {
+			_rigidbody = gameObject.AddComponent<Rigidbody>();
+			_rigidbody.isKinematic = false;
+		}
+
+		public void OnDestroy() {
+			Destroy(_rigidbody);
 		}
 
 
 
-		public void FixedUpdate() { //TODO just make camera the child of the bot - this isn't working
-			Vector3 center = Structure.transform.position;
-			center.y += VerticalOffset;
-			transform.RotateAround(center, Vector3.up, Input.GetAxisRaw("MouseX") * YawFactor);
+		public void FixedUpdate() {
+			Vector3 center = Center();
+			transform.position = center;
+			transform.rotation = Quaternion.identity;
+			_rigidbody.velocity = Structure.velocity;
+
+			float deltaZoom = Input.GetAxisRaw("MouseScroll") * ZoomFactor;
+			// ReSharper disable once CompareOfFloatsByEqualityOperator
+			if (deltaZoom != 0) {
+				float newZoom = _zoom - deltaZoom;
+				if (newZoom < MinZoom) {
+					deltaZoom = MinZoom - _zoom;
+				} else if (newZoom > MaxZoom) {
+					deltaZoom = MaxZoom - _zoom;
+				}
+				_zoom -= deltaZoom;
+			}
+			transform.position -= transform.forward * _zoom;
+
+			_yaw = (_yaw + Input.GetAxisRaw("MouseX") * YawFactor) % 360;
+			transform.RotateAround(center, Vector3.up, _yaw);
 
 			float deltaPitch = Input.GetAxisRaw("MouseY") * PitchFactor;
 			// ReSharper disable once CompareOfFloatsByEqualityOperator
@@ -53,24 +70,14 @@ namespace Assets.Scripts.Playing {
 					deltaPitch = MaxPitch - _pitch;
 				}
 				_pitch += deltaPitch;
-				transform.RotateAround(center, transform.right, deltaPitch);
 			}
+			transform.RotateAround(center, transform.right, _pitch);
+		}
 
-			float deltaZoom = Input.GetAxisRaw("MouseScroll") * ZoomFactor;
-			// ReSharper disable once CompareOfFloatsByEqualityOperator
-			if (deltaZoom != 0) {
-				float newZoom = _zoom + deltaZoom;
-				if (newZoom < MinZoom) {
-					deltaZoom = MinZoom - _zoom;
-				} else if (newZoom > MaxZoom) {
-					deltaZoom = MaxZoom - _zoom;
-				}
-				_zoom += deltaZoom;
-				transform.position += transform.forward * deltaZoom;
-			}
-
-			transform.position += Structure.transform.position - _lastStructure;
-			_lastStructure = Structure.transform.position;
+		private Vector3 Center() {
+			Vector3 center = Structure.position;
+			center.y += VerticalOffset;
+			return center;
 		}
 	}
 }

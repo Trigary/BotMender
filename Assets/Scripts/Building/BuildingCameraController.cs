@@ -27,7 +27,7 @@ namespace Assets.Scripts.Building {
 				_pitch = 90;
 			}
 
-			_yaw += Input.GetAxisRaw("MouseX") * YawFactor;
+			_yaw = (_yaw + Input.GetAxisRaw("MouseX") * YawFactor) % 360;
 			transform.rotation = Quaternion.Euler(_pitch, _yaw, 0);
 
 			transform.position += transform.rotation * new Vector3(

@@ -43,7 +43,7 @@ namespace Assets.Scripts.Structures {
 
 			structure.MaxHealth = structure.Health;
 			structure._systems.Finished();
-			structure.ApplyCenterOfMass();
+			structure.ApplyMass();
 			return structure;
 		}
 
@@ -131,7 +131,7 @@ namespace Assets.Scripts.Structures {
 			RemoveBlock(block);
 			_systems.TryRemove(block.Position);
 			//TODO connection checks
-			ApplyCenterOfMass();
+			ApplyMass();
 		}
 
 		// ReSharper disable once SuggestBaseTypeForParameter
@@ -147,7 +147,7 @@ namespace Assets.Scripts.Structures {
 			}
 		}
 
-		private void ApplyCenterOfMass() {
+		private void ApplyMass() {
 			Vector3 center = new Vector3();
 			uint mass = 0;
 			foreach (ILiveBlock block in _blocks.Values) {
@@ -168,6 +168,8 @@ namespace Assets.Scripts.Structures {
 					real.transform.position -= center;
 				}
 			}
+
+			_body.mass = (float)Mass / 1000;
 		}
 
 

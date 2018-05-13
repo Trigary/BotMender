@@ -38,7 +38,7 @@ namespace Assets.Scripts.Building {
 			} else if (Input.GetButtonDown("Fire2")) {
 				Delete();
 			}
-			
+
 			//TODO remove
 			if (Input.GetButtonDown("Ability")) {
 				CompleteStructure complete = CompleteStructure.Create(_structure.Serialize());
@@ -46,10 +46,9 @@ namespace Assets.Scripts.Building {
 					Debug.Log("Failed to create CompleteStructure");
 				} else {
 					complete.gameObject.AddComponent<HumanBotController>();
-					_camera.gameObject.AddComponent<PlayingCameraController>().Structure = complete;
+					_camera.gameObject.AddComponent<PlayingCameraController>().Structure = complete.GetComponent<Rigidbody>();
 					Destroy(_camera.gameObject.GetComponent<BuildingCameraController>());
 					Destroy(gameObject);
-					Debug.Log("CompleteStructure created, EditableStructure destroyed");
 				}
 			}
 		}
