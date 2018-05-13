@@ -11,7 +11,7 @@ namespace Assets.Scripts.Blocks {
 	/// Creates new block GameObject instances.
 	/// </summary>
 	public static class BlockFactory {
-		public static readonly BlockType[] BlockTypes = (BlockType[])Enum.GetValues(typeof(BlockType));
+		private static readonly BlockType[] BlockTypes = (BlockType[])Enum.GetValues(typeof(BlockType));
 		private static readonly Dictionary<BlockType, BlockInfo> Blocks = new Dictionary<BlockType, BlockInfo>();
 
 		static BlockFactory() { //Specify blocks here
@@ -26,6 +26,12 @@ namespace Assets.Scripts.Blocks {
 		}
 
 
+
+		public static int TypeCount { get { return BlockTypes.Length; } }
+
+		public static BlockType GetType(int index) {
+			return BlockTypes[index];
+		}
 
 		public static BlockInfo GetInfo(BlockType type) {
 			return Blocks[type];

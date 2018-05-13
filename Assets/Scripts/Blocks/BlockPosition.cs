@@ -1,10 +1,14 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Assets.Scripts.Blocks {
+	/// <summary>
+	/// Specifies a block coordinate in the building mode.
+	/// </summary>
 	public class BlockPosition : IEquatable<BlockPosition> {
-		private const byte Min = 0; //Inclusive
-		private const byte Max = 255; //Inclusive
+		public const byte Min = 0; //Inclusive
+		public const byte Max = 255; //Inclusive
 
 		public readonly byte X;
 		public readonly byte Y;
@@ -80,7 +84,7 @@ namespace Assets.Scripts.Blocks {
 					output = Z == Min ? null : new BlockPosition(X, Y, Z - 1);
 					break;
 				default:
-					throw new ArgumentException("The specified side is invalid.");
+					throw new AssertionException("Invalid side: " + side, null);
 			}
 
 			return output != null;

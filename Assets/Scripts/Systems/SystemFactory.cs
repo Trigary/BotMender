@@ -17,13 +17,13 @@ namespace Assets.Scripts.Systems {
 		static SystemFactory() { //Specify systems here
 			Add(BlockType.ArmorLong1, block => new UnrealAcceleratorSystem(block));
 			Add(BlockType.ArmorCorner1, block => new FullStopSystem(block));
-			Add(BlockType.ArmorSlope1, block => new ThrusterSystem(block, Vector3.zero, 1f));
+			Add(BlockType.ArmorSlope1, block => new ThrusterSystem(block, Vector3.zero, BlockSides.Bottom, 1f));
 		}
 
 
 
 		/// <summary>
-		/// Create a new system instance from the block if it's a system block.
+		/// Create a new system instance from the block if the block comes with a system.
 		/// </summary>
 		public static bool Create(RealLiveBlock block, out BotSystem system) {
 			Function<RealLiveBlock, BotSystem> function;

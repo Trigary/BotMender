@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 using Assets.Scripts.Blocks;
 using Assets.Scripts.Blocks.Info;
 using Assets.Scripts.Blocks.Placed;
@@ -8,21 +7,17 @@ using Assets.Scripts.Structures;
 
 namespace Assets.Scripts.Building {
 	/// <summary>
-	/// Allows the player to interact with the structure.
+	/// Allows the player to interact with the structure the script is attached to, should be used in build mode.
 	/// </summary>
-	[RequireComponent(typeof(EditableStructure))]
 	public class BuildingController : MonoBehaviour {
 		private Camera _camera;
 		private EditableStructure _structure;
-		private BlockType _blockType;
+		private int _blockType;
 		private byte _facingVariant;
-
-		//TODO changes selected facing, change selected new block location events?
 
 		public void Awake() {
 			_camera = Camera.main;
 			_structure = GetComponent<EditableStructure>();
-			_blockType = BlockType.ArmorSlope1;
 		}
 
 
@@ -64,10 +59,9 @@ namespace Assets.Scripts.Building {
 		}
 
 		private void Switch() {
-			BlockType[] values = BlockFactory.BlockTypes;
-			int index = Array.IndexOf(values, _blockType);
-			_blockType = values[(index + 1) % values.Length];
-			Debug.Log("Switched to: " + _blockType); //TODO remove
+			//TODO remove
+			_blockType = (_blockType + 1) % BlockFactory.TypeCount;
+			Debug.Log("Switched to: " + BlockFactory.GetType(_blockType));
 		}
 
 		private void Place() {
@@ -82,7 +76,7 @@ namespace Assets.Scripts.Building {
 			}
 
 			byte rotation = Rotation.GetByte(BlockSide.FromNormal(hit.normal), _facingVariant);
-			BlockInfo info = BlockFactory.GetInfo(_blockType);
+			BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType(_blockType));
 
 			SingleBlockInfo singleInfo = info as SingleBlockInfo;
 			if (singleInfo != null) {

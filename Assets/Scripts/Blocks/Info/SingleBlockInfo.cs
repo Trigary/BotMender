@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 
 namespace Assets.Scripts.Blocks.Info {
+	/// <summary>
+	/// Information about a specific single block type.
+	/// </summary>
 	public class SingleBlockInfo : BlockInfo {
 		public readonly BlockSides ConnectSides;
 

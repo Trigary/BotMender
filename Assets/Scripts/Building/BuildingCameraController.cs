@@ -2,7 +2,7 @@
 
 namespace Assets.Scripts.Building {
 	/// <summary>
-	/// Controls the camera during the building/edit mode.
+	/// Controls the camera it is attached to during the building/edit mode.
 	/// </summary>
 	public class BuildingCameraController : MonoBehaviour {
 		public const float PitchFactor = 1.25f;

@@ -2,7 +2,8 @@
 
 namespace Assets.Scripts.Playing {
 	/// <summary>
-	/// Controls the camera during the play mode.
+	/// Controls the camera it is attached to during the play mode.
+	/// Internally creates a rigidbody so that the camera can smoothly follow the object even at high speeds.
 	/// </summary>
 	public class PlayingCameraController : MonoBehaviour {
 		//TODO make the constants depend on the structure's dimensions instead
@@ -27,7 +28,7 @@ namespace Assets.Scripts.Playing {
 		private float _pitch = DefaultPitch;
 		private float _zoom = DefaultZoom;
 
-		public void Awake() {
+		public void Start() {
 			_rigidbody = gameObject.AddComponent<Rigidbody>();
 			_rigidbody.isKinematic = false;
 		}
@@ -45,7 +46,6 @@ namespace Assets.Scripts.Playing {
 			_rigidbody.velocity = Structure.velocity;
 
 			float deltaZoom = Input.GetAxisRaw("MouseScroll") * ZoomFactor;
-			// ReSharper disable once CompareOfFloatsByEqualityOperator
 			if (deltaZoom != 0) {
 				float newZoom = _zoom - deltaZoom;
 				if (newZoom < MinZoom) {
@@ -61,7 +61,6 @@ namespace Assets.Scripts.Playing {
 			transform.RotateAround(center, Vector3.up, _yaw);
 
 			float deltaPitch = Input.GetAxisRaw("MouseY") * PitchFactor;
-			// ReSharper disable once CompareOfFloatsByEqualityOperator
 			if (deltaPitch != 0) {
 				float newPitch = _pitch + deltaPitch;
 				if (newPitch < MinPitch) {

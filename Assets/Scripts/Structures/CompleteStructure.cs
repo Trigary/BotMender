@@ -11,8 +11,8 @@ using UnityEngine;
 namespace Assets.Scripts.Structures {
 	/// <summary>
 	/// A structure which is no longer editable, but is damagable and destructable.
+	/// Internally creates a Rigidbody.
 	/// </summary>
-	[RequireComponent(typeof(Rigidbody))]
 	public class CompleteStructure : MonoBehaviour {
 		public uint MaxHealth { get; private set; }
 		public uint Health { get; private set; }
@@ -21,8 +21,8 @@ namespace Assets.Scripts.Structures {
 		private readonly SystemStorage _systems = new SystemStorage();
 		private Rigidbody _body;
 
-		public void Awake() {
-			_body = GetComponent<Rigidbody>();
+		public void Start() {
+			_body = gameObject.AddComponent<Rigidbody>();
 		}
 
 
@@ -32,7 +32,6 @@ namespace Assets.Scripts.Structures {
 		/// Lazely validates the data and returns null, if it is found invalid.
 		/// Connection checks are NOT made, EditableStructure#Load should be used for that.
 		/// </summary>
-		// ReSharper disable once ParameterTypeCanBeEnumerable.Global
 		[CanBeNull]
 		public static CompleteStructure Create(ulong[] serialized, string gameObjectName = "CompleteStructure") {
 			CompleteStructure structure = new GameObject(gameObjectName).AddComponent<CompleteStructure>();
@@ -46,14 +45,13 @@ namespace Assets.Scripts.Structures {
 			structure.ApplyMass();
 			return structure;
 		}
-
-		// ReSharper disable once ParameterTypeCanBeEnumerable.Global
+		
 		private bool Deserialize(ulong[] serialized) {
 			try {
 				foreach (ulong value in serialized) {
 					byte[] bytes = BitConverter.GetBytes(value);
 					uint type = BitConverter.ToUInt32(bytes, 4);
-					if (type >= BlockFactory.BlockTypes.Length) {
+					if (type >= BlockFactory.TypeCount) {
 						return false;
 					}
 
@@ -62,7 +60,7 @@ namespace Assets.Scripts.Structures {
 						return false;
 					}
 
-					BlockInfo info = BlockFactory.GetInfo(BlockFactory.BlockTypes[type]);
+					BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType((int)type));
 					SingleBlockInfo single = info as SingleBlockInfo;
 					RealLiveBlock block;
 					if (single != null) {
@@ -81,7 +79,7 @@ namespace Assets.Scripts.Structures {
 					}
 				}
 			} catch (Exception e) {
-				Debug.Log(e);
+				Debug.Log("Exception caught while deserializing into a CompleteStructure: " + e);
 				return false;
 			}
 			return true;
@@ -125,7 +123,7 @@ namespace Assets.Scripts.Structures {
 				return;
 			}
 
-			//TODO no blocks left / Health == 0
+			//TODO handle if no blocks left or Health equals 0
 
 			Mass -= block.Info.Mass;
 			RemoveBlock(block);
@@ -136,13 +134,13 @@ namespace Assets.Scripts.Structures {
 
 		// ReSharper disable once SuggestBaseTypeForParameter
 		private void RemoveBlock(RealLiveBlock block) {
-			Assert.IsTrue(_blocks.Remove(block.Position), "No block exists at the specified position.");
-			if (block is LiveSingleBlock) {
-				return;
+			Assert.IsTrue(_blocks.Remove(block.Position), "The block is not present.");
+			LiveMultiBlockParent parent = block as LiveMultiBlockParent;
+			if (parent == null) {
+				return; //block is LiveSingleBlock
 			}
-
-			// ReSharper disable once PossibleNullReferenceException
-			foreach (LiveMultiBlockPart part in (block as LiveMultiBlockParent).Parts) {
+			
+			foreach (LiveMultiBlockPart part in parent.Parts) {
 				Assert.IsTrue(_blocks.Remove(part.Position), "A part of the multi block is not present.");
 			}
 		}

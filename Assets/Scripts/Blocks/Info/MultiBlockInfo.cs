@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
-using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Assets.Scripts.Blocks.Info {
+	/// <summary>
+	/// Information about a specific multi block type.
+	/// </summary>
 	public class MultiBlockInfo : BlockInfo {
 		private readonly List<KeyValuePair<Vector3Int, BlockSides>> _partConnectSides = new List<KeyValuePair<Vector3Int, BlockSides>>();
 		
@@ -16,7 +18,6 @@ namespace Assets.Scripts.Blocks.Info {
 		/// Sets the sides at which a specific part of the multi block can connect to other blocks.
 		/// Returns itself for chaining. 0;0;0 must be set.
 		/// </summary>
-		[Pure]
 		public MultiBlockInfo Add(byte x, byte y, byte z, BlockSides connectSides) {
 			_partConnectSides.Add(new KeyValuePair<Vector3Int, BlockSides>(new Vector3Int(x, y, z), connectSides));
 			return this;

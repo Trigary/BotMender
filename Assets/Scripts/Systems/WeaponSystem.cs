@@ -2,6 +2,9 @@
 using UnityEngine;
 
 namespace Assets.Scripts.Systems {
+	/// <summary>
+	/// A system which controls a weapon.
+	/// </summary>
 	public abstract class WeaponSystem : BotSystem {
 		private readonly Transform _turret;
 		private readonly Vector3 _turretOffset;
@@ -20,10 +23,18 @@ namespace Assets.Scripts.Systems {
 		}
 
 
+
+		/// <summary>
+		/// Fire the weapons towards their current heading.
+		/// </summary>
 		public abstract void FireWeapons(Rigidbody bot);
+		//TODO implement cooldowns, inaccuracy
 
 
 
+		/// <summary>
+		/// Rotate the weapon's barrel so it faces the target coordinates.
+		/// </summary>
 		public void TrackTarget(Vector3 target) {
 			Vector3 direction = Quaternion.Inverse(Block.transform.rotation) * (target - _turret.position);
 			Vector3 euler = Quaternion.LookRotation(direction, Block.transform.up).eulerAngles;

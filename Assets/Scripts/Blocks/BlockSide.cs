@@ -20,6 +20,9 @@ namespace Assets.Scripts.Blocks {
 		All = X | Y | Z
 	}
 
+	/// <summary>
+	/// Utility methods regarding the BlockSides flags enum.
+	/// </summary>
 	public static class BlockSide {
 		/// <summary>
 		/// Returns a BlockSides based on the raycast hit's normal.

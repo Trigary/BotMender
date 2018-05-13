@@ -100,7 +100,7 @@ namespace Assets.Scripts.Structures {
 		public void RemoveBlock(BlockPosition position) {
 			IPlacedBlock block;
 			if (!_blocks.TryGetValue(position, out block)) {
-				throw new AssertionException("No block exists at the specific position.", null);
+				throw new AssertionException("Can't remove block at a position where no blocks exist.", null);
 			}
 			RemoveBlock(block);
 		}
@@ -131,7 +131,6 @@ namespace Assets.Scripts.Structures {
 		/// Serialises the structure, saving the positions, types and rotations.
 		/// Data structure (each character represents 1 byte): XYZR TTTT
 		/// </summary>
-		// ReSharper disable once ReturnTypeCanBeEnumerable.Global
 		public ulong[] Serialize() {
 			int count = 0;
 			RealPlacedBlock[] blocks = new RealPlacedBlock[_blocks.Count];
@@ -157,7 +156,6 @@ namespace Assets.Scripts.Structures {
 		/// Overrides the current structure (read: removes all previous blocks) with the serialized one.
 		/// Completely validates the data and returns false, if it is invalid.
 		/// </summary>
-		// ReSharper disable once ParameterTypeCanBeEnumerable.Global
 		public bool Deserialize(ulong[] serialized) {
 			foreach (IPlacedBlock block in _blocks.Values) {
 				RealPlacedBlock real = block as RealPlacedBlock;
@@ -170,7 +168,7 @@ namespace Assets.Scripts.Structures {
 				foreach (ulong value in serialized) {
 					byte[] bytes = BitConverter.GetBytes(value);
 					uint type = BitConverter.ToUInt32(bytes, 4);
-					if (type >= BlockFactory.BlockTypes.Length) {
+					if (type >= BlockFactory.TypeCount) {
 						return false;
 					}
 
@@ -179,7 +177,7 @@ namespace Assets.Scripts.Structures {
 						return false;
 					}
 
-					BlockInfo info = BlockFactory.GetInfo(BlockFactory.BlockTypes[type]);
+					BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType((int)type));
 					SingleBlockInfo single = info as SingleBlockInfo;
 					bool result = single != null
 						? TryAddBlock(position, single, bytes[3])
@@ -191,7 +189,7 @@ namespace Assets.Scripts.Structures {
 				}
 				return true;
 			} catch (Exception e) {
-				Debug.Log(e);
+				Debug.Log("Exception caught while deserializing into an EditableStructure: " + e);
 				return false;
 			}
 		}
@@ -203,8 +201,7 @@ namespace Assets.Scripts.Structures {
 		/// connection sides can connect to any other block.
 		/// </summary>
 		private bool CanConnect(BlockPosition position, BlockSides rotatedConnectSides) {
-			//TODO can connect two corners which aren't touching due to how corner sides are done
-
+			//TODO can connect two corners which aren't touching due to how corner connection sides are done
 			if (_blocks.Count == 0) {
 				return true;
 			}
@@ -230,7 +227,6 @@ namespace Assets.Scripts.Structures {
 					return true;
 				}
 			}
-
 			return false;
 		}
 	}

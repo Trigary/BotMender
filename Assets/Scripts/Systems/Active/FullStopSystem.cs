@@ -2,6 +2,9 @@
 using UnityEngine;
 
 namespace Assets.Scripts.Systems.Active {
+	/// <summary>
+	/// Sets the bot's velocity to zero upon activation.
+	/// </summary>
 	public class FullStopSystem : ActiveSystem {
 		public FullStopSystem(RealLiveBlock block) : base(block) { }
 

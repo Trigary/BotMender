@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Assets.Scripts.Blocks {
@@ -143,7 +142,6 @@ namespace Assets.Scripts.Blocks {
 					break;
 				}
 			}
-
 			return (output & ~removed) | added;
 		}
 	}

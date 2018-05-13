@@ -4,6 +4,9 @@ using NUnit.Framework;
 using UnityEngine;
 
 namespace Assets.Scripts.Systems {
+	/// <summary>
+	/// A class which handles the management of a bot's systems.
+	/// </summary>
 	public class SystemStorage {
 		private readonly Dictionary<BlockPosition, BotSystem> _systems = new Dictionary<BlockPosition, BotSystem>();
 		private readonly HashSet<PropulsionSystem> _propulsions = new HashSet<PropulsionSystem>();
@@ -31,7 +34,7 @@ namespace Assets.Scripts.Systems {
 			}
 
 			ActiveSystem active = system as ActiveSystem;
-			Assert.IsNull(_active, "Active system can only be set once.");
+			Assert.IsNull(_active, "The active system can only be set once.");
 			_active = active;
 		}
 
