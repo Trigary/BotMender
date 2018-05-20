@@ -102,6 +102,8 @@ namespace Assets.Scripts.Structures {
 		private void RemoveBlock(IPlacedBlock block) {
 			if (block.Position.Equals(_mainframePosition)) {
 				_mainframePosition = null;
+			} else if (SystemFactory.IsActiveSystem(block.Type)) {
+				_activeSystemPresent = false;
 			}
 
 			PlacedSingleBlock single = block as PlacedSingleBlock;

@@ -17,6 +17,7 @@ namespace Assets.Scripts.Building {
 		private int _blockType;
 		private byte _facingVariant;
 		private BlockPosition _previousPreviewPosition;
+		private GameObject _previewObject;
 
 		public void Awake() {
 			_camera = Camera.main;
@@ -57,9 +58,10 @@ namespace Assets.Scripts.Building {
 		}
 
 		public void FixedUpdate() {
+			GameObject block;
 			BlockPosition position;
 			byte rotation;
-			if (GetSelectedPosition(out position, out rotation) && !position.Equals(_previousPreviewPosition)) {
+			if (GetSelectedBlock(out block, out position, out rotation) && !position.Equals(_previousPreviewPosition)) {
 				ShowPreview(position, rotation);
 			}
 		}
@@ -82,69 +84,96 @@ namespace Assets.Scripts.Building {
 		}
 
 		private void Place() {
+			GameObject block;
 			BlockPosition position;
 			byte rotation;
-			if (!GetSelectedPosition(out position, out rotation)) {
+			if (!GetSelectedBlock(out block, out position, out rotation)) {
 				return;
 			}
-			
+
 			BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType(_blockType));
 			if (_structure.TryAddBlock(position, info, rotation)) {
 				ColorNotConnectedBlocks();
+				ShowPreview(position, rotation);
 			}
 		}
 
 		private void Delete() {
-			RaycastHit hit;
-			if (!GetSelected(out hit)) {
+			GameObject block;
+			BlockPosition position;
+			byte rotation;
+			if (!GetSelectedBlock(out block, out position, out rotation)) {
 				return;
 			}
-
-			GameObject block = hit.transform.gameObject;
+			
 			RealPlacedBlock component = block.GetComponent<RealPlacedBlock>();
 			if (component != null) {
 				_structure.RemoveBlock(component.Position);
 				ColorNotConnectedBlocks();
+				ShowPreview(position, rotation);
 			}
 		}
 
 
 
 		private void ShowPreview() {
+			GameObject block;
 			BlockPosition position;
 			byte rotation;
-			if (GetSelectedPosition(out position, out rotation)) {
+			if (GetSelectedBlock(out block, out position, out rotation)) {
 				ShowPreview(position, rotation);
 			}
 		}
-
+		
 		private void ShowPreview(BlockPosition position, byte rotation) {
+			Destroy(_previewObject);
 			_previousPreviewPosition = position;
-			//TODO remove previous preview
-			/*BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType(_blockType));
+			BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType(_blockType));
+			if (!_structure.CanAddBlock(position, info, rotation)) {
+				return;
+			}
+
 			SingleBlockInfo single = info as SingleBlockInfo;
-			if (info != null) {
-				BlockFactory.MakeSinglePlaced(_structure.transform, single, rotation, position);
+			RealPlacedBlock block;
+			if (single != null) {
+				block = BlockFactory.MakeSinglePlaced(_structure.transform, single, rotation, position);
 			} else {
-				BlockFactory.MakeMultiPlaced(_structure.transform, (MultiBlockInfo)info, rotation, position, );
-			}*/
-			//TODO I should reuse the code in EditableStructure somehow
+				PlacedMultiBlockPart[] parts;
+				block = BlockFactory.MakeMultiPlaced(_structure.transform, (MultiBlockInfo)info, rotation, position, out parts);
+			}
+
+			_previewObject = block.gameObject;
+			_previewObject.gameObject.name = "BlockPreview";
+			DestroyImmediate(_previewObject.GetComponent<Collider>());
+			Renderer render = _previewObject.GetComponent<Renderer>();
+			EnableMaterialTransparency(render.material);
+			render.material.color = new Color(1, 1, 1, 0.5f);
+		}
+
+		private static void EnableMaterialTransparency(Material material) {
+			material.SetInt("_Mode", 3);
+			material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+			material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+			material.SetInt("_ZWrite", 0);
+			material.DisableKeyword("_ALPHATEST_ON");
+			material.DisableKeyword("_ALPHABLEND_ON");
+			material.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+			material.renderQueue = 3000;
 		}
 
 
 
-		private bool GetSelected(out RaycastHit hit) {
-			return Physics.Raycast(_camera.transform.position, _camera.transform.forward, out hit);
-		}
-
-		private bool GetSelectedPosition(out BlockPosition position, out byte rotation) {
+		private bool GetSelectedBlock(out GameObject block, out BlockPosition position, out byte rotation) {
+			block = null;
 			position = null;
 			rotation = 0;
 			RaycastHit hit;
-			if (!GetSelected(out hit) || !BlockPosition.FromVector(hit.point + hit.normal / 2, out position)) {
+			if (!Physics.Raycast(_camera.transform.position, _camera.transform.forward, out hit)
+				|| !BlockPosition.FromVector(hit.point + hit.normal / 2, out position)) {
 				return false;
 			}
 			rotation = Rotation.GetByte(BlockSide.FromNormal(hit.normal), _facingVariant);
+			block = hit.transform.gameObject;
 			return true;
 		}
 

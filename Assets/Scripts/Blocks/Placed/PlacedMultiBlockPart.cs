@@ -8,6 +8,7 @@ namespace Assets.Scripts.Blocks.Placed {
 		public BlockSides ConnectSides { get; private set; }
 		public BlockPosition Position { get; private set; }
 		public PlacedMultiBlockParent Parent { get; private set; }
+		public BlockType Type { get { return Parent.Type; } }
 
 		public PlacedMultiBlockPart(BlockSides connectSides, BlockPosition position) {
 			ConnectSides = connectSides;
