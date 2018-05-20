@@ -4,6 +4,8 @@ using System.Linq;
 using Assets.Scripts.Blocks;
 using Assets.Scripts.Blocks.Info;
 using Assets.Scripts.Blocks.Placed;
+using Assets.Scripts.Systems;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -12,61 +14,75 @@ namespace Assets.Scripts.Structures {
 	/// A structure which is editable. It doesn't have health and it may contain unconnected blocks.
 	/// </summary>
 	public class EditableStructure : MonoBehaviour {
-		private readonly Dictionary<BlockPosition, IPlacedBlock> _blocks = new Dictionary<BlockPosition, IPlacedBlock>();
+		private readonly IDictionary<BlockPosition, IPlacedBlock> _blocks = new Dictionary<BlockPosition, IPlacedBlock>();
+		[CanBeNull] private BlockPosition _mainframePosition;
+		private bool _activeSystemPresent;
 
 		public void Start() {
 			BlockPosition position;
-			if (BlockPosition.FromVector(transform.position, out position)) {
-				_blocks.Add(position, BlockFactory.MakeSinglePlaced(transform,
-					(SingleBlockInfo)BlockFactory.GetInfo(BlockType.ArmorCube1), 0, position));
+			Assert.IsTrue(BlockPosition.FromVector(transform.position, out position),
+				"Failed to get BlockPosition from EditableStructure position.");
+			Assert.IsTrue(TryAddBlock(position, (MultiBlockInfo)BlockFactory.GetInfo(BlockType.Mainframe), 0),
+				"Failed to set the place the Mainframe.");
+		}
+
+
+
+		/// <summary>
+		/// Determines whether the block can be added checking whether a block is already
+		/// present at the position and whether this new block can connect to another block.
+		/// </summary>
+		public bool CanAddBlock(BlockPosition position, BlockInfo info, byte rotation) {
+			if (info.Type == BlockType.Mainframe) {
+				if (_mainframePosition != null) {
+					return false;
+				}
+			} else if (SystemFactory.IsActiveSystem(info.Type)) {
+				if (_activeSystemPresent) {
+					return false;
+				}
+			}
+
+			SingleBlockInfo single = info as SingleBlockInfo;
+			if (single != null) {
+				return !_blocks.ContainsKey(position)
+					&& CanConnect(position, Rotation.RotateSides(single.ConnectSides, rotation));
+			} else {
+				KeyValuePair<BlockPosition, BlockSides>[] positions;
+				return ((MultiBlockInfo)info).GetRotatedPositions(position, rotation, out positions)
+					&& !positions.Any(pair => _blocks.ContainsKey(pair.Key))
+					&& positions.Any(pair => CanConnect(pair.Key, pair.Value));
 			}
 		}
 
 
 
 		/// <summary>
-		/// Determines whether the single block can be added checking whether a block is already
-		/// present at the position and whether this new block can connect to another block.
+		/// Tries to add the block. Returns the same as #CanAddBlock.
 		/// </summary>
-		public bool CanAddBlock(BlockPosition position, SingleBlockInfo info, byte rotation) {
-			return !_blocks.ContainsKey(position) && CanConnect(position, Rotation.RotateSides(info.ConnectSides, rotation));
-		}
-
-		/// <summary>
-		/// Tries to add the single block. Returns the same as #CanAddBlock.
-		/// </summary>
-		public bool TryAddBlock(BlockPosition position, SingleBlockInfo info, byte rotation) {
+		public bool TryAddBlock(BlockPosition position, BlockInfo info, byte rotation) {
 			if (!CanAddBlock(position, info, rotation)) {
 				return false;
 			}
 
-			_blocks.Add(position, BlockFactory.MakeSinglePlaced(transform, info, rotation, position));
+			SingleBlockInfo single = info as SingleBlockInfo;
+			if (single != null) {
+				_blocks.Add(position, BlockFactory.MakeSinglePlaced(transform, single, rotation, position));
+			} else {
+				AddMultiBlock(position, (MultiBlockInfo)info, rotation);
+			}
+
+			if (info.Type == BlockType.Mainframe) {
+				_mainframePosition = position;
+			} else if (SystemFactory.IsActiveSystem(info.Type)) {
+				_activeSystemPresent = true;
+			}
 			return true;
 		}
 
-
-
-		/// <summary>
-		/// Determines whether the multi block can be added whether blocks are already
-		/// present at the position and whether the any of the new blocks can connect to another block.
-		/// </summary>
-		public bool CanAddBlock(BlockPosition position, MultiBlockInfo info, byte rotation) {
+		private void AddMultiBlock(BlockPosition position, MultiBlockInfo info, byte rotation) {
 			KeyValuePair<BlockPosition, BlockSides>[] positions;
-			return info.GetRotatedPositions(position, rotation, out positions) && CanAddBlock(positions);
-		}
-
-		private bool CanAddBlock(KeyValuePair<BlockPosition, BlockSides>[] positions) {
-			return !positions.Any(pair => _blocks.ContainsKey(pair.Key)) && positions.Any(pair => CanConnect(pair.Key, pair.Value));
-		}
-
-		/// <summary>
-		/// Tries to add the multi block. Returns the same as #CanAddBlock.
-		/// </summary>
-		public bool TryAddBlock(BlockPosition position, MultiBlockInfo info, byte rotation) {
-			KeyValuePair<BlockPosition, BlockSides>[] positions;
-			if (!info.GetRotatedPositions(position, rotation, out positions) || !CanAddBlock(positions)) {
-				return false;
-			}
+			info.GetRotatedPositions(position, rotation, out positions);
 
 			BlockSides parentSides = BlockSides.None;
 			PlacedMultiBlockPart[] parts = new PlacedMultiBlockPart[positions.Length - 1];
@@ -88,7 +104,6 @@ namespace Assets.Scripts.Structures {
 			foreach (PlacedMultiBlockPart part in parts) {
 				part.Initialize(parent);
 			}
-			return true;
 		}
 
 
@@ -128,6 +143,46 @@ namespace Assets.Scripts.Structures {
 
 
 		/// <summary>
+		/// Returns the blocks which aren't connected to the mainframe. If there are none, then the structure is valid.
+		/// Returns null if the mainframe is not present.
+		/// </summary>
+		[CanBeNull]
+		public IDictionary<BlockPosition, IPlacedBlock> GetNotConnectedBlocks() {
+			if (_mainframePosition == null) {
+				return null;
+			}
+
+			IDictionary<BlockPosition, IPlacedBlock> blocks = new Dictionary<BlockPosition, IPlacedBlock>(_blocks);
+			CheckSides(blocks[_mainframePosition], -1, blocks);
+			return blocks;
+		}
+
+		private static void CheckSides(IPlacedBlock block, int ignoreBit, IDictionary<BlockPosition, IPlacedBlock> blocks) {
+			Assert.IsTrue(blocks.Remove(block.Position), "The block is no longer in the dictionary.");
+			for (int bit = 0; bit < 6; bit++) {
+				if (bit == ignoreBit) {
+					continue;
+				}
+
+				BlockSides side = block.ConnectSides & (BlockSides)(1 << bit);
+				BlockPosition offseted;
+				IPlacedBlock other;
+				if (side == BlockSides.None
+					|| !block.Position.GetOffseted(side, out offseted)
+					|| !blocks.TryGetValue(offseted, out other)) {
+					continue;
+				}
+				
+				int inverseBit = bit % 2 == 0 ? bit + 1 : bit - 1;
+				if ((other.ConnectSides & (BlockSides)(1 << inverseBit)) != BlockSides.None) {
+					CheckSides(other, inverseBit, blocks);
+				}
+			}
+		}
+
+
+
+		/// <summary>
 		/// Serialises the structure, saving the positions, types and rotations.
 		/// Data structure (each character represents 1 byte): XYZR TTTT
 		/// </summary>
@@ -154,7 +209,8 @@ namespace Assets.Scripts.Structures {
 
 		/// <summary>
 		/// Overrides the current structure (read: removes all previous blocks) with the serialized one.
-		/// Completely validates the data and returns false, if it is invalid.
+		/// Lazely validates the data and returns false, if it is found invalid.
+		/// Connection checks are not made, #IsValid should be called after this method.
 		/// </summary>
 		public bool Deserialize(ulong[] serialized) {
 			foreach (IPlacedBlock block in _blocks.Values) {
@@ -208,22 +264,16 @@ namespace Assets.Scripts.Structures {
 
 			for (int bit = 0; bit < 6; bit++) {
 				BlockSides side = rotatedConnectSides & (BlockSides)(1 << bit);
-				if (side == BlockSides.None) {
-					continue;
-				}
-
 				BlockPosition offseted;
-				if (!position.GetOffseted(side, out offseted)) {
-					continue;
-				}
-
 				IPlacedBlock block;
-				if (!_blocks.TryGetValue(offseted, out block)) {
+				if (side == BlockSides.None
+					|| !position.GetOffseted(side, out offseted)
+					|| !_blocks.TryGetValue(offseted, out block)) {
 					continue;
 				}
 
-				int otherBit = bit % 2 == 0 ? bit + 1 : bit - 1;
-				if ((block.ConnectSides & (BlockSides)(1 << otherBit)) != BlockSides.None) {
+				int inverseBit = bit % 2 == 0 ? bit + 1 : bit - 1;
+				if ((block.ConnectSides & (BlockSides)(1 << inverseBit)) != BlockSides.None) {
 					return true;
 				}
 			}

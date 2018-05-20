@@ -17,11 +17,11 @@ namespace Assets.Scripts.Structures {
 		public uint MaxHealth { get; private set; }
 		public uint Health { get; private set; }
 		public uint Mass { get; private set; }
-		private readonly Dictionary<BlockPosition, ILiveBlock> _blocks = new Dictionary<BlockPosition, ILiveBlock>();
+		private readonly IDictionary<BlockPosition, ILiveBlock> _blocks = new Dictionary<BlockPosition, ILiveBlock>();
 		private readonly SystemStorage _systems = new SystemStorage();
 		private Rigidbody _body;
 
-		public void Start() {
+		public void Awake() {
 			_body = gameObject.AddComponent<Rigidbody>();
 		}
 
@@ -30,7 +30,7 @@ namespace Assets.Scripts.Structures {
 		/// <summary>
 		/// Loads this structure using the given serialized blocks.
 		/// Lazely validates the data and returns null, if it is found invalid.
-		/// Connection checks are NOT made, EditableStructure#Load should be used for that.
+		/// Connection checks are not made, the EditableStructure should be used for that.
 		/// </summary>
 		[CanBeNull]
 		public static CompleteStructure Create(ulong[] serialized, string gameObjectName = "CompleteStructure") {
@@ -45,7 +45,7 @@ namespace Assets.Scripts.Structures {
 			structure.ApplyMass();
 			return structure;
 		}
-		
+
 		private bool Deserialize(ulong[] serialized) {
 			try {
 				foreach (ulong value in serialized) {
@@ -123,7 +123,10 @@ namespace Assets.Scripts.Structures {
 				return;
 			}
 
-			//TODO handle if no blocks left or Health equals 0
+			if (block.Info.Type == BlockType.Mainframe || Health == 0) {
+				//TODO destroy the structure
+				return;
+			}
 
 			Mass -= block.Info.Mass;
 			RemoveBlock(block);
@@ -139,7 +142,7 @@ namespace Assets.Scripts.Structures {
 			if (parent == null) {
 				return; //block is LiveSingleBlock
 			}
-			
+
 			foreach (LiveMultiBlockPart part in parent.Parts) {
 				Assert.IsTrue(_blocks.Remove(part.Position), "A part of the multi block is not present.");
 			}

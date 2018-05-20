@@ -12,6 +12,7 @@ namespace Assets.Scripts.Systems.Active {
 
 		public override void Activate(Rigidbody bot) {
 			bot.velocity = Vector3.zero;
+			bot.angularVelocity = Vector3.zero;
 		}
 	}
 }

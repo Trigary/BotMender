@@ -77,13 +77,7 @@ namespace Assets.Scripts.Building {
 
 			byte rotation = Rotation.GetByte(BlockSide.FromNormal(hit.normal), _facingVariant);
 			BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType(_blockType));
-
-			SingleBlockInfo singleInfo = info as SingleBlockInfo;
-			if (singleInfo != null) {
-				_structure.TryAddBlock(position, singleInfo, rotation);
-			} else {
-				_structure.TryAddBlock(position, info as MultiBlockInfo, rotation);
-			}
+			_structure.TryAddBlock(position, info, rotation);
 		}
 
 		private void Delete() {

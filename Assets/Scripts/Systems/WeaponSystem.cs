@@ -6,13 +6,13 @@ namespace Assets.Scripts.Systems {
 	/// A system which controls a weapon.
 	/// </summary>
 	public abstract class WeaponSystem : BotSystem {
+		protected Vector3 TurretHeading { get { return _turret.forward; } }
+		protected Vector3 TurretEnd { get { return _turret.position + _turret.rotation * _turretOffset; } }
 		private readonly Transform _turret;
 		private readonly Vector3 _turretOffset;
 		private readonly float _minPitch;
 		private readonly float _maxPitch;
 		private readonly float _yawLimit;
-		protected Vector3 TurretHeading { get { return _turret.forward; } }
-		protected Vector3 TurretEnd { get { return _turret.position + _turret.rotation * _turretOffset; } }
 
 		protected WeaponSystem(RealLiveBlock block, Vector3 offset, float yawLimit, float minPitch, float maxPitch) : base(block) {
 			_turret = block.transform.Find("Turret");
@@ -28,10 +28,16 @@ namespace Assets.Scripts.Systems {
 		/// Fire the weapons towards their current heading.
 		/// </summary>
 		public abstract void FireWeapons(Rigidbody bot);
-		//TODO implement cooldowns, inaccuracy
+		//TODO add weapon types
+		//TODO cooldown: for a specific weapon type, method depends on weapon type (few weapons fires at a time depending on count & cooldown, etc.)
+		//TODO should multiple weapon types be allowed on one bot? probably no
+		//TODO inaccuracy: make it a parameter, so it can be displayed (and easier for server-side validation later)
+		//TODO weapon kickback
+		//TODO weapon rotation speed limit?
+		//TODO only fire the weapon if it was able to look at the target? does rotation speed count? does being obfuscated by other blocks count?
 
-
-
+		
+		
 		/// <summary>
 		/// Rotate the weapon's barrel so it faces the target coordinates.
 		/// </summary>

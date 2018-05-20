@@ -28,7 +28,7 @@ namespace Assets.Scripts.Playing {
 		private float _pitch = DefaultPitch;
 		private float _zoom = DefaultZoom;
 
-		public void Start() {
+		public void Awake() {
 			_rigidbody = gameObject.AddComponent<Rigidbody>();
 			_rigidbody.isKinematic = false;
 		}

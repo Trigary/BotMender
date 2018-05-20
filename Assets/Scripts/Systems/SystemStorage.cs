@@ -8,7 +8,7 @@ namespace Assets.Scripts.Systems {
 	/// A class which handles the management of a bot's systems.
 	/// </summary>
 	public class SystemStorage {
-		private readonly Dictionary<BlockPosition, BotSystem> _systems = new Dictionary<BlockPosition, BotSystem>();
+		private readonly IDictionary<BlockPosition, BotSystem> _systems = new Dictionary<BlockPosition, BotSystem>();
 		private readonly HashSet<PropulsionSystem> _propulsions = new HashSet<PropulsionSystem>();
 		private readonly HashSet<WeaponSystem> _weapons = new HashSet<WeaponSystem>();
 		private ActiveSystem _active;

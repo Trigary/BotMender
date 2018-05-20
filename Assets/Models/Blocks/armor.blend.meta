@@ -8,18 +8,23 @@ ModelImporter:
     100000: //RootNode
     100002: corner
     100004: slope
+    100006: long
     400000: //RootNode
     400002: corner
     400004: slope
+    400006: long
     2100000: unnamed
     2300000: //RootNode
     2300002: corner
     2300004: slope
+    2300006: long
     3300000: //RootNode
     3300002: corner
     3300004: slope
+    3300006: long
     4300000: slope
     4300002: corner
+    4300004: long
     7400000: Default Take
     9500000: //RootNode
   externalObjects: {}

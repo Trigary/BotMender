@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Assets.Scripts.Blocks;
 using Assets.Scripts.Blocks.Live;
 using Assets.Scripts.Systems.Active;
 using Assets.Scripts.Systems.Propulsion;
+using Assets.Scripts.Systems.Weapon;
 using Boo.Lang;
 using UnityEngine;
 
@@ -11,10 +13,10 @@ namespace Assets.Scripts.Systems {
 	/// Creates new system instances.
 	/// </summary>
 	public static class SystemFactory {
-		private static readonly Dictionary<BlockType, Function<RealLiveBlock, BotSystem>> Map =
+		private static readonly IDictionary<BlockType, Function<RealLiveBlock, BotSystem>> Map =
 			new Dictionary<BlockType, Function<RealLiveBlock, BotSystem>>();
 
-		static SystemFactory() { //Specify systems here
+		static SystemFactory() {
 			Add(BlockType.ArmorLong1, block => new UnrealAcceleratorSystem(block));
 			Add(BlockType.ArmorCorner1, block => new FullStopSystem(block));
 			Add(BlockType.ArmorSlope1, block => new ThrusterSystem(block, Vector3.zero, BlockSides.Bottom, 1f));
@@ -34,6 +36,28 @@ namespace Assets.Scripts.Systems {
 
 			system = function.Invoke(block);
 			return true;
+		}
+
+		/// <summary>
+		/// Returns the weapon type of the specified block type. If it is not a weapon, WeaponType#None is returned.
+		/// </summary>
+		public static WeaponType GetWeaponType(BlockType block) {
+			switch (block) {
+				default:
+					return WeaponType.None;
+			}
+		}
+
+		/// <summary>
+		/// Returns whether the specified block type installs an active system.
+		/// </summary>
+		public static bool IsActiveSystem(BlockType block) {
+			switch (block) {
+				case BlockType.ArmorCorner1:
+					return true;
+				default:
+					return false;
+			}
 		}
 
 

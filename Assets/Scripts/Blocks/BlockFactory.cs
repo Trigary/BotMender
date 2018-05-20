@@ -12,9 +12,18 @@ namespace Assets.Scripts.Blocks {
 	/// </summary>
 	public static class BlockFactory {
 		private static readonly BlockType[] BlockTypes = (BlockType[])Enum.GetValues(typeof(BlockType));
-		private static readonly Dictionary<BlockType, BlockInfo> Blocks = new Dictionary<BlockType, BlockInfo>();
+		private static readonly IDictionary<BlockType, BlockInfo> Blocks = new Dictionary<BlockType, BlockInfo>();
 
-		static BlockFactory() { //Specify blocks here
+		static BlockFactory() {
+			AddMulti(BlockType.Mainframe, 5000, 2500)
+				.Add(0, 0, 0, BlockSides.All)
+				.Add(0, 0, 1, BlockSides.All)
+				.Add(0, 0, 2, BlockSides.All)
+				.Add(0, 1, 0, BlockSides.All)
+				.Add(0, 1, 1, BlockSides.All)
+				.Add(0, 1, 2, BlockSides.All)
+				.Finished();
+
 			AddSingle(BlockType.ArmorCube1, 1000, 1000, BlockSides.All);
 			AddSingle(BlockType.ArmorSlope1, 500, 500, BlockSides.X | BlockSides.Bottom | BlockSides.Back);
 			AddSingle(BlockType.ArmorCorner1, 125, 125, BlockSides.Left | BlockSides.Bottom | BlockSides.Back);
