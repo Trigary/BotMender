@@ -19,6 +19,7 @@ namespace Assets.Scripts.Structures {
 		public uint Mass { get; private set; }
 		private readonly IDictionary<BlockPosition, ILiveBlock> _blocks = new Dictionary<BlockPosition, ILiveBlock>();
 		private readonly SystemStorage _systems = new SystemStorage();
+		private BlockPosition _mainframePosition;
 		private Rigidbody _body;
 
 		public void Awake() {
@@ -30,7 +31,7 @@ namespace Assets.Scripts.Structures {
 		/// <summary>
 		/// Loads this structure using the given serialized blocks.
 		/// Lazely validates the data and returns null, if it is found invalid.
-		/// Connection checks are not made, the EditableStructure should be used for that.
+		/// No checks are made, the EditableStructure should be used for that.
 		/// </summary>
 		[CanBeNull]
 		public static CompleteStructure Create(ulong[] serialized, string gameObjectName = "CompleteStructure") {
@@ -61,12 +62,20 @@ namespace Assets.Scripts.Structures {
 					}
 
 					BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType((int)type));
+					if (info.Type == BlockType.Mainframe) {
+						_mainframePosition = position;
+					}
+
 					SingleBlockInfo single = info as SingleBlockInfo;
 					RealLiveBlock block;
 					if (single != null) {
 						block = BlockFactory.MakeSingleLive(transform, single, bytes[3], position);
 					} else {
-						block = CreateMulti(position, (MultiBlockInfo)info, bytes[3]);
+						LiveMultiBlockPart[] parts;
+						block = BlockFactory.MakeMultiLive(transform, (MultiBlockInfo)info, bytes[3], position, out parts);
+						foreach (LiveMultiBlockPart part in parts) {
+							_blocks.Add(part.Position, part);
+						}
 					}
 
 					Health += info.Health;
@@ -85,33 +94,6 @@ namespace Assets.Scripts.Structures {
 			return true;
 		}
 
-		private LiveMultiBlockParent CreateMulti(BlockPosition position, MultiBlockInfo info, byte rotation) {
-			KeyValuePair<BlockPosition, BlockSides>[] positions;
-			info.GetRotatedPositions(position, rotation, out positions);
-
-			BlockSides parentSides = BlockSides.None;
-			LiveMultiBlockPart[] parts = new LiveMultiBlockPart[positions.Length - 1];
-			int partsIndex = 0;
-
-			foreach (KeyValuePair<BlockPosition, BlockSides> pair in positions) {
-				if (pair.Key.Equals(position)) {
-					parentSides = pair.Value;
-					continue;
-				}
-
-				LiveMultiBlockPart part = new LiveMultiBlockPart(pair.Value, pair.Key);
-				parts[partsIndex++] = part;
-				_blocks.Add(pair.Key, part);
-			}
-
-			LiveMultiBlockParent parent = BlockFactory.MakeMultiLive(transform, info, rotation, position, parentSides, parts);
-			foreach (LiveMultiBlockPart part in parts) {
-				part.Initialize(parent);
-			}
-
-			return parent;
-		}
-
 
 
 		/// <summary>
@@ -123,20 +105,21 @@ namespace Assets.Scripts.Structures {
 				return;
 			}
 
-			if (block.Info.Type == BlockType.Mainframe || Health == 0) {
+			if (block.Info.Type == BlockType.Mainframe) {
 				//TODO destroy the structure
 				return;
 			}
-
-			Mass -= block.Info.Mass;
+			
 			RemoveBlock(block);
-			_systems.TryRemove(block.Position);
-			//TODO connection checks
+			RemoveNotConnectedBlocks();
 			ApplyMass();
 		}
 
 		// ReSharper disable once SuggestBaseTypeForParameter
 		private void RemoveBlock(RealLiveBlock block) {
+			Mass -= block.Info.Mass;
+			_systems.TryRemove(block.Position);
+
 			Assert.IsTrue(_blocks.Remove(block.Position), "The block is not present.");
 			LiveMultiBlockParent parent = block as LiveMultiBlockParent;
 			if (parent == null) {
@@ -148,29 +131,16 @@ namespace Assets.Scripts.Structures {
 			}
 		}
 
-		private void ApplyMass() {
-			Vector3 center = new Vector3();
-			uint mass = 0;
-			foreach (ILiveBlock block in _blocks.Values) {
-				RealLiveBlock real = block as RealLiveBlock;
-				if (real == null) {
-					continue;
-				}
-
-				center += real.transform.localPosition * real.Info.Mass;
-				mass += real.Info.Mass;
-			}
-
-			center /= mass;
-			transform.position += center;
-			foreach (ILiveBlock block in _blocks.Values) {
+		private void RemoveNotConnectedBlocks() {
+			IDictionary<BlockPosition, ILiveBlock> blocks = new Dictionary<BlockPosition, ILiveBlock>(_blocks);
+			StructureUtilities.RemoveConnected(blocks[_mainframePosition], -1, blocks);
+			foreach (ILiveBlock block in blocks.Values) {
 				RealLiveBlock real = block as RealLiveBlock;
 				if (real != null) {
-					real.transform.position -= center;
+					Health -= real.Health;
+					RemoveBlock(real);
 				}
 			}
-
-			_body.mass = (float)Mass / 1000;
 		}
 
 
@@ -201,6 +171,31 @@ namespace Assets.Scripts.Structures {
 		/// </summary>
 		public void UseActive() {
 			_systems.UseActive(_body);
+		}
+
+
+
+		private void ApplyMass() {
+			Vector3 center = new Vector3();
+			uint mass = 0;
+			foreach (ILiveBlock block in _blocks.Values) {
+				RealLiveBlock real = block as RealLiveBlock;
+				if (real == null) {
+					continue;
+				}
+				center += real.transform.localPosition * real.Info.Mass;
+				mass += real.Info.Mass;
+			}
+
+			center /= mass;
+			transform.position += center;
+			foreach (ILiveBlock block in _blocks.Values) {
+				RealLiveBlock real = block as RealLiveBlock;
+				if (real != null) {
+					real.transform.position -= center;
+				}
+			}
+			_body.mass = (float)Mass / 1000;
 		}
 	}
 }

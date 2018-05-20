@@ -11,7 +11,7 @@ using UnityEngine.Assertions;
 
 namespace Assets.Scripts.Structures {
 	/// <summary>
-	/// A structure which is editable. It doesn't have health and it may contain unconnected blocks.
+	/// A structure which is editable. It doesn't have health and it may contain not connected blocks.
 	/// </summary>
 	public class EditableStructure : MonoBehaviour {
 		private readonly IDictionary<BlockPosition, IPlacedBlock> _blocks = new Dictionary<BlockPosition, IPlacedBlock>();
@@ -69,7 +69,12 @@ namespace Assets.Scripts.Structures {
 			if (single != null) {
 				_blocks.Add(position, BlockFactory.MakeSinglePlaced(transform, single, rotation, position));
 			} else {
-				AddMultiBlock(position, (MultiBlockInfo)info, rotation);
+				PlacedMultiBlockPart[] parts;
+				_blocks.Add(position, BlockFactory.MakeMultiPlaced(transform, (MultiBlockInfo)info, rotation,
+					position, out parts));
+				foreach (PlacedMultiBlockPart part in parts) {
+					_blocks.Add(part.Position, part);
+				}
 			}
 
 			if (info.Type == BlockType.Mainframe) {
@@ -78,32 +83,6 @@ namespace Assets.Scripts.Structures {
 				_activeSystemPresent = true;
 			}
 			return true;
-		}
-
-		private void AddMultiBlock(BlockPosition position, MultiBlockInfo info, byte rotation) {
-			KeyValuePair<BlockPosition, BlockSides>[] positions;
-			info.GetRotatedPositions(position, rotation, out positions);
-
-			BlockSides parentSides = BlockSides.None;
-			PlacedMultiBlockPart[] parts = new PlacedMultiBlockPart[positions.Length - 1];
-			int partsIndex = 0;
-
-			foreach (KeyValuePair<BlockPosition, BlockSides> pair in positions) {
-				if (pair.Key.Equals(position)) {
-					parentSides = pair.Value;
-					continue;
-				}
-
-				PlacedMultiBlockPart part = new PlacedMultiBlockPart(pair.Value, pair.Key);
-				parts[partsIndex++] = part;
-				_blocks.Add(pair.Key, part);
-			}
-
-			PlacedMultiBlockParent parent = BlockFactory.MakeMultiPlaced(transform, info, rotation, position, parentSides, parts);
-			_blocks.Add(position, parent);
-			foreach (PlacedMultiBlockPart part in parts) {
-				part.Initialize(parent);
-			}
 		}
 
 
@@ -121,6 +100,10 @@ namespace Assets.Scripts.Structures {
 		}
 
 		private void RemoveBlock(IPlacedBlock block) {
+			if (block.Position.Equals(_mainframePosition)) {
+				_mainframePosition = null;
+			}
+
 			PlacedSingleBlock single = block as PlacedSingleBlock;
 			if (single != null) {
 				Destroy(single.gameObject);
@@ -153,31 +136,8 @@ namespace Assets.Scripts.Structures {
 			}
 
 			IDictionary<BlockPosition, IPlacedBlock> blocks = new Dictionary<BlockPosition, IPlacedBlock>(_blocks);
-			CheckSides(blocks[_mainframePosition], -1, blocks);
+			StructureUtilities.RemoveConnected(blocks[_mainframePosition], -1, blocks);
 			return blocks;
-		}
-
-		private static void CheckSides(IPlacedBlock block, int ignoreBit, IDictionary<BlockPosition, IPlacedBlock> blocks) {
-			Assert.IsTrue(blocks.Remove(block.Position), "The block is no longer in the dictionary.");
-			for (int bit = 0; bit < 6; bit++) {
-				if (bit == ignoreBit) {
-					continue;
-				}
-
-				BlockSides side = block.ConnectSides & (BlockSides)(1 << bit);
-				BlockPosition offseted;
-				IPlacedBlock other;
-				if (side == BlockSides.None
-					|| !block.Position.GetOffseted(side, out offseted)
-					|| !blocks.TryGetValue(offseted, out other)) {
-					continue;
-				}
-				
-				int inverseBit = bit % 2 == 0 ? bit + 1 : bit - 1;
-				if ((other.ConnectSides & (BlockSides)(1 << inverseBit)) != BlockSides.None) {
-					CheckSides(other, inverseBit, blocks);
-				}
-			}
 		}
 
 
@@ -210,7 +170,7 @@ namespace Assets.Scripts.Structures {
 		/// <summary>
 		/// Overrides the current structure (read: removes all previous blocks) with the serialized one.
 		/// Lazely validates the data and returns false, if it is found invalid.
-		/// Connection checks are not made, #IsValid should be called after this method.
+		/// No checks are not made, #GetNotConnectedBlocks should be called after this method.
 		/// </summary>
 		public bool Deserialize(ulong[] serialized) {
 			foreach (IPlacedBlock block in _blocks.Values) {

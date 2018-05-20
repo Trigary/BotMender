@@ -14,6 +14,5 @@ namespace Assets.Scripts.Systems {
 		/// Handle the movement input.
 		/// </summary>
 		public abstract void MoveRotate(Rigidbody bot, float x, float y, float z);
-		//TODO differentiate strafing and rotation
 	}
 }

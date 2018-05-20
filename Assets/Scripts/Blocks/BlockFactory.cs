@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Assets.Scripts.Blocks.Info;
 using Assets.Scripts.Blocks.Live;
 using Assets.Scripts.Blocks.Placed;
+using Assets.Scripts.Blocks.Shared;
+using Boo.Lang;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -56,10 +58,15 @@ namespace Assets.Scripts.Blocks {
 		}
 
 		public static PlacedMultiBlockParent MakeMultiPlaced(Transform parent, MultiBlockInfo info, byte rotation, BlockPosition position,
-															BlockSides connectSides, PlacedMultiBlockPart[] parts) {
+															out PlacedMultiBlockPart[] parts) {
 			GameObject block = InstantiatePrefab(parent, info, rotation, position);
 			PlacedMultiBlockParent component = block.AddComponent<PlacedMultiBlockParent>();
-			component.Initialize(connectSides, position, info, rotation, parts);
+
+			IMultiBlockPart[] tempParts;
+			// ReSharper disable once CoVariantArrayConversion
+			InitializeMulti(component, info, rotation, position, count => new PlacedMultiBlockPart[count],
+				pair => new PlacedMultiBlockPart(pair.Value, pair.Key), out tempParts);
+			parts = (PlacedMultiBlockPart[])tempParts;
 			return component;
 		}
 
@@ -73,11 +80,29 @@ namespace Assets.Scripts.Blocks {
 		}
 
 		public static LiveMultiBlockParent MakeMultiLive(Transform parent, MultiBlockInfo info, byte rotation, BlockPosition position,
-														BlockSides connectSides, LiveMultiBlockPart[] parts) {
+														out LiveMultiBlockPart[] parts) {
 			GameObject block = InstantiatePrefab(parent, info, rotation, position);
 			LiveMultiBlockParent component = block.AddComponent<LiveMultiBlockParent>();
-			component.Initialize(connectSides, position, info, rotation, parts);
+
+			IMultiBlockPart[] tempParts;
+			// ReSharper disable once CoVariantArrayConversion
+			InitializeMulti(component, info, rotation, position, count => new LiveMultiBlockPart[count],
+				pair => new LiveMultiBlockPart(pair.Value, pair.Key), out tempParts);
+			parts = (LiveMultiBlockPart[])tempParts;
 			return component;
+		}
+
+
+
+		private static void AddSingle(BlockType type, uint health, uint mass, BlockSides connectSides) {
+			Blocks.Add(type, new SingleBlockInfo(type, health, mass, Resources.Load("Blocks/" + type) as GameObject,
+				connectSides));
+		}
+
+		private static MultiBlockInfo AddMulti(BlockType type, uint health, uint mass) {
+			MultiBlockInfo info = new MultiBlockInfo(type, health, mass, Resources.Load("Blocks/" + type) as GameObject);
+			Blocks.Add(type, info);
+			return info;
 		}
 
 
@@ -86,14 +111,28 @@ namespace Assets.Scripts.Blocks {
 			return Object.Instantiate(info.Prefab, position.ToVector(), Rotation.GetQuaternion(rotation), parent);
 		}
 
-		private static void AddSingle(BlockType type, uint health, uint mass, BlockSides connectSides) {
-			Blocks.Add(type, new SingleBlockInfo(type, health, mass, Resources.Load("Blocks/" + type) as GameObject, connectSides));
-		}
+		private static void InitializeMulti(IMultiBlockParent parent, MultiBlockInfo info, byte rotation, BlockPosition position,
+											Function<int, IMultiBlockPart[]> partsArrayConstructor,
+											Function<KeyValuePair<BlockPosition, BlockSides>, IMultiBlockPart> partConstructor,
+											out IMultiBlockPart[] parts) {
+			KeyValuePair<BlockPosition, BlockSides>[] positions;
+			info.GetRotatedPositions(position, rotation, out positions);
 
-		private static MultiBlockInfo AddMulti(BlockType type, uint health, uint mass) {
-			MultiBlockInfo info = new MultiBlockInfo(type, health, mass, Resources.Load("Blocks/" + type) as GameObject);
-			Blocks.Add(type, info);
-			return info;
+			BlockSides parentSides = BlockSides.None;
+			parts = partsArrayConstructor.Invoke(positions.Length - 1);
+			int partsIndex = 0;
+			foreach (KeyValuePair<BlockPosition, BlockSides> pair in positions) {
+				if (pair.Key.Equals(position)) {
+					parentSides = pair.Value;
+				} else {
+					parts[partsIndex++] = partConstructor.Invoke(pair);
+				}
+			}
+
+			foreach (IMultiBlockPart part in parts) {
+				part.Initialize(parent);
+			}
+			parent.Initialize(parentSides, position, info, rotation, parts);
 		}
 	}
 }
