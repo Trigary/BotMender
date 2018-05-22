@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Blocks.Live;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Assets.Scripts.Systems {
@@ -6,47 +7,40 @@ namespace Assets.Scripts.Systems {
 	/// A system which controls a weapon.
 	/// </summary>
 	public abstract class WeaponSystem : BotSystem {
+		public readonly ConstantsContainer Constants;
 		protected Vector3 TurretHeading { get { return _turret.forward; } }
 		protected Vector3 TurretEnd { get { return _turret.position + _turret.rotation * _turretOffset; } }
 		private readonly Transform _turret;
 		private readonly Vector3 _turretOffset;
-		private readonly float _minPitch;
-		private readonly float _maxPitch;
-		private readonly float _yawLimit;
+		private float _cooldownEnds;
 
-		protected WeaponSystem(RealLiveBlock block, Vector3 offset, float yawLimit, float minPitch, float maxPitch) : base(block) {
+		protected WeaponSystem(RealLiveBlock block, ConstantsContainer constants, Vector3 offset) : base(block) {
+			Constants = constants;
 			_turret = block.transform.Find("Turret");
 			_turretOffset = offset;
-			_minPitch = minPitch;
-			_maxPitch = maxPitch;
-			_yawLimit = yawLimit;
 		}
 
 
 
 		/// <summary>
-		/// Fire the weapons towards their current heading.
+		/// Returns whether the specified weapon is currently on cooldown.
 		/// </summary>
-		public abstract void FireWeapons(Rigidbody bot);
-		//TODO add weapon types
-		//TODO cooldown: for a specific weapon type, method depends on weapon type (few weapons fires at a time depending on count & cooldown, etc.)
-		//TODO should multiple weapon types be allowed on one bot? probably no
-		//TODO inaccuracy: make it a parameter, so it can be displayed (and easier for server-side validation later)
-		//TODO weapon kickback
-		//TODO weapon rotation speed limit?
-		//TODO only fire the weapon if it was able to look at the target? does rotation speed count? does being obfuscated by other blocks count?
+		public bool IsOnCooldown() {
+			return _cooldownEnds > Time.time;
+		}
 
-		
-		
+
+
 		/// <summary>
 		/// Rotate the weapon's barrel so it faces the target coordinates.
 		/// </summary>
 		public void TrackTarget(Vector3 target) {
 			Vector3 direction = Quaternion.Inverse(Block.transform.rotation) * (target - _turret.position);
 			Vector3 euler = Quaternion.LookRotation(direction, Block.transform.up).eulerAngles;
-			euler.x = ClampRotation(euler.x, _minPitch, _maxPitch);
-			euler.y = ClampRotation(euler.y, _yawLimit * -1, _yawLimit);
-			_turret.localRotation = Quaternion.Euler(euler);
+			euler.x = ClampRotation(euler.x, Constants.MinPitch, Constants.MaxPitch);
+			euler.y = ClampRotation(euler.y, Constants.YawLimit * -1, Constants.YawLimit);
+			_turret.localRotation = Quaternion.RotateTowards(_turret.localRotation,
+				Quaternion.Euler(euler), Constants.RotationSpeed);
 		}
 
 		private static float ClampRotation(float value, float min, float max) {
@@ -54,6 +48,72 @@ namespace Assets.Scripts.Systems {
 				value -= 360;
 			}
 			return Mathf.Clamp(value, min, max);
+		}
+
+
+
+		/// <summary>
+		/// Fire the weapon towards their current heading. Returns false if the shot would hit the bot itself.
+		/// </summary>
+		public bool TryFireWeapon(Rigidbody bot, float inaccuracy) {
+			Vector3 point;
+			Transform hitTransform;
+			Vector3 direction = Quaternion.Euler(inaccuracy * Random.Range(-1f, 1f),
+				inaccuracy * Random.Range(-1f, 1f), 0) * TurretHeading;
+
+			RaycastHit hit;
+			if (Physics.Raycast(TurretEnd, direction, out hit)) {
+				if (hit.transform == bot.transform) {
+					return false;
+				}
+				point = hit.point;
+				hitTransform = hit.transform;
+			} else {
+				point = TurretEnd + direction * 10000;
+				hitTransform = null;
+			}
+
+			FireWeapon(bot, point, hitTransform == null ? null : hitTransform.GetComponent<RealLiveBlock>());
+			_cooldownEnds = Time.time + Constants.Cooldown;
+			bot.AddForceAtPosition(_turret.rotation * Constants.Kickback, TurretEnd, ForceMode.Impulse);
+			return true;
+		}
+
+		protected abstract void FireWeapon(Rigidbody bot, Vector3 point, [CanBeNull] RealLiveBlock block);
+
+
+
+		/// <summary>
+		/// Types of weapons.
+		/// </summary>
+		public enum Type {
+			None,
+			Laser
+		}
+
+		/// <summary>
+		/// Constants regarding a specific weapon.
+		/// The yaw and the pitch are specified in degrees, the MinPitch is usually negative.
+		/// The rotation speed is specified in 'degrees / fixed game tick'.
+		/// The cooldown is in seconds.
+		/// The energy is a value in the range of [0; 100].
+		/// </summary>
+		public class ConstantsContainer {
+			public readonly float YawLimit, MinPitch, MaxPitch, RotationSpeed, Cooldown, Inaccuracy;
+			public readonly Vector3 Kickback;
+			public readonly int Energy;
+
+			public ConstantsContainer(float yawLimit, float minPitch, float maxPitch, float rotationSpeed,
+									float kickback, float cooldown, float inaccuracy, int energy) {
+				YawLimit = yawLimit;
+				MinPitch = minPitch;
+				MaxPitch = maxPitch;
+				RotationSpeed = rotationSpeed;
+				Kickback = new Vector3(0, 0, kickback * -1);
+				Cooldown = cooldown;
+				Inaccuracy = inaccuracy; //TODO test
+				Energy = energy;
+			}
 		}
 	}
 }

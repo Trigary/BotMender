@@ -17,6 +17,8 @@ namespace Assets.Scripts.Structures {
 		private readonly IDictionary<BlockPosition, IPlacedBlock> _blocks = new Dictionary<BlockPosition, IPlacedBlock>();
 		[CanBeNull] private BlockPosition _mainframePosition;
 		private bool _activeSystemPresent;
+		private WeaponSystem.Type _weaponType = WeaponSystem.Type.None;
+		private int _weaponCount;
 
 		public void Start() {
 			BlockPosition position;
@@ -39,6 +41,10 @@ namespace Assets.Scripts.Structures {
 				}
 			} else if (SystemFactory.IsActiveSystem(info.Type)) {
 				if (_activeSystemPresent) {
+					return false;
+				}
+			} else if (SystemFactory.GetWeaponType(info.Type) != _weaponType) {
+				if (_weaponType != WeaponSystem.Type.None) {
 					return false;
 				}
 			}
@@ -70,8 +76,13 @@ namespace Assets.Scripts.Structures {
 				_blocks.Add(position, BlockFactory.MakeSinglePlaced(transform, single, rotation, position));
 			} else {
 				PlacedMultiBlockPart[] parts;
-				_blocks.Add(position, BlockFactory.MakeMultiPlaced(transform, (MultiBlockInfo)info, rotation,
-					position, out parts));
+				PlacedMultiBlockParent parent = BlockFactory.MakeMultiPlaced(transform, (MultiBlockInfo)info,
+					rotation, position, out parts);
+				if (parent == null) {
+					return false;
+				}
+
+				_blocks.Add(position, parent);
 				foreach (PlacedMultiBlockPart part in parts) {
 					_blocks.Add(part.Position, part);
 				}
@@ -81,6 +92,12 @@ namespace Assets.Scripts.Structures {
 				_mainframePosition = position;
 			} else if (SystemFactory.IsActiveSystem(info.Type)) {
 				_activeSystemPresent = true;
+			} else {
+				WeaponSystem.Type weaponType = SystemFactory.GetWeaponType(info.Type);
+				if (weaponType != WeaponSystem.Type.None) {
+					_weaponType = weaponType; //may or may not be first time set
+					_weaponCount++;
+				}
 			}
 			return true;
 		}
@@ -104,6 +121,10 @@ namespace Assets.Scripts.Structures {
 				_mainframePosition = null;
 			} else if (SystemFactory.IsActiveSystem(block.Type)) {
 				_activeSystemPresent = false;
+			} else if (SystemFactory.GetWeaponType(block.Type) != WeaponSystem.Type.None) {
+				if (--_weaponCount == 0) {
+					_weaponType = WeaponSystem.Type.None;
+				}
 			}
 
 			PlacedSingleBlock single = block as PlacedSingleBlock;
@@ -134,11 +155,11 @@ namespace Assets.Scripts.Structures {
 		[CanBeNull]
 		public IDictionary<BlockPosition, IPlacedBlock> GetNotConnectedBlocks() {
 			if (_mainframePosition == null) {
-				return null;
+				return null; //TODO method to check for other errors, eg. no weapons
 			}
 
 			IDictionary<BlockPosition, IPlacedBlock> blocks = new Dictionary<BlockPosition, IPlacedBlock>(_blocks);
-			StructureUtilities.RemoveConnected(blocks[_mainframePosition], -1, blocks);
+			StructureUtilities.RemoveConnected(blocks[_mainframePosition], blocks);
 			return blocks;
 		}
 

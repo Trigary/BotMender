@@ -6,7 +6,6 @@ namespace Assets.Scripts.Playing {
 	/// Internally creates a rigidbody so that the camera can smoothly follow the object even at high speeds.
 	/// </summary>
 	public class PlayingCameraController : MonoBehaviour {
-		//TODO make the constants depend on the structure's dimensions instead
 		public const float VerticalOffset = 1.5f;
 		public const float YawFactor = 1.25f;
 

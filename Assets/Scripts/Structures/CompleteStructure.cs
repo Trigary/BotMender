@@ -18,7 +18,7 @@ namespace Assets.Scripts.Structures {
 		public uint Health { get; private set; }
 		public uint Mass { get; private set; }
 		private readonly IDictionary<BlockPosition, ILiveBlock> _blocks = new Dictionary<BlockPosition, ILiveBlock>();
-		private readonly SystemStorage _systems = new SystemStorage();
+		private readonly SystemManager _systems = new SystemManager();
 		private BlockPosition _mainframePosition;
 		private Rigidbody _body;
 
@@ -73,6 +73,10 @@ namespace Assets.Scripts.Structures {
 					} else {
 						LiveMultiBlockPart[] parts;
 						block = BlockFactory.MakeMultiLive(transform, (MultiBlockInfo)info, bytes[3], position, out parts);
+						if (block == null) {
+							return false;
+						}
+
 						foreach (LiveMultiBlockPart part in parts) {
 							_blocks.Add(part.Position, part);
 						}
@@ -95,11 +99,16 @@ namespace Assets.Scripts.Structures {
 		}
 
 
+		public void FixedUpdate() {
+			_systems.Tick();
+		}
+
+
 
 		/// <summary>
 		/// Should only be called by a RealLiveBlock instance when it is damaged.
 		/// </summary>
-		public void Damaged(RealLiveBlock block, uint damage) { //TODO events, etc.
+		public void Damaged(RealLiveBlock block, uint damage) {
 			Health -= damage;
 			if (block.Health != 0) {
 				return;
@@ -114,8 +123,7 @@ namespace Assets.Scripts.Structures {
 			RemoveNotConnectedBlocks();
 			ApplyMass();
 		}
-
-		// ReSharper disable once SuggestBaseTypeForParameter
+		
 		private void RemoveBlock(RealLiveBlock block) {
 			Mass -= block.Info.Mass;
 			_systems.TryRemove(block.Position);
@@ -133,7 +141,7 @@ namespace Assets.Scripts.Structures {
 
 		private void RemoveNotConnectedBlocks() {
 			IDictionary<BlockPosition, ILiveBlock> blocks = new Dictionary<BlockPosition, ILiveBlock>(_blocks);
-			StructureUtilities.RemoveConnected(blocks[_mainframePosition], -1, blocks);
+			StructureUtilities.RemoveConnected(blocks[_mainframePosition], blocks);
 			foreach (ILiveBlock block in blocks.Values) {
 				RealLiveBlock real = block as RealLiveBlock;
 				if (real != null) {

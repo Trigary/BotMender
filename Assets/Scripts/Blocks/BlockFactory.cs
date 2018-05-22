@@ -5,6 +5,7 @@ using Assets.Scripts.Blocks.Live;
 using Assets.Scripts.Blocks.Placed;
 using Assets.Scripts.Blocks.Shared;
 using Boo.Lang;
+using JetBrains.Annotations;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -57,14 +58,24 @@ namespace Assets.Scripts.Blocks {
 			return component;
 		}
 
+		/// <summary>
+		/// Creates a multi-block. Returns null if it fails.
+		/// </summary>
+		[CanBeNull]
 		public static PlacedMultiBlockParent MakeMultiPlaced(Transform parent, MultiBlockInfo info, byte rotation, BlockPosition position,
 															out PlacedMultiBlockPart[] parts) {
+			KeyValuePair<BlockPosition, BlockSides>[] partPositions;
+			if (!info.GetRotatedPositions(position, rotation, out partPositions)) {
+				parts = null;
+				return null;
+			}
+			
 			GameObject block = InstantiatePrefab(parent, info, rotation, position);
 			PlacedMultiBlockParent component = block.AddComponent<PlacedMultiBlockParent>();
 
 			IMultiBlockPart[] tempParts;
 			// ReSharper disable once CoVariantArrayConversion
-			InitializeMulti(component, info, rotation, position, count => new PlacedMultiBlockPart[count],
+			InitializeMulti(component, info, rotation, position, partPositions, count => new PlacedMultiBlockPart[count],
 				pair => new PlacedMultiBlockPart(pair.Value, pair.Key), out tempParts);
 			parts = (PlacedMultiBlockPart[])tempParts;
 			return component;
@@ -79,14 +90,24 @@ namespace Assets.Scripts.Blocks {
 			return component;
 		}
 
+		/// <summary>
+		/// Creates a multi-block. Returns null if it fails.
+		/// </summary>
+		[CanBeNull]
 		public static LiveMultiBlockParent MakeMultiLive(Transform parent, MultiBlockInfo info, byte rotation, BlockPosition position,
 														out LiveMultiBlockPart[] parts) {
+			KeyValuePair<BlockPosition, BlockSides>[] partPositions;
+			if (!info.GetRotatedPositions(position, rotation, out partPositions)) {
+				parts = null;
+				return null;
+			}
+
 			GameObject block = InstantiatePrefab(parent, info, rotation, position);
 			LiveMultiBlockParent component = block.AddComponent<LiveMultiBlockParent>();
 
 			IMultiBlockPart[] tempParts;
 			// ReSharper disable once CoVariantArrayConversion
-			InitializeMulti(component, info, rotation, position, count => new LiveMultiBlockPart[count],
+			InitializeMulti(component, info, rotation, position, partPositions, count => new LiveMultiBlockPart[count],
 				pair => new LiveMultiBlockPart(pair.Value, pair.Key), out tempParts);
 			parts = (LiveMultiBlockPart[])tempParts;
 			return component;
@@ -112,16 +133,14 @@ namespace Assets.Scripts.Blocks {
 		}
 
 		private static void InitializeMulti(IMultiBlockParent parent, MultiBlockInfo info, byte rotation, BlockPosition position,
+											KeyValuePair<BlockPosition, BlockSides>[] partPositions,
 											Function<int, IMultiBlockPart[]> partsArrayConstructor,
 											Function<KeyValuePair<BlockPosition, BlockSides>, IMultiBlockPart> partConstructor,
 											out IMultiBlockPart[] parts) {
-			KeyValuePair<BlockPosition, BlockSides>[] positions;
-			info.GetRotatedPositions(position, rotation, out positions);
-
 			BlockSides parentSides = BlockSides.None;
-			parts = partsArrayConstructor.Invoke(positions.Length - 1);
+			parts = partsArrayConstructor.Invoke(partPositions.Length - 1);
 			int partsIndex = 0;
-			foreach (KeyValuePair<BlockPosition, BlockSides> pair in positions) {
+			foreach (KeyValuePair<BlockPosition, BlockSides> pair in partPositions) {
 				if (pair.Key.Equals(position)) {
 					parentSides = pair.Value;
 				} else {

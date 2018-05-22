@@ -18,7 +18,7 @@ namespace Assets.Scripts.Systems {
 		static SystemFactory() {
 			Add(BlockType.ArmorLong1, block => new UnrealAcceleratorSystem(block));
 			Add(BlockType.ArmorCorner1, block => new FullStopSystem(block));
-			Add(BlockType.ArmorSlope1, block => new ThrusterSystem(block, Vector3.zero, BlockSides.Bottom, 1f));
+			Add(BlockType.ArmorSlope1, block => new LaserSystem(block, Vector3.zero));
 		}
 
 
@@ -38,12 +38,14 @@ namespace Assets.Scripts.Systems {
 		}
 
 		/// <summary>
-		/// Returns the weapon type of the specified block type. If it is not a weapon, WeaponType#None is returned.
+		/// Returns the weapon type of the specified block type. If it is not a weapon, #None is returned.
 		/// </summary>
-		public static WeaponType GetWeaponType(BlockType block) {
+		public static WeaponSystem.Type GetWeaponType(BlockType block) {
 			switch (block) {
+				case BlockType.ArmorSlope1:
+					return WeaponSystem.Type.Laser;
 				default:
-					return WeaponType.None;
+					return WeaponSystem.Type.None;
 			}
 		}
 

@@ -61,8 +61,13 @@ namespace Assets.Scripts.Building {
 			GameObject block;
 			BlockPosition position;
 			byte rotation;
-			if (GetSelectedBlock(out block, out position, out rotation) && !position.Equals(_previousPreviewPosition)) {
-				ShowPreview(position, rotation);
+			if (GetSelectedBlock(out block, out position, out rotation)) {
+				if (!position.Equals(_previousPreviewPosition)) {
+					ShowPreview(position, rotation);
+				}
+			} else {
+				Destroy(_previewObject);
+				_previousPreviewPosition = null;
 			}
 		}
 
@@ -105,7 +110,7 @@ namespace Assets.Scripts.Building {
 			if (!GetSelectedBlock(out block, out position, out rotation)) {
 				return;
 			}
-			
+
 			RealPlacedBlock component = block.GetComponent<RealPlacedBlock>();
 			if (component != null) {
 				_structure.RemoveBlock(component.Position);
@@ -124,14 +129,11 @@ namespace Assets.Scripts.Building {
 				ShowPreview(position, rotation);
 			}
 		}
-		
+
 		private void ShowPreview(BlockPosition position, byte rotation) {
 			Destroy(_previewObject);
 			_previousPreviewPosition = position;
 			BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType(_blockType));
-			if (!_structure.CanAddBlock(position, info, rotation)) {
-				return;
-			}
 
 			SingleBlockInfo single = info as SingleBlockInfo;
 			RealPlacedBlock block;
@@ -140,25 +142,18 @@ namespace Assets.Scripts.Building {
 			} else {
 				PlacedMultiBlockPart[] parts;
 				block = BlockFactory.MakeMultiPlaced(_structure.transform, (MultiBlockInfo)info, rotation, position, out parts);
+				if (block == null) {
+					return;
+				}
 			}
 
 			_previewObject = block.gameObject;
-			_previewObject.gameObject.name = "BlockPreview";
-			DestroyImmediate(_previewObject.GetComponent<Collider>());
-			Renderer render = _previewObject.GetComponent<Renderer>();
-			EnableMaterialTransparency(render.material);
-			render.material.color = new Color(1, 1, 1, 0.5f);
-		}
+			_previewObject.gameObject.name = "PreviewBlock";
+			BlockUtilities.RemoveCollider(_previewObject, true);
 
-		private static void EnableMaterialTransparency(Material material) {
-			material.SetInt("_Mode", 3);
-			material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-			material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-			material.SetInt("_ZWrite", 0);
-			material.DisableKeyword("_ALPHATEST_ON");
-			material.DisableKeyword("_ALPHABLEND_ON");
-			material.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-			material.renderQueue = 3000;
+			Color color = _structure.CanAddBlock(position, info, rotation) ? Color.white : Color.red;
+			color.a = 0.5f;
+			BlockUtilities.SetColor(_previewObject, color, true);
 		}
 
 
@@ -181,7 +176,7 @@ namespace Assets.Scripts.Building {
 
 		private void ColorNotConnectedBlocks() {
 			foreach (RealPlacedBlock block in _previousNotConnected) {
-				block.GetComponent<Renderer>().material.color = Color.white;
+				BlockUtilities.SetColor(block.gameObject, Color.white, false);
 			}
 			_previousNotConnected.Clear();
 
@@ -193,7 +188,7 @@ namespace Assets.Scripts.Building {
 			foreach (IPlacedBlock block in notConnected.Values) {
 				RealPlacedBlock real = block as RealPlacedBlock;
 				if (real != null) {
-					real.GetComponent<Renderer>().material.color = Color.red;
+					BlockUtilities.SetColor(real.gameObject, Color.red, false);
 					_previousNotConnected.Add(real);
 				}
 			}

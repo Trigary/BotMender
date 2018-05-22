@@ -1,17 +1,24 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Blocks;
+using Assets.Scripts.Utilities;
 using NUnit.Framework;
 using UnityEngine;
 
 namespace Assets.Scripts.Systems {
 	/// <summary>
-	/// A class which handles the management of a bot's systems.
+	/// A class which manages a bot's systems.
 	/// </summary>
-	public class SystemStorage {
+	public class SystemManager {
+		public const float MinInaccuracy = 3f;
+		public const float MaxInaccuracy = 30f;
+		public const float InaccuracyFading = 0.05f;
+
 		private readonly IDictionary<BlockPosition, BotSystem> _systems = new Dictionary<BlockPosition, BotSystem>();
 		private readonly HashSet<PropulsionSystem> _propulsions = new HashSet<PropulsionSystem>();
-		private readonly HashSet<WeaponSystem> _weapons = new HashSet<WeaponSystem>();
+		private readonly CircularList<WeaponSystem> _weapons = new CircularList<WeaponSystem>();
 		private ActiveSystem _active;
+		private float _inaccuracy;
+		private float _energy = 100;
 
 
 
@@ -32,10 +39,9 @@ namespace Assets.Scripts.Systems {
 				_weapons.Add(weapon);
 				return;
 			}
-
-			ActiveSystem active = system as ActiveSystem;
+			
 			Assert.IsNull(_active, "The active system can only be set once.");
-			_active = active;
+			_active = system as ActiveSystem;
 		}
 
 		/// <summary>
@@ -75,6 +81,21 @@ namespace Assets.Scripts.Systems {
 
 
 		/// <summary>
+		/// Informs the instance that a fixed amount of time has passed:
+		/// accuracy restoration and energy regeneration should be applied.
+		/// </summary>
+		public void Tick() {
+			_inaccuracy -= InaccuracyFading;
+			if (_inaccuracy < MinInaccuracy) {
+				_inaccuracy = MinInaccuracy;
+			}
+
+			if (_energy < 100) {
+				_energy++;
+			}
+		}
+
+		/// <summary>
 		/// Executes the propulsion systems.
 		/// </summary>
 		public void MoveRotate(Rigidbody bot, float x, float y, float z) {
@@ -97,7 +118,15 @@ namespace Assets.Scripts.Systems {
 		/// </summary>
 		public void FireWeapons(Rigidbody bot) {
 			foreach (WeaponSystem system in _weapons) {
-				system.FireWeapons(bot);
+				if (!system.IsOnCooldown() && system.Constants.Energy <= _energy && system.TryFireWeapon(bot, _inaccuracy)) {
+					_inaccuracy += system.Constants.Inaccuracy;
+					if (_inaccuracy > MaxInaccuracy) {
+						_inaccuracy = MaxInaccuracy;
+					}
+
+					_energy -= system.Constants.Energy;
+					break;
+				}
 			}
 		}
 
