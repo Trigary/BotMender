@@ -11,3 +11,4 @@ with another block) connection sides are connected together.
 It is required because of how the "are these block groups connected" algorithm works.
 If the block comes with a system, it has to be specified in the `SystemFactory` class.
 Weapon and active systems must also be specified in the `GetWeaponType` and `IsActiveSystem` methods respectively.
+Weapons must also have a child `GameObject` named "Turret" attached to them.

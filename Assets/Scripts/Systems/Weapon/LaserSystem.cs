@@ -6,7 +6,7 @@ namespace Assets.Scripts.Systems.Weapon {
 	/// Fires a laser beam.
 	/// </summary>
 	public class LaserSystem : WeaponSystem {
-		private static readonly ConstantsContainer ClassConstants = new ConstantsContainer(120, -60, 30, 5, 5, 1, 1, 75);
+		private static readonly ConstantsContainer ClassConstants = new ConstantsContainer(120, -60, 30, 300, 5, 1, 0.25f, 8);
 
 		public LaserSystem(RealLiveBlock block, Vector3 offset) : base(block, ClassConstants, offset) { }
 

@@ -100,7 +100,7 @@ namespace Assets.Scripts.Structures {
 
 
 		public void FixedUpdate() {
-			_systems.Tick();
+			_systems.Tick(_body);
 		}
 
 

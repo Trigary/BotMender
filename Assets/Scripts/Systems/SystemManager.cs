@@ -9,16 +9,21 @@ namespace Assets.Scripts.Systems {
 	/// A class which manages a bot's systems.
 	/// </summary>
 	public class SystemManager {
-		public const float MinInaccuracy = 3f;
-		public const float MaxInaccuracy = 30f;
-		public const float InaccuracyFading = 0.05f;
+		public const float FiringPause = 0.075f; //in seconds
+		public const float EnergyFillRate = 0.25f;
+		public const float MinFiringInaccuracy = 0.25f;
+		public const float MaxInaccuracy = 10;
+		public const float FiringInaccuracyFading = 4; //in seconds
+		public const float MovingInaccuracyScale = 0.5f;
 
 		private readonly IDictionary<BlockPosition, BotSystem> _systems = new Dictionary<BlockPosition, BotSystem>();
 		private readonly HashSet<PropulsionSystem> _propulsions = new HashSet<PropulsionSystem>();
 		private readonly CircularList<WeaponSystem> _weapons = new CircularList<WeaponSystem>();
 		private ActiveSystem _active;
-		private float _inaccuracy;
-		private float _energy = 100;
+		private float _firingPauseEnds;
+		private float _energy = 1;
+		private float _firingInaccuracy = MinFiringInaccuracy;
+		private float _realInaccuracy;
 
 
 
@@ -39,7 +44,7 @@ namespace Assets.Scripts.Systems {
 				_weapons.Add(weapon);
 				return;
 			}
-			
+
 			Assert.IsNull(_active, "The active system can only be set once.");
 			_active = system as ActiveSystem;
 		}
@@ -82,17 +87,24 @@ namespace Assets.Scripts.Systems {
 
 		/// <summary>
 		/// Informs the instance that a fixed amount of time has passed:
-		/// accuracy restoration and energy regeneration should be applied.
+		/// energy regeneration and accuracy restoration should be applied.
 		/// </summary>
-		public void Tick() {
-			_inaccuracy -= InaccuracyFading;
-			if (_inaccuracy < MinInaccuracy) {
-				_inaccuracy = MinInaccuracy;
+		public void Tick(Rigidbody bot) {
+			_energy += EnergyFillRate * Time.fixedDeltaTime;
+			if (_energy > 1) {
+				_energy = 1;
 			}
 
-			if (_energy < 100) {
-				_energy++;
+			_firingInaccuracy -= FiringInaccuracyFading * Time.fixedDeltaTime;
+			if (_firingInaccuracy < MinFiringInaccuracy) {
+				_firingInaccuracy = MinFiringInaccuracy;
 			}
+			_realInaccuracy = _firingInaccuracy + bot.velocity.sqrMagnitude * MovingInaccuracyScale;
+			if (_realInaccuracy > MaxInaccuracy) {
+				_realInaccuracy = MaxInaccuracy;
+			}
+
+			Debug.Log(_realInaccuracy);
 		}
 
 		/// <summary>
@@ -117,14 +129,19 @@ namespace Assets.Scripts.Systems {
 		/// Executes the weapon systems.
 		/// </summary>
 		public void FireWeapons(Rigidbody bot) {
-			foreach (WeaponSystem system in _weapons) {
-				if (!system.IsOnCooldown() && system.Constants.Energy <= _energy && system.TryFireWeapon(bot, _inaccuracy)) {
-					_inaccuracy += system.Constants.Inaccuracy;
-					if (_inaccuracy > MaxInaccuracy) {
-						_inaccuracy = MaxInaccuracy;
-					}
+			if (_firingPauseEnds > Time.time) {
+				return;
+			}
 
+			foreach (WeaponSystem system in _weapons) {
+				if (!system.IsOnCooldown() && system.Constants.Energy <= _energy && system.TryFireWeapon(bot, _realInaccuracy)) {
+					_firingPauseEnds = Time.time + FiringPause;
 					_energy -= system.Constants.Energy;
+
+					_firingInaccuracy += system.Constants.Inaccuracy;
+					if (_firingInaccuracy > MaxInaccuracy) {
+						_firingInaccuracy = MaxInaccuracy;
+					}
 					break;
 				}
 			}

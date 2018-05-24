@@ -4,6 +4,7 @@ namespace Assets.Scripts.Playing {
 	/// <summary>
 	/// Controls the camera it is attached to during the play mode.
 	/// Internally creates a rigidbody so that the camera can smoothly follow the object even at high speeds.
+	/// The rigidbody is destroyed when the script is destroyed.
 	/// </summary>
 	public class PlayingCameraController : MonoBehaviour {
 		public const float VerticalOffset = 1.5f;

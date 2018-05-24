@@ -40,7 +40,7 @@ namespace Assets.Scripts.Systems {
 			euler.x = ClampRotation(euler.x, Constants.MinPitch, Constants.MaxPitch);
 			euler.y = ClampRotation(euler.y, Constants.YawLimit * -1, Constants.YawLimit);
 			_turret.localRotation = Quaternion.RotateTowards(_turret.localRotation,
-				Quaternion.Euler(euler), Constants.RotationSpeed);
+				Quaternion.Euler(euler), Constants.RotationSpeed * Time.fixedDeltaTime);
 		}
 
 		private static float ClampRotation(float value, float min, float max) {
@@ -94,25 +94,26 @@ namespace Assets.Scripts.Systems {
 		/// <summary>
 		/// Constants regarding a specific weapon.
 		/// The yaw and the pitch are specified in degrees, the MinPitch is usually negative.
-		/// The rotation speed is specified in 'degrees / fixed game tick'.
+		/// The rotation speed is specified in 'degrees / second'.
+		/// The kickback's value is in world space units.
 		/// The cooldown is in seconds.
-		/// The energy is a value in the range of [0; 100].
+		/// The energy is a value between 0 and 1.
+		/// The inaccuracy is specified in angles.
 		/// </summary>
 		public class ConstantsContainer {
-			public readonly float YawLimit, MinPitch, MaxPitch, RotationSpeed, Cooldown, Inaccuracy;
+			public readonly float YawLimit, MinPitch, MaxPitch, RotationSpeed, Cooldown, Inaccuracy, Energy;
 			public readonly Vector3 Kickback;
-			public readonly int Energy;
-
+			
 			public ConstantsContainer(float yawLimit, float minPitch, float maxPitch, float rotationSpeed,
-									float kickback, float cooldown, float inaccuracy, int energy) {
+									float kickback, float cooldown, float energy, float inaccuracy) {
 				YawLimit = yawLimit;
 				MinPitch = minPitch;
 				MaxPitch = maxPitch;
 				RotationSpeed = rotationSpeed;
 				Kickback = new Vector3(0, 0, kickback * -1);
 				Cooldown = cooldown;
-				Inaccuracy = inaccuracy; //TODO test
 				Energy = energy;
+				Inaccuracy = inaccuracy;
 			}
 		}
 	}
