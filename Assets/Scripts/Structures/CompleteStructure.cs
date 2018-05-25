@@ -127,6 +127,7 @@ namespace Assets.Scripts.Structures {
 		private void RemoveBlock(RealLiveBlock block) {
 			Mass -= block.Info.Mass;
 			_systems.TryRemove(block.Position);
+			Destroy(block.gameObject);
 
 			Assert.IsTrue(_blocks.Remove(block.Position), "The block is not present.");
 			LiveMultiBlockParent parent = block as LiveMultiBlockParent;

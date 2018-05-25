@@ -103,8 +103,6 @@ namespace Assets.Scripts.Systems {
 			if (_realInaccuracy > MaxInaccuracy) {
 				_realInaccuracy = MaxInaccuracy;
 			}
-
-			Debug.Log(_realInaccuracy);
 		}
 
 		/// <summary>

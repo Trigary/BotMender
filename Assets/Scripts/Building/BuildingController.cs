@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Assets.Scripts.Blocks;
 using Assets.Scripts.Blocks.Info;
@@ -22,6 +23,7 @@ namespace Assets.Scripts.Building {
 		public void Awake() {
 			_camera = Camera.main;
 			_structure = GetComponent<EditableStructure>();
+			_structure.Deserialize(new[] {8421504UL, 17993597057UL, 17993728129UL, 19671515264UL, 17456857215UL, 17456726143UL, 20208124032UL, 9672163968UL});
 		}
 
 
@@ -43,15 +45,24 @@ namespace Assets.Scripts.Building {
 				if (notConnected == null || notConnected.Count != 0) {
 					Debug.Log("Invalid structure: " + (notConnected == null ? "no mainframe" : "not connected blocks"));
 				} else {
-					CompleteStructure complete = CompleteStructure.Create(_structure.Serialize());
+					ulong[] serialized = _structure.Serialize();
+					Debug.Log("Structure: " + string.Join(", ", serialized.Select(value => value.ToString() + "UL").ToArray()));
+					CompleteStructure complete = CompleteStructure.Create(serialized);
+
 					if (complete == null) {
 						Debug.Log("Failed to create CompleteStructure");
 					} else {
 						complete.gameObject.AddComponent<HumanBotController>();
 						_camera.gameObject.AddComponent<PlayingCameraController>()
 							.Structure = complete.GetComponent<Rigidbody>();
+
 						Destroy(_camera.gameObject.GetComponent<BuildingCameraController>());
 						Destroy(gameObject);
+
+						CompleteStructure otherStructure = CompleteStructure.Create(new[] {8421504UL, 7323222400UL, 6786613632UL, 17993793921UL, 17993531777UL, 17456923007UL, 17456660863UL, 11651940734UL, 11618386306UL, 11081384322UL, 11114938750UL, 9806316160UL, 9672229504UL, 5377196672UL}, "Other Structure");
+						if (otherStructure != null) {
+							otherStructure.transform.position = new Vector3(150, 65, 150);
+						}
 					}
 				}
 			}

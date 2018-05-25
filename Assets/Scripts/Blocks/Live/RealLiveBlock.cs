@@ -13,6 +13,10 @@ namespace Assets.Scripts.Blocks.Live {
 		public byte Rotation { get; protected set; }
 		public uint Health { get; private set; }
 
+		protected void InitializeBase() {
+			Health = Info.Health;
+		}
+
 
 
 		/// <summary>
@@ -26,7 +30,6 @@ namespace Assets.Scripts.Blocks.Live {
 			} else {
 				damage = Health;
 				Health = 0;
-				Destroy(this);
 			}
 			transform.parent.GetComponent<CompleteStructure>().Damaged(this, damage);
 		}

@@ -15,6 +15,7 @@ namespace Assets.Scripts.Blocks.Live {
 			Info = info;
 			Rotation = rotation;
 			Parts = (LiveMultiBlockPart[])parts;
+			InitializeBase();
 		}
 	}
 }

@@ -10,6 +10,7 @@ namespace Assets.Scripts.Blocks.Live {
 			Position = position;
 			Info = info;
 			Rotation = rotation;
+			InitializeBase();
 		}
 	}
 }

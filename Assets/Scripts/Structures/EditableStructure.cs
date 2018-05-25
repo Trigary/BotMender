@@ -21,11 +21,13 @@ namespace Assets.Scripts.Structures {
 		private int _weaponCount;
 
 		public void Start() {
-			BlockPosition position;
-			Assert.IsTrue(BlockPosition.FromVector(transform.position, out position),
-				"Failed to get BlockPosition from EditableStructure position.");
-			Assert.IsTrue(TryAddBlock(position, (MultiBlockInfo)BlockFactory.GetInfo(BlockType.Mainframe), 0),
-				"Failed to set the place the Mainframe.");
+			if (_blocks.Count == 0) {
+				BlockPosition position;
+				Assert.IsTrue(BlockPosition.FromVector(transform.position, out position),
+					"Failed to get BlockPosition from EditableStructure position.");
+				Assert.IsTrue(TryAddBlock(position, (MultiBlockInfo)BlockFactory.GetInfo(BlockType.Mainframe), 0),
+					"Failed to set the place the Mainframe.");
+			}
 		}
 
 
@@ -43,8 +45,9 @@ namespace Assets.Scripts.Structures {
 				if (_activeSystemPresent) {
 					return false;
 				}
-			} else if (SystemFactory.GetWeaponType(info.Type) != _weaponType) {
-				if (_weaponType != WeaponSystem.Type.None) {
+			} else {
+				WeaponSystem.Type weaponType = SystemFactory.GetWeaponType(info.Type);
+				if (weaponType != WeaponSystem.Type.None && weaponType != _weaponType && _weaponType != WeaponSystem.Type.None) {
 					return false;
 				}
 			}

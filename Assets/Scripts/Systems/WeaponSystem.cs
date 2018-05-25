@@ -57,7 +57,7 @@ namespace Assets.Scripts.Systems {
 		/// </summary>
 		public bool TryFireWeapon(Rigidbody bot, float inaccuracy) {
 			Vector3 point;
-			Transform hitTransform;
+			RealLiveBlock block;
 			Vector3 direction = Quaternion.Euler(inaccuracy * Random.Range(-1f, 1f),
 				inaccuracy * Random.Range(-1f, 1f), 0) * TurretHeading;
 
@@ -67,13 +67,13 @@ namespace Assets.Scripts.Systems {
 					return false;
 				}
 				point = hit.point;
-				hitTransform = hit.transform;
+				block = hit.collider.gameObject.GetComponent<RealLiveBlock>();
 			} else {
 				point = TurretEnd + direction * 10000;
-				hitTransform = null;
+				block = null;
 			}
 
-			FireWeapon(bot, point, hitTransform == null ? null : hitTransform.GetComponent<RealLiveBlock>());
+			FireWeapon(bot, point, block);
 			_cooldownEnds = Time.time + Constants.Cooldown;
 			bot.AddForceAtPosition(_turret.rotation * Constants.Kickback, TurretEnd, ForceMode.Impulse);
 			return true;
