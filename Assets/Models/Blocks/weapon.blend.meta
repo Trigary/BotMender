@@ -1,40 +1,23 @@
 fileFormatVersion: 2
-guid: 7d1d7dc5140602c44a53c561fd1f788d
-timeCreated: 1516122907
+guid: 787c9117c5a623a419b135f54bd2a560
+timeCreated: 1527758212
 licenseType: Free
 ModelImporter:
   serializedVersion: 22
   fileIDToRecycleName:
-    100000: //RootNode
-    100002: corner
-    100004: slope
-    100006: long
-    100008: cube
-    100010: inner
-    400000: //RootNode
-    400002: corner
-    400004: slope
-    400006: long
-    400008: cube
-    400010: inner
+    100000: laser
+    100002: laser_turret
+    100004: //RootNode
+    400000: laser
+    400002: laser_turret
+    400004: //RootNode
     2100000: unnamed
-    2300000: //RootNode
-    2300002: corner
-    2300004: slope
-    2300006: long
-    2300008: cube
-    2300010: inner
-    3300000: //RootNode
-    3300002: corner
-    3300004: slope
-    3300006: long
-    3300008: cube
-    3300010: inner
-    4300000: slope
-    4300002: corner
-    4300004: long
-    4300006: cube
-    4300008: inner
+    2300000: laser
+    2300002: laser_turret
+    3300000: laser
+    3300002: laser_turret
+    4300000: laser_turret
+    4300002: laser
     7400000: Default Take
     9500000: //RootNode
   externalObjects: {}

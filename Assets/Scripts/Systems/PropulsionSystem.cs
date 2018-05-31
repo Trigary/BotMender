@@ -6,6 +6,8 @@ namespace Assets.Scripts.Systems {
 	/// A system which affects the bot's movement and/or rotation.
 	/// </summary>
 	public abstract class PropulsionSystem : BotSystem {
+		//TODO each propulsion system should only be able to accelerate up to a given speed
+		//(if the bot is already travelling faster then don't do anything)
 		protected PropulsionSystem(RealLiveBlock block) : base(block) { }
 
 

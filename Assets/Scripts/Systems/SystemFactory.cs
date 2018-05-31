@@ -16,9 +16,11 @@ namespace Assets.Scripts.Systems {
 			new Dictionary<BlockType, Function<RealLiveBlock, BotSystem>>();
 
 		static SystemFactory() {
-			Add(BlockType.ArmorLong1, block => new UnrealAcceleratorSystem(block));
-			Add(BlockType.ArmorCorner1, block => new FullStopSystem(block));
-			Add(BlockType.ArmorSlope1, block => new LaserSystem(block, Vector3.zero));
+			Add(BlockType.LaserWeapon1, block => new LaserSystem(block, Vector3.zero));
+			Add(BlockType.ThrusterSmall, block => new ThrusterSystem(block, Vector3.zero, BlockSides.Front, 1));
+			
+			Add(BlockType.UnrealAccelerator, block => new UnrealAcceleratorSystem(block));
+			Add(BlockType.FullStopSystem, block => new FullStopSystem(block));
 		}
 
 
@@ -42,7 +44,7 @@ namespace Assets.Scripts.Systems {
 		/// </summary>
 		public static WeaponSystem.Type GetWeaponType(BlockType block) {
 			switch (block) {
-				case BlockType.ArmorSlope1:
+				case BlockType.LaserWeapon1:
 					return WeaponSystem.Type.Laser;
 				default:
 					return WeaponSystem.Type.None;
@@ -54,7 +56,7 @@ namespace Assets.Scripts.Systems {
 		/// </summary>
 		public static bool IsActiveSystem(BlockType block) {
 			switch (block) {
-				case BlockType.ArmorCorner1:
+				case BlockType.FullStopSystem:
 					return true;
 				default:
 					return false;

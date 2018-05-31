@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Assets.Scripts.Blocks;
@@ -6,6 +7,7 @@ using Assets.Scripts.Blocks.Info;
 using Assets.Scripts.Blocks.Placed;
 using Assets.Scripts.Playing;
 using Assets.Scripts.Structures;
+using NUnit.Framework;
 
 namespace Assets.Scripts.Building {
 	/// <summary>
@@ -41,30 +43,40 @@ namespace Assets.Scripts.Building {
 			}
 
 			if (Input.GetButtonDown("Ability")) {
-				IDictionary<BlockPosition, IPlacedBlock> notConnected = _structure.GetNotConnectedBlocks();
-				if (notConnected == null || notConnected.Count != 0) {
-					Debug.Log("Invalid structure: " + (notConnected == null ? "no mainframe" : "not connected blocks"));
-				} else {
+				new Action(() => {
+					EditableStructure.Errors errors = _structure.GetStructureErrors();
+					if (errors != EditableStructure.Errors.None) {
+						Debug.Log("Structure error: " + errors);
+						return;
+					}
+
+					IDictionary<BlockPosition, IPlacedBlock> notConnected = _structure.GetNotConnectedBlocks();
+					Assert.NotNull(notConnected, "The lack of the presence of the Mainframe was not shown among the errors.");
+					if (notConnected.Count != 0) {
+						Debug.Log("Structure error: not connected blocks");
+						return;
+					}
+
 					ulong[] serialized = _structure.Serialize();
 					Debug.Log("Structure: " + string.Join(", ", serialized.Select(value => value.ToString() + "UL").ToArray()));
 					CompleteStructure complete = CompleteStructure.Create(serialized);
-
 					if (complete == null) {
 						Debug.Log("Failed to create CompleteStructure");
-					} else {
-						complete.gameObject.AddComponent<HumanBotController>();
-						_camera.gameObject.AddComponent<PlayingCameraController>()
-							.Structure = complete.GetComponent<Rigidbody>();
-
-						Destroy(_camera.gameObject.GetComponent<BuildingCameraController>());
-						Destroy(gameObject);
-
-						CompleteStructure otherStructure = CompleteStructure.Create(new[] {8421504UL, 7323222400UL, 6786613632UL, 17993793921UL, 17993531777UL, 17456923007UL, 17456660863UL, 11651940734UL, 11618386306UL, 11081384322UL, 11114938750UL, 9806316160UL, 9672229504UL, 5377196672UL}, "Other Structure");
-						if (otherStructure != null) {
-							otherStructure.transform.position = new Vector3(150, 65, 150);
-						}
+						return;
 					}
-				}
+
+					complete.gameObject.AddComponent<HumanBotController>();
+					_camera.gameObject.AddComponent<PlayingCameraController>()
+						.Initialize(complete.GetComponent<Rigidbody>());
+
+					Destroy(_camera.gameObject.GetComponent<BuildingCameraController>());
+					Destroy(gameObject);
+
+					CompleteStructure otherStructure = CompleteStructure.Create(new[] {8421504UL, 7323222400UL, 6786613632UL, 17993793921UL, 17993531777UL, 17456923007UL, 17456660863UL, 11651940734UL, 11618386306UL, 11081384322UL, 11114938750UL, 9806316160UL, 9672229504UL, 5377196672UL}, "Other Structure");
+					if (otherStructure != null) {
+						otherStructure.transform.position = new Vector3(150, 65, 150);
+					}
+				}).Invoke();
 			}
 		}
 

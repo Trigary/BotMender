@@ -5,8 +5,8 @@ namespace Assets.Scripts.Building {
 	/// Controls the camera it is attached to during the building/edit mode.
 	/// </summary>
 	public class BuildingCameraController : MonoBehaviour {
-		public const float PitchFactor = 1.25f;
-		public const float YawFactor = 1.25f;
+		public const float PitchFactor = 1.3f;
+		public const float YawFactor = 1.3f;
 		public const float HorizontalFactor = 0.25f;
 		public const float VerticalFactor = 0.25f;
 

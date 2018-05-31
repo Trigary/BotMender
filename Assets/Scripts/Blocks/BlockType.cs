@@ -4,9 +4,18 @@
 	/// </summary>
 	public enum BlockType {
 		Mainframe,
+
 		ArmorCube1,
 		ArmorSlope1,
 		ArmorCorner1,
-		ArmorLong1
+		ArmorInner1,
+		ArmorLong1,
+
+		LaserWeapon1,
+
+		ThrusterSmall,
+		UnrealAccelerator,
+
+		FullStopSystem
 	}
 }

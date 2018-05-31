@@ -115,7 +115,7 @@ namespace Assets.Scripts.Structures {
 			}
 
 			if (block.Info.Type == BlockType.Mainframe) {
-				//TODO destroy the structure
+				Destroy(gameObject);
 				return;
 			}
 			

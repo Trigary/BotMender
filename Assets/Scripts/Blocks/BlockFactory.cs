@@ -30,11 +30,22 @@ namespace Assets.Scripts.Blocks {
 			AddSingle(BlockType.ArmorCube1, 1000, 1000, BlockSides.All);
 			AddSingle(BlockType.ArmorSlope1, 500, 500, BlockSides.X | BlockSides.Bottom | BlockSides.Back);
 			AddSingle(BlockType.ArmorCorner1, 125, 125, BlockSides.Left | BlockSides.Bottom | BlockSides.Back);
+			AddSingle(BlockType.ArmorInner1, 875, 875, BlockSides.All);
 
 			AddMulti(BlockType.ArmorLong1, 2000, 2000)
 				.Add(0, 0, 0, BlockSides.All)
 				.Add(0, 1, 0, BlockSides.All)
 				.Finished();
+
+			AddSingle(BlockType.LaserWeapon1, 2000, 2000, BlockSides.Bottom | BlockSides.Back);
+
+			AddSingle(BlockType.ThrusterSmall, 500, 500, BlockSides.Bottom);
+			AddMulti(BlockType.UnrealAccelerator, 2000, 2000)
+				.Add(0, 0, 0, BlockSides.Y)
+				.Add(0, 1, 0, BlockSides.Y)
+				.Finished();
+
+			AddSingle(BlockType.FullStopSystem, 500, 500, BlockSides.Bottom);
 		}
 
 

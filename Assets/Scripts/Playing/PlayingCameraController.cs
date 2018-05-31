@@ -7,23 +7,22 @@ namespace Assets.Scripts.Playing {
 	/// The rigidbody is destroyed when the script is destroyed.
 	/// </summary>
 	public class PlayingCameraController : MonoBehaviour {
-		public const float VerticalOffset = 1.5f;
-		public const float YawFactor = 1.25f;
+		public const float VerticalOffsetOffset = 0.0f;
+		public const float YawFactor = 1.3f;
 
-		public const float PitchFactor = 1.25f;
+		public const float PitchFactor = 1.3f;
 		public const float DefaultPitch = 20f;
 		public const float MaxPitch = 75f;
 		public const float MinPitch = 5f;
 
 		public const float ZoomFactor = 12.5f;
-		public const float DefaultZoom = 20f;
-		public const float MaxZoom = 35f; //Closest
-		public const float MinZoom = 10f; //Furthest
-
-		[Tooltip("The structure the camera should follow.")]
-		public Rigidbody Structure;
-
+		public const float DefaultZoom = 5f;
+		public const float MaxZoom = 8f; //Furthest
+		public const float MinZoom = 0.1f; //Closest
+		
+		private Rigidbody _structure;
 		private Rigidbody _rigidbody;
+		private float _verticalOffset = VerticalOffsetOffset;
 		private float _yaw;
 		private float _pitch = DefaultPitch;
 		private float _zoom = DefaultZoom;
@@ -37,23 +36,40 @@ namespace Assets.Scripts.Playing {
 			Destroy(_rigidbody);
 		}
 
+		/// <summary>
+		/// Initializes the camera controller with the structure it should follow.
+		/// </summary>
+		public void Initialize(Rigidbody structure) {
+			_structure = structure;
+
+			Bounds bounds = new Bounds(_structure.position, Vector3.zero);
+			foreach (Transform child in _structure.transform) {
+				Renderer childRenderer = child.GetComponent<Renderer>();
+				if (childRenderer != null) {
+					bounds.Encapsulate(childRenderer.bounds);
+				}
+			}
+			_verticalOffset = bounds.extents.y * 2; //TODO something is not right - fix this
+		}
+
 
 
 		public void FixedUpdate() {
 			Vector3 center = Center();
 			transform.position = center;
 			transform.rotation = Quaternion.identity;
-			_rigidbody.velocity = Structure.velocity;
+			_rigidbody.velocity = _structure.velocity;
 
 			float deltaZoom = Input.GetAxisRaw("MouseScroll") * ZoomFactor;
 			if (deltaZoom != 0) {
 				float newZoom = _zoom - deltaZoom;
 				if (newZoom < MinZoom) {
-					deltaZoom = MinZoom - _zoom;
+					_zoom = MinZoom;
 				} else if (newZoom > MaxZoom) {
-					deltaZoom = MaxZoom - _zoom;
+					_zoom = MaxZoom;
+				} else {
+					_zoom -= deltaZoom;
 				}
-				_zoom -= deltaZoom;
 			}
 			transform.position -= transform.forward * _zoom;
 
@@ -74,8 +90,8 @@ namespace Assets.Scripts.Playing {
 		}
 
 		private Vector3 Center() {
-			Vector3 center = Structure.position;
-			center.y += VerticalOffset;
+			Vector3 center = _structure.position;
+			center.y += _verticalOffset;
 			return center;
 		}
 	}

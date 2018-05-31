@@ -152,13 +152,27 @@ namespace Assets.Scripts.Structures {
 
 
 		/// <summary>
+		/// Get all errors regarding the structure which are included in the enum.
+		/// </summary>
+		public Errors GetStructureErrors() {
+			Errors errors = Errors.None;
+			if (_mainframePosition == null) {
+				errors |= Errors.NoMainframe;
+			}
+			if (_weaponCount == 0) {
+				errors |= Errors.NoWeapons;
+			}
+			return errors;
+		}
+
+		/// <summary>
 		/// Returns the blocks which aren't connected to the mainframe. If there are none, then the structure is valid.
 		/// Returns null if the mainframe is not present.
 		/// </summary>
 		[CanBeNull]
 		public IDictionary<BlockPosition, IPlacedBlock> GetNotConnectedBlocks() {
 			if (_mainframePosition == null) {
-				return null; //TODO method to check for other errors, eg. no weapons
+				return null;
 			}
 
 			IDictionary<BlockPosition, IPlacedBlock> blocks = new Dictionary<BlockPosition, IPlacedBlock>(_blocks);
@@ -264,6 +278,18 @@ namespace Assets.Scripts.Structures {
 				}
 			}
 			return false;
+		}
+
+
+
+		/// <summary>
+		/// Errors regarding the structure.
+		/// </summary>
+		[Flags]
+		public enum Errors {
+			None = 0,
+			NoMainframe = 1 << 0,
+			NoWeapons = 1 << 1
 		}
 	}
 }
