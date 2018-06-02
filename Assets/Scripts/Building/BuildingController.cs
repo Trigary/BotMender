@@ -25,7 +25,7 @@ namespace Assets.Scripts.Building {
 		public void Awake() {
 			_camera = Camera.main;
 			_structure = GetComponent<EditableStructure>();
-			_structure.Deserialize(new[] {8421504UL, 17993597057UL, 17993728129UL, 19671515264UL, 17456857215UL, 17456726143UL, 20208124032UL, 9672163968UL});
+			_structure.Deserialize(new[] {8421504UL, 8917188991UL, 17456857215UL, 8917319807UL, 26852163968UL, 6786613376UL, 8917123455UL, 26852098688UL, 9453994369UL, 9454059905UL, 9454190721UL, 11131977856UL, 30341759359UL, 15426945151UL, 13749223553UL, 18044059777UL, 30878630273UL, 4571889791UL, 4571824255UL, 5410750593UL, 7323287681UL, 37388124800UL, 41682960768UL, 30878564482UL, 30341693566UL, 24503091327UL, 24503091329UL, 11634835583UL, 11634835585UL, 14101217663UL, 14034108801UL});
 		}
 
 
@@ -72,7 +72,7 @@ namespace Assets.Scripts.Building {
 					Destroy(_camera.gameObject.GetComponent<BuildingCameraController>());
 					Destroy(gameObject);
 
-					CompleteStructure otherStructure = CompleteStructure.Create(new[] {8421504UL, 7323222400UL, 6786613632UL, 17993793921UL, 17993531777UL, 17456923007UL, 17456660863UL, 11651940734UL, 11618386306UL, 11081384322UL, 11114938750UL, 9806316160UL, 9672229504UL, 5377196672UL}, "Other Structure");
+					CompleteStructure otherStructure = CompleteStructure.Create(new[] {8421504UL, 8917188991UL, 17456857215UL, 8917319807UL, 26852163968UL, 6786613376UL, 8917123455UL, 26852098688UL, 9453994369UL, 9454059905UL, 9454190721UL, 11131977856UL, 30341759359UL, 15426945151UL, 13749223553UL, 18044059777UL, 30878630273UL, 4571889791UL, 4571824255UL, 5410750593UL, 7323287681UL, 37388124800UL, 41682960768UL, 30878564482UL, 30341693566UL, 24503091327UL, 24503091329UL, 11634835583UL, 11634835585UL, 14101217663UL, 14034108801UL}, "Other Structure");
 					if (otherStructure != null) {
 						otherStructure.transform.position = new Vector3(150, 65, 150);
 					}
@@ -158,6 +158,17 @@ namespace Assets.Scripts.Building {
 			_previousPreviewPosition = position;
 			BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType(_blockType));
 
+			Color color;
+			if (_structure.CanAddBlock(position, info, rotation)) {
+				color = Color.white;
+			} else {
+				if (_structure.IsPositionOccupied(position)) {
+					return;
+				} else {
+					color = Color.red;
+				}
+			}
+
 			SingleBlockInfo single = info as SingleBlockInfo;
 			RealPlacedBlock block;
 			if (single != null) {
@@ -173,8 +184,7 @@ namespace Assets.Scripts.Building {
 			_previewObject = block.gameObject;
 			_previewObject.gameObject.name = "PreviewBlock";
 			BlockUtilities.RemoveCollider(_previewObject, true);
-
-			Color color = _structure.CanAddBlock(position, info, rotation) ? Color.white : Color.red;
+			
 			color.a = 0.5f;
 			BlockUtilities.SetColor(_previewObject, color, true);
 		}

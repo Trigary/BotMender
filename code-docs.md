@@ -13,3 +13,4 @@ If the block comes with a system, it has to be specified in the `SystemFactory` 
 Weapon and active systems must also be specified in the `GetWeaponType` and `IsActiveSystem` methods respectively.
 Weapons must also have a child `GameObject` named "Turret" attached to them.
 This turret mustn't have its own collider.
+Constants which are specific to a block can be registered in the `SystemConstantsContainer` class for later retrieval.

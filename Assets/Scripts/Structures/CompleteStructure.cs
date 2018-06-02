@@ -14,6 +14,10 @@ namespace Assets.Scripts.Structures {
 	/// Internally creates a Rigidbody.
 	/// </summary>
 	public class CompleteStructure : MonoBehaviour {
+		private const float RigidbodyDragMultiplier = 0.0025f;
+		private const float RigidbodyDragOffset = 0.0025f;
+		private const float RigidbodyAngularDrag = 0.075f;
+
 		public uint MaxHealth { get; private set; }
 		public uint Health { get; private set; }
 		public uint Mass { get; private set; }
@@ -24,6 +28,7 @@ namespace Assets.Scripts.Structures {
 
 		public void Awake() {
 			_body = gameObject.AddComponent<Rigidbody>();
+			_body.angularDrag = RigidbodyAngularDrag;
 		}
 
 
@@ -99,8 +104,10 @@ namespace Assets.Scripts.Structures {
 		}
 
 
+
 		public void FixedUpdate() {
 			_systems.Tick(_body);
+			_body.drag = _body.velocity.sqrMagnitude * RigidbodyDragMultiplier + RigidbodyDragOffset;
 		}
 
 

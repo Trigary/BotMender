@@ -6,7 +6,7 @@ namespace Assets.Scripts.Systems {
 	/// </summary>
 	public abstract class BotSystem {
 		protected readonly RealLiveBlock Block;
-		
+
 		protected BotSystem(RealLiveBlock block) {
 			Block = block;
 		}

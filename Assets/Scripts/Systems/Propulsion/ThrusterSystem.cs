@@ -8,14 +8,12 @@ namespace Assets.Scripts.Systems.Propulsion {
 	/// Adds some force at the thruster's coordinates to the bot.
 	/// </summary>
 	public class ThrusterSystem : PropulsionSystem {
-		private readonly Vector3 _offset;
-		private readonly float _force;
+		protected readonly ThrusterConstants Constants;
 		private readonly BlockSides _facing;
-		
-		public ThrusterSystem(RealLiveBlock block, Vector3 offset, BlockSides facing, float force) : base(block) {
-			_offset = offset;
-			_force = force;
-			_facing = Rotation.RotateSides(facing, block.Rotation);
+
+		public ThrusterSystem(RealLiveBlock block, ThrusterConstants constants) : base(block) {
+			Constants = constants;
+			_facing = Rotation.RotateSides(constants.Facing, block.Rotation);
 		}
 
 
@@ -26,9 +24,9 @@ namespace Assets.Scripts.Systems.Propulsion {
 			if (multiplier == 0) {
 				return;
 			}
-
-			bot.AddForceAtPosition(direction * multiplier * _force,
-				bot.position + bot.rotation * (Block.transform.localPosition + _offset),
+			
+			bot.AddForceAtPosition(direction * multiplier * Constants.Force,
+				bot.position + bot.rotation * (Block.transform.localPosition + Constants.Offset),
 				ForceMode.Impulse);
 		}
 
@@ -54,6 +52,25 @@ namespace Assets.Scripts.Systems.Propulsion {
 					return z > 0 ? 0f : z;
 				default:
 					throw new AssertionException("Invalid facing: " + facing);
+			}
+		}
+
+
+
+		/// <summary>
+		/// Constants regarding a specific thruster.
+		/// The offset's and the force's value is in world space units.
+		/// The facing must contain exactly 1 facing.
+		/// </summary>
+		public class ThrusterConstants {
+			public readonly Vector3 Offset;
+			public readonly float Force;
+			public readonly BlockSides Facing;
+
+			public ThrusterConstants(Vector3 offset, float force, BlockSides facing) {
+				Offset = offset;
+				Force = force;
+				Facing = facing;
 			}
 		}
 	}

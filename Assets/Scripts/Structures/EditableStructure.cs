@@ -64,6 +64,13 @@ namespace Assets.Scripts.Structures {
 			}
 		}
 
+		/// <summary>
+		/// Returns whether a block (which may be a part of a multi block) exists at the specified position.
+		/// </summary>
+		public bool IsPositionOccupied(BlockPosition position) {
+			return _blocks.ContainsKey(position);
+		}
+
 
 
 		/// <summary>
@@ -257,7 +264,6 @@ namespace Assets.Scripts.Structures {
 		/// connection sides can connect to any other block.
 		/// </summary>
 		private bool CanConnect(BlockPosition position, BlockSides rotatedConnectSides) {
-			//TODO can connect two corners which aren't touching due to how corner connection sides are done
 			if (_blocks.Count == 0) {
 				return true;
 			}

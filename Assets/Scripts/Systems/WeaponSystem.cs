@@ -7,17 +7,15 @@ namespace Assets.Scripts.Systems {
 	/// A system which controls a weapon.
 	/// </summary>
 	public abstract class WeaponSystem : BotSystem {
-		public readonly ConstantsContainer Constants;
-		protected Vector3 TurretHeading { get { return _turret.forward; } }
-		protected Vector3 TurretEnd { get { return _turret.position + _turret.rotation * _turretOffset; } }
-		private readonly Transform _turret;
-		private readonly Vector3 _turretOffset;
+		public readonly WeaponConstants Constants;
+		protected Vector3 TurretHeading { get { return Turret.forward; } }
+		protected Vector3 TurretEnd { get { return Turret.position + Turret.rotation * Constants.TurretOffset; } }
+		protected readonly Transform Turret;
 		private float _cooldownEnds;
 
-		protected WeaponSystem(RealLiveBlock block, ConstantsContainer constants, Vector3 offset) : base(block) {
+		protected WeaponSystem(RealLiveBlock block, WeaponConstants constants) : base(block) {
 			Constants = constants;
-			_turret = block.transform.Find("Turret");
-			_turretOffset = offset;
+			Turret = block.transform.Find("Turret");
 		}
 
 
@@ -35,11 +33,11 @@ namespace Assets.Scripts.Systems {
 		/// Rotate the weapon's barrel so it faces the target coordinates.
 		/// </summary>
 		public void TrackTarget(Vector3 target) {
-			Vector3 direction = Quaternion.Inverse(Block.transform.rotation) * (target - _turret.position);
+			Vector3 direction = Quaternion.Inverse(Block.transform.rotation) * (target - Turret.position);
 			Vector3 euler = Quaternion.LookRotation(direction, Block.transform.up).eulerAngles;
 			euler.x = ClampRotation(euler.x, Constants.MinPitch, Constants.MaxPitch);
 			euler.y = ClampRotation(euler.y, Constants.YawLimit * -1, Constants.YawLimit);
-			_turret.localRotation = Quaternion.RotateTowards(_turret.localRotation,
+			Turret.localRotation = Quaternion.RotateTowards(Turret.localRotation,
 				Quaternion.Euler(euler), Constants.RotationSpeed * Time.fixedDeltaTime);
 		}
 
@@ -69,13 +67,13 @@ namespace Assets.Scripts.Systems {
 				point = hit.point;
 				block = hit.collider.gameObject.GetComponent<RealLiveBlock>();
 			} else {
-				point = TurretEnd + direction * 10000;
+				point = TurretEnd + direction * 500;
 				block = null;
 			}
 
 			FireWeapon(bot, point, block);
 			_cooldownEnds = Time.time + Constants.Cooldown;
-			bot.AddForceAtPosition(_turret.rotation * Constants.Kickback, TurretEnd, ForceMode.Impulse);
+			bot.AddForceAtPosition(Turret.rotation * Constants.Kickback, TurretEnd, ForceMode.Impulse);
 			return true;
 		}
 
@@ -93,19 +91,20 @@ namespace Assets.Scripts.Systems {
 
 		/// <summary>
 		/// Constants regarding a specific weapon.
+		/// The turret offset's and the kickback's value is in world space units.
 		/// The yaw and the pitch are specified in degrees, the MinPitch is usually negative.
 		/// The rotation speed is specified in 'degrees / second'.
-		/// The kickback's value is in world space units.
 		/// The cooldown is in seconds.
 		/// The energy is a value between 0 and 1.
 		/// The inaccuracy is specified in angles.
 		/// </summary>
-		public class ConstantsContainer {
+		public class WeaponConstants {
+			public readonly Vector3 TurretOffset, Kickback;
 			public readonly float YawLimit, MinPitch, MaxPitch, RotationSpeed, Cooldown, Inaccuracy, Energy;
-			public readonly Vector3 Kickback;
 			
-			public ConstantsContainer(float yawLimit, float minPitch, float maxPitch, float rotationSpeed,
+			public WeaponConstants(Vector3 turretOffset, float yawLimit, float minPitch, float maxPitch, float rotationSpeed,
 									float kickback, float cooldown, float energy, float inaccuracy) {
+				TurretOffset = turretOffset;
 				YawLimit = yawLimit;
 				MinPitch = minPitch;
 				MaxPitch = maxPitch;

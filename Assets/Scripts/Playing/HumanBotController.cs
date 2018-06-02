@@ -29,7 +29,7 @@ namespace Assets.Scripts.Playing {
 				if (Physics.Raycast(ray, out hit)) {
 					_structure.TrackTarget(hit.point);
 				} else {
-					_structure.TrackTarget(ray.origin + ray.direction * 10000);
+					_structure.TrackTarget(ray.origin + ray.direction * 500);
 				}
 			}
 
