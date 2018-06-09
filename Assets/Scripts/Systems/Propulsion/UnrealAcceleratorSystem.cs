@@ -10,9 +10,9 @@ namespace Assets.Scripts.Systems.Propulsion {
 
 
 
-		public override void MoveRotate(Rigidbody bot, float x, float y, float z) {
-			bot.AddForce(bot.transform.rotation * new Vector3(0, y, z), ForceMode.VelocityChange);
-			bot.transform.RotateAround(bot.transform.position, bot.transform.up, x);
+		public override void MoveRotate(Rigidbody bot, Vector3 direction) {
+			bot.AddForce(bot.transform.rotation * new Vector3(0, direction.y, direction.z), ForceMode.VelocityChange);
+			bot.transform.RotateAround(bot.transform.position, bot.transform.up, direction.x);
 		}
 	}
 }

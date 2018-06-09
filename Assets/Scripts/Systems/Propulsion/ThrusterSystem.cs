@@ -1,7 +1,7 @@
 ﻿using Assets.Scripts.Blocks;
 using Assets.Scripts.Blocks.Live;
-using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Assets.Scripts.Systems.Propulsion {
 	/// <summary>
@@ -18,9 +18,8 @@ namespace Assets.Scripts.Systems.Propulsion {
 
 
 
-		public override void MoveRotate(Rigidbody bot, float x, float y, float z) {
-			Vector3 direction;
-			float multiplier = ForceData(bot.transform, _facing, x, y, z, out direction);
+		public override void MoveRotate(Rigidbody bot, Vector3 direction) {
+			float multiplier = ForceData(bot.transform, _facing, direction.x, direction.y, direction.z, out direction);
 			if (multiplier == 0) {
 				return;
 			}
@@ -51,7 +50,7 @@ namespace Assets.Scripts.Systems.Propulsion {
 					direction = bot.forward;
 					return z > 0 ? 0f : z;
 				default:
-					throw new AssertionException("Invalid facing: " + facing);
+					throw new AssertionException("Invalid facing: " + facing, null);
 			}
 		}
 

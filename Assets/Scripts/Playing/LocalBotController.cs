@@ -5,7 +5,7 @@ namespace Assets.Scripts.Playing {
 	/// <summary>
 	/// Gives the player controls over the structure it is attached to, should be used in play mode.
 	/// </summary>
-	public class HumanBotController : MonoBehaviour {
+	public class LocalBotController : MonoBehaviour {
 		private Camera _camera;
 		private CompleteStructure _structure;
 
@@ -37,11 +37,15 @@ namespace Assets.Scripts.Playing {
 				_structure.FireWeapons();
 			}
 
-			_structure.MoveRotate(
+			Vector3 newMoveRotateInput = new Vector3(
 				Input.GetAxisRaw("Rightward"),
 				Input.GetAxisRaw("Upward"),
 				Input.GetAxisRaw("Forward")
 			);
+
+			if (!newMoveRotateInput.Equals(_structure.MoveRotateDirection)) {
+				_structure.SetMoveRotateDirection(newMoveRotateInput);
+			}
 		}
 	}
 }

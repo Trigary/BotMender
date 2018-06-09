@@ -19,8 +19,8 @@ namespace Assets.Scripts.Playing {
 		public const float DefaultZoom = 5f;
 		public const float MaxZoom = 8f; //Furthest
 		public const float MinZoom = 0.1f; //Closest
-		
-		private Rigidbody _structure;
+
+		public Rigidbody Structure { get; private set; }
 		private Rigidbody _rigidbody;
 		private float _verticalOffset = VerticalOffsetOffset;
 		private float _yaw;
@@ -40,10 +40,10 @@ namespace Assets.Scripts.Playing {
 		/// Initializes the camera controller with the structure it should follow.
 		/// </summary>
 		public void Initialize(Rigidbody structure) {
-			_structure = structure;
+			Structure = structure;
 
-			Bounds bounds = new Bounds(_structure.position, Vector3.zero);
-			foreach (Transform child in _structure.transform) {
+			Bounds bounds = new Bounds(Structure.position, Vector3.zero);
+			foreach (Transform child in Structure.transform) {
 				Renderer childRenderer = child.GetComponent<Renderer>();
 				if (childRenderer != null) {
 					bounds.Encapsulate(childRenderer.bounds);
@@ -59,7 +59,7 @@ namespace Assets.Scripts.Playing {
 			transform.position = center;
 			//TODO center changes when blocks are destroyed -> when blocks are destroyed, update a center-offset
 			transform.rotation = Quaternion.identity;
-			_rigidbody.velocity = _structure.velocity;
+			_rigidbody.velocity = Structure.velocity;
 
 			float deltaZoom = Input.GetAxisRaw("MouseScroll") * ZoomFactor;
 			if (deltaZoom != 0) {
@@ -91,7 +91,7 @@ namespace Assets.Scripts.Playing {
 		}
 
 		private Vector3 Center() {
-			Vector3 center = _structure.position;
+			Vector3 center = Structure.position;
 			center.y += _verticalOffset;
 			return center;
 		}

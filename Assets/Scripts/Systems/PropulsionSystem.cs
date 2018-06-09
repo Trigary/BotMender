@@ -13,6 +13,6 @@ namespace Assets.Scripts.Systems {
 		/// <summary>
 		/// Handle the movement input.
 		/// </summary>
-		public abstract void MoveRotate(Rigidbody bot, float x, float y, float z);
+		public abstract void MoveRotate(Rigidbody bot, Vector3 direction);
 	}
 }

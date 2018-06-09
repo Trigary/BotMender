@@ -7,13 +7,14 @@ using Assets.Scripts.Blocks.Info;
 using Assets.Scripts.Blocks.Placed;
 using Assets.Scripts.Playing;
 using Assets.Scripts.Structures;
-using NUnit.Framework;
+using UnityEngine.Assertions;
 
 namespace Assets.Scripts.Building {
 	/// <summary>
 	/// Allows the player to interact with the structure the script is attached to, should be used in build mode.
 	/// </summary>
 	public class BuildingController : MonoBehaviour {
+		public static readonly ulong[] ExampleStructure = {8396928UL, 8917164415UL, 17456832639UL, 8917295231UL, 26852139392UL, 6786588800UL, 8917098879UL, 26852074112UL, 9453969793UL, 9454035329UL, 9454166145UL, 11131953280UL, 30341734783UL, 15426920575UL, 13749198977UL, 18044035201UL, 30878605697UL, 4571865215UL, 4571799679UL, 5410726017UL, 7323263105UL, 37388100224UL, 41682936192UL, 30878539906UL, 30341668990UL, 24503066751UL, 24503066753UL, 11634811007UL, 11634811009UL, 14101193087UL, 14034084225UL};
 		private readonly HashSet<RealPlacedBlock> _previousNotConnected = new HashSet<RealPlacedBlock>();
 		private Camera _camera;
 		private EditableStructure _structure;
@@ -25,7 +26,7 @@ namespace Assets.Scripts.Building {
 		public void Awake() {
 			_camera = Camera.main;
 			_structure = GetComponent<EditableStructure>();
-			_structure.Deserialize(new[] {8421504UL, 8917188991UL, 17456857215UL, 8917319807UL, 26852163968UL, 6786613376UL, 8917123455UL, 26852098688UL, 9453994369UL, 9454059905UL, 9454190721UL, 11131977856UL, 30341759359UL, 15426945151UL, 13749223553UL, 18044059777UL, 30878630273UL, 4571889791UL, 4571824255UL, 5410750593UL, 7323287681UL, 37388124800UL, 41682960768UL, 30878564482UL, 30341693566UL, 24503091327UL, 24503091329UL, 11634835583UL, 11634835585UL, 14101217663UL, 14034108801UL});
+			_structure.Deserialize(ExampleStructure);
 		}
 
 
@@ -51,7 +52,7 @@ namespace Assets.Scripts.Building {
 					}
 
 					IDictionary<BlockPosition, IPlacedBlock> notConnected = _structure.GetNotConnectedBlocks();
-					Assert.NotNull(notConnected, "The lack of the presence of the Mainframe was not shown among the errors.");
+					Assert.IsNotNull(notConnected, "The lack of the presence of the Mainframe was not shown among the errors.");
 					if (notConnected.Count != 0) {
 						Debug.Log("Structure error: not connected blocks");
 						return;
@@ -59,22 +60,26 @@ namespace Assets.Scripts.Building {
 
 					ulong[] serialized = _structure.Serialize();
 					Debug.Log("Structure: " + string.Join(", ", serialized.Select(value => value.ToString() + "UL").ToArray()));
-					CompleteStructure complete = CompleteStructure.Create(serialized);
-					if (complete == null) {
+					CompleteStructure complete = new GameObject("CompleteStructure").AddComponent<CompleteStructure>();
+					if (complete.Initialize(serialized)) {
 						Debug.Log("Failed to create CompleteStructure");
 						return;
 					}
 
-					complete.gameObject.AddComponent<HumanBotController>();
+					complete.gameObject.AddComponent<LocalBotController>();
 					_camera.gameObject.AddComponent<PlayingCameraController>()
 						.Initialize(complete.GetComponent<Rigidbody>());
 
 					Destroy(_camera.gameObject.GetComponent<BuildingCameraController>());
 					Destroy(gameObject);
 
-					CompleteStructure otherStructure = CompleteStructure.Create(new[] {8421504UL, 8917188991UL, 17456857215UL, 8917319807UL, 26852163968UL, 6786613376UL, 8917123455UL, 26852098688UL, 9453994369UL, 9454059905UL, 9454190721UL, 11131977856UL, 30341759359UL, 15426945151UL, 13749223553UL, 18044059777UL, 30878630273UL, 4571889791UL, 4571824255UL, 5410750593UL, 7323287681UL, 37388124800UL, 41682960768UL, 30878564482UL, 30341693566UL, 24503091327UL, 24503091329UL, 11634835583UL, 11634835585UL, 14101217663UL, 14034108801UL}, "Other Structure");
-					if (otherStructure != null) {
-						otherStructure.transform.position = new Vector3(150, 65, 150);
+
+
+					CompleteStructure otherStructure = new GameObject("OtherStructure").AddComponent<CompleteStructure>();
+					if (otherStructure.Initialize(ExampleStructure)) {
+						otherStructure.transform.position = new Vector3(150, 5, 150);
+					} else {
+						Debug.Log("Failed to create OtherStructure");
 					}
 				}).Invoke();
 			}
@@ -184,7 +189,7 @@ namespace Assets.Scripts.Building {
 			_previewObject = block.gameObject;
 			_previewObject.gameObject.name = "PreviewBlock";
 			BlockUtilities.RemoveCollider(_previewObject, true);
-			
+
 			color.a = 0.5f;
 			BlockUtilities.SetColor(_previewObject, color, true);
 		}

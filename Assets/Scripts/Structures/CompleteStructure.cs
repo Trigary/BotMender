@@ -3,53 +3,74 @@ using System.Collections.Generic;
 using Assets.Scripts.Blocks;
 using Assets.Scripts.Blocks.Info;
 using Assets.Scripts.Blocks.Live;
+using Assets.Scripts.Playing;
 using Assets.Scripts.Systems;
-using JetBrains.Annotations;
-using NUnit.Framework;
+using Assets.Scripts.Utilities;
 using UnityEngine;
+using UnityEngine.Assertions;
+using UnityEngine.Networking;
 
 namespace Assets.Scripts.Structures {
 	/// <summary>
 	/// A structure which is no longer editable, but is damagable and destructable.
-	/// Internally creates a Rigidbody.
+	/// Internally creates a Rigidbody which is destroyed when the script is destroyed.
 	/// </summary>
-	public class CompleteStructure : MonoBehaviour {
-		private const float RigidbodyDragMultiplier = 0.0025f;
-		private const float RigidbodyDragOffset = 0.0025f;
-		private const float RigidbodyAngularDrag = 0.075f;
+	public class CompleteStructure : NetworkBehaviour {
+		public const float PositionMovementUpdateFrequency = 5;
+		public const float RigidbodyDragMultiplier = 0.0025f;
+		public const float RigidbodyDragOffset = 0.0025f;
+		public const float RigidbodyAngularDrag = 0.075f;
 
 		public uint MaxHealth { get; private set; }
 		public uint Health { get; private set; }
 		public uint Mass { get; private set; }
+		public Vector3 MoveRotateDirection { get; private set; }
 		private readonly IDictionary<BlockPosition, ILiveBlock> _blocks = new Dictionary<BlockPosition, ILiveBlock>();
 		private readonly SystemManager _systems = new SystemManager();
 		private BlockPosition _mainframePosition;
 		private Rigidbody _body;
 
 		public void Awake() {
+			MoveRotateDirection = new Vector3(0, 0, 0);
 			_body = gameObject.AddComponent<Rigidbody>();
 			_body.angularDrag = RigidbodyAngularDrag;
+		}
+
+		public void Start() {
+			if (isLocalPlayer) {
+				StartCoroutine(CoroutineUtils.RepeatUnscaled(() => CmdUpdatePositionMovement(MoveRotateDirection,
+						transform.position, transform.rotation, _body.velocity, _body.angularVelocity),
+					1f / PositionMovementUpdateFrequency));
+			}
+		}
+
+		public void OnDestroy() {
+			Destroy(_body);
+			PlayingCameraController cameraController = Camera.main.GetComponent<PlayingCameraController>();
+			if (cameraController.Structure == _body) {
+				Destroy(cameraController);
+			}
 		}
 
 
 
 		/// <summary>
-		/// Loads this structure using the given serialized blocks.
-		/// Lazely validates the data and returns null, if it is found invalid.
+		/// Loads this structure into the current GameObject using the given serialized blocks.
+		/// The GameObject can be empty - no components are required.
+		/// Lazely validates the data and returns false if it is found invalid.
 		/// No checks are made, the EditableStructure should be used for that.
 		/// </summary>
-		[CanBeNull]
-		public static CompleteStructure Create(ulong[] serialized, string gameObjectName = "CompleteStructure") {
-			CompleteStructure structure = new GameObject(gameObjectName).AddComponent<CompleteStructure>();
-			if (!structure.Deserialize(serialized)) {
-				Destroy(structure.gameObject);
-				return null;
+		public bool Initialize(ulong[] serialized) {
+			if (!Deserialize(serialized)) {
+				Destroy(this);
+				return false;
 			}
 
-			structure.MaxHealth = structure.Health;
-			structure._systems.Finished();
-			structure.ApplyMass();
-			return structure;
+			MaxHealth = Health;
+			_systems.Finished();
+			ApplyMass(false);
+			enabled = true;
+			return true;
 		}
 
 		private bool Deserialize(ulong[] serialized) {
@@ -107,6 +128,7 @@ namespace Assets.Scripts.Structures {
 
 		public void FixedUpdate() {
 			_systems.Tick(_body);
+			_systems.MoveRotate(_body, MoveRotateDirection);
 			_body.drag = _body.velocity.sqrMagnitude * RigidbodyDragMultiplier + RigidbodyDragOffset;
 		}
 
@@ -125,12 +147,12 @@ namespace Assets.Scripts.Structures {
 				Destroy(gameObject);
 				return;
 			}
-			
+
 			RemoveBlock(block);
 			RemoveNotConnectedBlocks();
-			ApplyMass();
+			ApplyMass(true);
 		}
-		
+
 		private void RemoveBlock(RealLiveBlock block) {
 			Mass -= block.Info.Mass;
 			_systems.TryRemove(block.Position);
@@ -162,11 +184,41 @@ namespace Assets.Scripts.Structures {
 
 
 		/// <summary>
-		/// Executes the propulsion systems.
+		/// Applies the MoveRotateDirection change and sends a position-movement update to the server.
+		/// Should only be called by the authoritive client.
 		/// </summary>
-		public void MoveRotate(float x, float y, float z) {
-			_systems.MoveRotate(_body, x, y, z);
+		public void SetMoveRotateDirection(Vector3 direction) {
+			MoveRotateDirection = direction;
+			CmdUpdatePositionMovement(direction, transform.position, transform.rotation, _body.velocity, _body.angularVelocity);
 		}
+
+		[Command]
+		private void CmdUpdatePositionMovement(Vector3 direction, Vector3 position, Quaternion rotation,
+												Vector3 velocity, Vector3 angularVelocity) {
+			if (!isLocalPlayer) {
+				MoveRotateDirection = direction;
+				transform.position = position;
+				transform.rotation = rotation;
+				_body.velocity = velocity;
+				_body.angularVelocity = angularVelocity;
+			}
+
+			NetworkUtils.ForEachConnection(connectionToClient, target => TargetUpdatePositionMovement(target,
+				direction, transform.position, transform.rotation, _body.velocity, _body.angularVelocity));
+		}
+
+		[TargetRpc]
+		private void TargetUpdatePositionMovement(NetworkConnection target, Vector3 direction, Vector3 position,
+												Quaternion rotation, Vector3 velocity, Vector3 angularVelocity) {
+			//TODO when receiving data calculate the time the data took to travel and apply that (MAYBE)
+			MoveRotateDirection = direction;
+			transform.position = position;
+			transform.rotation = rotation;
+			_body.velocity = velocity;
+			_body.angularVelocity = angularVelocity;
+		}
+
+
 
 		/// <summary>
 		/// Rotates the weapons.
@@ -191,7 +243,7 @@ namespace Assets.Scripts.Structures {
 
 
 
-		private void ApplyMass() {
+		private void ApplyMass(bool keepLocation) {
 			Vector3 center = new Vector3();
 			uint mass = 0;
 			foreach (ILiveBlock block in _blocks.Values) {
@@ -204,7 +256,10 @@ namespace Assets.Scripts.Structures {
 			}
 
 			center /= mass;
-			transform.position += center;
+			if (keepLocation) {
+				transform.position += center;
+			}
+
 			foreach (ILiveBlock block in _blocks.Values) {
 				RealLiveBlock real = block as RealLiveBlock;
 				if (real != null) {

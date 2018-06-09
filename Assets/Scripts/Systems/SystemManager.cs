@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Blocks;
 using Assets.Scripts.Utilities;
-using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Assertions;
+using UnityEngine.Networking;
 
 namespace Assets.Scripts.Systems {
 	/// <summary>
@@ -109,9 +110,9 @@ namespace Assets.Scripts.Systems {
 		/// <summary>
 		/// Executes the propulsion systems.
 		/// </summary>
-		public void MoveRotate(Rigidbody bot, float x, float y, float z) {
+		public void MoveRotate(Rigidbody bot, Vector3 direction) {
 			foreach (PropulsionSystem system in _propulsions) {
-				system.MoveRotate(bot, x, y, z);
+				system.MoveRotate(bot, direction);
 			}
 		}
 
@@ -150,9 +151,25 @@ namespace Assets.Scripts.Systems {
 		/// Executes the active system.
 		/// </summary>
 		public void UseActive(Rigidbody bot) {
-			if (_active != null) {
-				_active.Activate(bot);
+			if (_active == null) {
+				return;
 			}
+
+			if (NetworkServer.active) {
+				//tell all clients to do this, but also do this myself
+				//Maybe not? Only the local client - the one who controls the bot and the server has to know about the cooldown
+				// -> create LocalOrServer variant of classes?
+				// -> validation and execution have to be separated:
+				//			anything which isn't needed to create the end result is validation
+				
+				if (!NetworkClient.active) {
+
+				}
+			} else {
+				//tell the server to try to do this
+			}
+
+			_active.Activate(bot);
 		}
 	}
 }
