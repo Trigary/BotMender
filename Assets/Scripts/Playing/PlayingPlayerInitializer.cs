@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Building;
+using Assets.Scripts.Networking;
 using Assets.Scripts.Structures;
 using Assets.Scripts.Utilities;
 using UnityEngine;
@@ -8,6 +9,7 @@ namespace Assets.Scripts.Playing {
 	public class PlayingPlayerInitializer : NetworkBehaviour {
 		public void Start() {
 			Debug.Log("Client: " + NetworkUtils.IsClient + " | Server: " + NetworkUtils.IsServer);
+			//TODO new networking
 
 			CompleteStructure structure = GetComponent<CompleteStructure>();
 			if (!structure.Initialize(BuildingController.ExampleStructure)) {

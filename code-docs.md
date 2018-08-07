@@ -1,4 +1,4 @@
-# Documentation
+# Scripting documentation
 
 A place where some codebase related stuff are explained.
 

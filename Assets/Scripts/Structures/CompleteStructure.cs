@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Assets.Scripts.Blocks;
 using Assets.Scripts.Blocks.Info;
 using Assets.Scripts.Blocks.Live;
+using Assets.Scripts.Networking;
 using Assets.Scripts.Playing;
 using Assets.Scripts.Systems;
 using Assets.Scripts.Utilities;
@@ -203,6 +204,7 @@ namespace Assets.Scripts.Structures {
 				_body.angularVelocity = angularVelocity;
 			}
 
+			//TODO new networking
 			NetworkUtils.ForEachConnection(connectionToClient, target => TargetUpdatePositionMovement(target,
 				direction, transform.position, transform.rotation, _body.velocity, _body.angularVelocity));
 		}
