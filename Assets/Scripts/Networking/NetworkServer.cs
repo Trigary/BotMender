@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Assets.Scripts.Utilities;
 using DoubleSocket.Protocol;
 using DoubleSocket.Server;
@@ -45,6 +46,17 @@ namespace Assets.Scripts.Networking {
 			}
 		}
 
+		/// <summary>
+		/// Returns the count of connected and authenticated clients or -1 if the server is not initialized.
+		/// </summary>
+		public static int ClientCount {
+			get {
+				lock (TcpHandlers) {
+					return Clients?.Count ?? -1;
+				}
+			}
+		}
+
 
 
 		/// <summary>
@@ -63,10 +75,12 @@ namespace Assets.Scripts.Networking {
 			}
 		}
 		private static byte[] _udpPayload;
-
+		
 		private static readonly OnPacketReceived[] TcpHandlers = new OnPacketReceived[Enum.GetNames(typeof(NetworkPacket)).Length];
-		private static DoubleServer Server;
+		private static ResettingByteBuffer ResettingByteBuffer;
+		private static HashSet<INetworkServerClient> Clients;
 		private static DoubleServerHandler Handler;
+		private static DoubleServer Server;
 		private static TickingThread TickingThread;
 
 
@@ -81,6 +95,8 @@ namespace Assets.Scripts.Networking {
 								OnPacketReceived udpHandler) {
 			lock (TcpHandlers) {
 				Assert.IsNull(Server, "The NetworkClient is already initialized.");
+				ResettingByteBuffer = new ResettingByteBuffer(DoubleProtocol.TcpBufferArraySize);
+				Clients = new HashSet<INetworkServerClient>();
 				Handler = new DoubleServerHandler(onConnected, onDisconnected, udpHandler);
 				Server = new DoubleServer(Handler, NetworkUtils.ServerMaxConnectionCount,
 					NetworkUtils.ServerMaxPendingConnections, NetworkUtils.Port);
@@ -93,9 +109,11 @@ namespace Assets.Scripts.Networking {
 		public static void Stop() {
 			lock (TcpHandlers) {
 				_udpPayload = null;
-				TickingThread.Stop();
+				TickingThread?.Stop();
 				TickingThread = null;
 				Array.Clear(TcpHandlers, 0, TcpHandlers.Length);
+				ResettingByteBuffer = null;
+				Clients = null;
 				Handler = null;
 				Server.Close();
 				Server = null;
@@ -126,7 +144,7 @@ namespace Assets.Scripts.Networking {
 		}
 
 		/// <summary>
-		/// Sends the specified payload over TCP.
+		/// Sends the specified payload over TCP to the specified client.
 		/// </summary>
 		/// <param name="recipient">The recipient of the packet.</param>
 		/// <param name="payloadWriter">The action which writes the payload to a buffer.</param>
@@ -138,8 +156,98 @@ namespace Assets.Scripts.Networking {
 
 
 
+		/// <summary>
+		/// Executes the specified action for each connected client.
+		/// </summary>
+		/// <param name="action">The action to execute.</param>
+		public static void ForEachClient(Action<INetworkServerClient> action) {
+			lock (TcpHandlers) {
+				if (Server == null) {
+					return;
+				}
+
+				foreach (INetworkServerClient serverClient in Clients) {
+					action(serverClient);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Sends the specified payload over TCP to all clients.
+		/// </summary>
+		/// <param name="payloadWriter">The action which writes the payload to a buffer.</param>
+		public static void SendTcpToAll(Action<ByteBuffer> payloadWriter) {
+			lock (TcpHandlers) {
+				if (Server == null) {
+					return;
+				}
+
+				using (ResettingByteBuffer) {
+					payloadWriter(ResettingByteBuffer);
+					Action<ByteBuffer> realWriter = buffer => buffer.Write(ResettingByteBuffer.Array,
+						0, ResettingByteBuffer.WriteIndex);
+
+					foreach (INetworkServerClient client in Clients) {
+						Server.SendTcp(((NetworkServerClient)client).DoubleClient, realWriter);
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Sends the specified payload over TCP to all clients except one.
+		/// </summary>
+		/// <param name="payloadWriter">The action which writes the payload to a buffer.</param>
+		/// <param name="excluding">The only client which shouldn't receive the payload.</param>
+		public static void SendTcpToAll(Action<ByteBuffer> payloadWriter, INetworkServerClient excluding) {
+			lock (TcpHandlers) {
+				if (Server == null) {
+					return;
+				}
+
+				using (ResettingByteBuffer) {
+					payloadWriter(ResettingByteBuffer);
+					Action<ByteBuffer> realWriter = buffer => buffer.Write(ResettingByteBuffer.Array,
+						0, ResettingByteBuffer.WriteIndex);
+
+					foreach (INetworkServerClient client in Clients) {
+						if (client != excluding) {
+							Server.SendTcp(((NetworkServerClient)client).DoubleClient, realWriter);
+						}
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Sends the specified payload over TCP to all clients which pass the specified filter.
+		/// </summary>
+		/// <param name="payloadWriter">The action which writes the payload to a buffer.</param>
+		/// <param name="filter">A filter which returns true if the client shoudl receive the payload, false otherwise.</param>
+		public static void SendTcpToAll(Action<ByteBuffer> payloadWriter, Predicate<INetworkServerClient> filter) {
+			lock (TcpHandlers) {
+				if (Server == null) {
+					return;
+				}
+
+				using (ResettingByteBuffer) {
+					payloadWriter(ResettingByteBuffer);
+					Action<ByteBuffer> realWriter = buffer => buffer.Write(ResettingByteBuffer.Array,
+						0, ResettingByteBuffer.WriteIndex);
+
+					foreach (INetworkServerClient client in Clients) {
+						if (filter(client)) {
+							Server.SendTcp(((NetworkServerClient)client).DoubleClient, realWriter);
+						}
+					}
+				}
+			}
+		}
+
+
+
 		private class DoubleServerHandler : IDoubleServerHandler {
-			private static readonly MutableByteBuffer HandlerBuffer = new MutableByteBuffer();
+			private readonly MutableByteBuffer _handlerBuffer = new MutableByteBuffer();
 			private readonly OnConnected _onConnected;
 			private readonly OnDisconnected _onDisconnected;
 			private readonly OnPacketReceived _udpHandler;
@@ -168,6 +276,7 @@ namespace Assets.Scripts.Networking {
 					lock (TcpHandlers) {
 						NetworkServerClient serverClient = (NetworkServerClient)client.ExtraData;
 						serverClient.Initialize();
+						Clients.Add(serverClient);
 						_onConnected(serverClient);
 					}
 				});
@@ -180,10 +289,10 @@ namespace Assets.Scripts.Networking {
 						if (action != null) {
 							byte[] bytes = buffer.ReadBytes();
 							UnityDispatcher.Invoke(() => {
-								HandlerBuffer.Array = bytes;
-								HandlerBuffer.ReadIndex = 0;
-								HandlerBuffer.WriteIndex = bytes.Length;
-								action((NetworkServerClient)client.ExtraData, HandlerBuffer);
+								_handlerBuffer.Array = bytes;
+								_handlerBuffer.ReadIndex = 0;
+								_handlerBuffer.WriteIndex = bytes.Length;
+								action((NetworkServerClient)client.ExtraData, _handlerBuffer);
 							});
 						}
 					}
@@ -201,10 +310,10 @@ namespace Assets.Scripts.Networking {
 
 					byte[] bytes = buffer.ReadBytes();
 					UnityDispatcher.Invoke(() => {
-						HandlerBuffer.Array = bytes;
-						HandlerBuffer.ReadIndex = 0;
-						HandlerBuffer.WriteIndex = bytes.Length;
-						_udpHandler(serverClient, HandlerBuffer);
+						_handlerBuffer.Array = bytes;
+						_handlerBuffer.ReadIndex = 0;
+						_handlerBuffer.WriteIndex = bytes.Length;
+						_udpHandler(serverClient, _handlerBuffer);
 					});
 				}
 			}

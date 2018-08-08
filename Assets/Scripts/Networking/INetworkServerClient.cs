@@ -6,6 +6,6 @@
 		/// <summary>
 		/// The identifier assigned to this client in this session. IDs are not reused within sessions.
 		/// </summary>
-		byte Id { get; }
+		byte Id { get; } //TODO the clients should know what to do with IDs - whose which
 	}
 }

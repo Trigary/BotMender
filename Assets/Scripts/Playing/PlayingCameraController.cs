@@ -55,6 +55,11 @@ namespace Assets.Scripts.Playing {
 
 
 		public void FixedUpdate() {
+			if (Structure == null) {
+				Destroy(this);
+				return;
+			}
+
 			Vector3 center = Center();
 			transform.position = center;
 			//TODO center changes when blocks are destroyed -> when blocks are destroyed, update a center-offset

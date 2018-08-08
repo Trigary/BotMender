@@ -60,8 +60,8 @@ namespace Assets.Scripts.Building {
 
 					ulong[] serialized = _structure.Serialize();
 					Debug.Log("Structure: " + string.Join(", ", serialized.Select(value => value.ToString() + "UL").ToArray()));
-					CompleteStructure complete = new GameObject("CompleteStructure").AddComponent<CompleteStructure>();
-					if (complete.Initialize(serialized)) {
+					CompleteStructure complete = CompleteStructure.Create(serialized, "BuiltStructure");
+					if (complete == null) {
 						Debug.Log("Failed to create CompleteStructure");
 						return;
 					}
@@ -75,8 +75,8 @@ namespace Assets.Scripts.Building {
 
 
 
-					CompleteStructure otherStructure = new GameObject("OtherStructure").AddComponent<CompleteStructure>();
-					if (otherStructure.Initialize(ExampleStructure)) {
+					CompleteStructure otherStructure = CompleteStructure.Create(ExampleStructure, "OtherStructure");
+					if (otherStructure != null) {
 						otherStructure.transform.position = new Vector3(150, 5, 150);
 					} else {
 						Debug.Log("Failed to create OtherStructure");

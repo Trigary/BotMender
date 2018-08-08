@@ -147,6 +147,7 @@ namespace Assets.Scripts.Networking {
 				byte[] encryptionKey = new byte[16];
 				byte[] authenticationData = encryptionKey;
 				Client = new DoubleClient(Handler, encryptionKey, authenticationData, ip, NetworkUtils.Port);
+				Client.Start();
 			}
 		}
 
@@ -161,7 +162,7 @@ namespace Assets.Scripts.Networking {
 				ResetPacketTimestamp = false;
 				_udpPayload = null;
 				_disconnectHandler = null;
-				TickingThread.Stop();
+				TickingThread?.Stop();
 				TickingThread = null;
 				Array.Clear(TcpHandlers, 0, TcpHandlers.Length);
 				Handler = null;
@@ -196,7 +197,7 @@ namespace Assets.Scripts.Networking {
 
 
 		private class DoubleClientHandler : IDoubleClientHandler {
-			private static readonly MutableByteBuffer HandlerBuffer = new MutableByteBuffer();
+			private readonly MutableByteBuffer _handlerBuffer = new MutableByteBuffer();
 			private OnConnected _onConnected;
 			private ushort _lastPacketTimestamp;
 
@@ -243,10 +244,10 @@ namespace Assets.Scripts.Networking {
 						if (action != null) {
 							byte[] bytes = buffer.ReadBytes();
 							UnityDispatcher.Invoke(() => {
-								HandlerBuffer.Array = bytes;
-								HandlerBuffer.ReadIndex = 0;
-								HandlerBuffer.WriteIndex = bytes.Length;
-								action(HandlerBuffer);
+								_handlerBuffer.Array = bytes;
+								_handlerBuffer.ReadIndex = 0;
+								_handlerBuffer.WriteIndex = bytes.Length;
+								action(_handlerBuffer);
 							});
 						}
 					}
@@ -268,10 +269,10 @@ namespace Assets.Scripts.Networking {
 
 					byte[] bytes = buffer.ReadBytes();
 					UnityDispatcher.Invoke(() => {
-						HandlerBuffer.Array = bytes;
-						HandlerBuffer.ReadIndex = 0;
-						HandlerBuffer.WriteIndex = bytes.Length;
-						_udpHandler(HandlerBuffer);
+						_handlerBuffer.Array = bytes;
+						_handlerBuffer.ReadIndex = 0;
+						_handlerBuffer.WriteIndex = bytes.Length;
+						_udpHandler(_handlerBuffer);
 					});
 				}
 			}
