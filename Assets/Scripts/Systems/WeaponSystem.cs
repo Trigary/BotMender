@@ -1,5 +1,4 @@
 ﻿using Assets.Scripts.Blocks.Live;
-using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Assets.Scripts.Systems {
@@ -8,8 +7,8 @@ namespace Assets.Scripts.Systems {
 	/// </summary>
 	public abstract class WeaponSystem : BotSystem {
 		public readonly WeaponConstants Constants;
-		protected Vector3 TurretHeading { get { return Turret.forward; } }
-		protected Vector3 TurretEnd { get { return Turret.position + Turret.rotation * Constants.TurretOffset; } }
+		protected Vector3 TurretHeading => Turret.forward;
+		protected Vector3 TurretEnd => Turret.position + Turret.rotation * Constants.TurretOffset;
 		protected readonly Transform Turret;
 		private float _cooldownEnds;
 
@@ -77,7 +76,7 @@ namespace Assets.Scripts.Systems {
 			return true;
 		}
 
-		protected abstract void FireWeapon(Rigidbody bot, Vector3 point, [CanBeNull] RealLiveBlock block);
+		protected abstract void FireWeapon(Rigidbody bot, Vector3 point, RealLiveBlock block);
 
 
 
@@ -101,7 +100,7 @@ namespace Assets.Scripts.Systems {
 		public class WeaponConstants {
 			public readonly Vector3 TurretOffset, Kickback;
 			public readonly float YawLimit, MinPitch, MaxPitch, RotationSpeed, Cooldown, Inaccuracy, Energy;
-			
+
 			public WeaponConstants(Vector3 turretOffset, float yawLimit, float minPitch, float maxPitch, float rotationSpeed,
 									float kickback, float cooldown, float energy, float inaccuracy) {
 				TurretOffset = turretOffset;

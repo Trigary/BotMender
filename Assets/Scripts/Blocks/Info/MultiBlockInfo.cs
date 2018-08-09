@@ -7,7 +7,7 @@ namespace Assets.Scripts.Blocks.Info {
 	/// </summary>
 	public class MultiBlockInfo : BlockInfo {
 		private readonly List<KeyValuePair<Vector3Int, BlockSides>> _partConnectSides = new List<KeyValuePair<Vector3Int, BlockSides>>();
-		
+
 		public MultiBlockInfo(BlockType type, uint health, uint mass, GameObject prefab) :
 			base(type, health, mass, prefab) {
 		}
@@ -37,6 +37,7 @@ namespace Assets.Scripts.Blocks.Info {
 		/// Both the positions are and the connection points are rotated.
 		/// Returns false if any of these positions is out of bounds.
 		/// </summary>
+		// ReSharper disable once AnnotateCanBeNullParameter
 		public bool GetRotatedPositions(BlockPosition origin, byte rotation, out KeyValuePair<BlockPosition, BlockSides>[] output) {
 			output = new KeyValuePair<BlockPosition, BlockSides>[_partConnectSides.Count];
 			Quaternion rotationQuaternion = Rotation.GetQuaternion(rotation);

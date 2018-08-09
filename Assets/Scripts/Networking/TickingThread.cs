@@ -17,8 +17,6 @@ namespace Assets.Scripts.Networking {
 		/// <summary>
 		/// Creates a new thread controller with the specified parameters.
 		/// </summary>
-		/// <param name="frequency">The frequency at which the action should be executed.</param>
-		/// <param name="onTick">The action to execute periodically.</param>
 		public TickingThread(int frequency, Action onTick) {
 			Frequency = frequency;
 			_thread = new Thread(() => {
@@ -33,7 +31,7 @@ namespace Assets.Scripts.Networking {
 			_thread.Start();
 		}
 
-		
+
 
 		/// <summary>
 		/// Interrupts the thread, but does not wait for it to shut down.

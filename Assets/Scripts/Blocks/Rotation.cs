@@ -52,7 +52,7 @@ namespace Assets.Scripts.Blocks {
 		/// Can also be used to get the axs the rotation is facing using the axis: 3
 		/// </summary>
 		public static int GetAmount(byte rotation, int axis) {
-			return (rotation & (3 << 2 * axis)) >> 2 * axis;
+			return (rotation & (3 << (2 * axis))) >> (2 * axis);
 		}
 
 		/// <summary>

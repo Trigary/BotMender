@@ -36,7 +36,7 @@ namespace Assets.Scripts.Utilities {
 			if (_list.Count == 0) {
 				yield break;
 			}
-			
+
 			int originalIndex = _index;
 			yield return Next();
 			while (_index != originalIndex) {

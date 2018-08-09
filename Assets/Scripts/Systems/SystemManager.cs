@@ -161,7 +161,7 @@ namespace Assets.Scripts.Systems {
 				// -> create LocalOrServer variant of classes?
 				// -> validation and execution have to be separated:
 				//			anything which isn't needed to create the end result is validation
-				
+
 				if (!NetworkClient.active) {
 
 				}

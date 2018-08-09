@@ -15,15 +15,9 @@ namespace Assets.Scripts.Networking {
 	/// </summary>
 	public static class NetworkClient {
 		/// <summary>
-		/// Fired when the connection is finished. It connection may or may not have be successful.
+		/// Fired when the connection is finished. The connection may or may not have be successful,
+		/// the success variable should be checked to determine that.
 		/// </summary>
-		/// <param name="success">Whether the connection was successful.
-		/// If this is true of the other parameters will have default values.</param>
-		/// <param name="connectionFailure">The reason of the connection failure, if the connection failed.</param>
-		/// <param name="authenticationFailure">The authentication failure response code returned by the server,
-		/// if the authentication failed.</param>
-		/// <param name="timeout">Shows whether a timeout happened.</param>
-		/// <param name="connectionLost">Shows whether the connection was lost while authenticating.</param>
 		public delegate void OnConnected(bool success, SocketError connectionFailure,
 										byte authenticationFailure, bool timeout, bool connectionLost);
 
@@ -33,7 +27,7 @@ namespace Assets.Scripts.Networking {
 		/// </summary>
 		public delegate void OnDisconnected();
 
-		
+
 
 		/// <summary>
 		/// Determines whether this client is currently initialized.
@@ -42,7 +36,7 @@ namespace Assets.Scripts.Networking {
 		public static bool Initialized {
 			get {
 				lock (TcpHandlers) {
-					return Client != null;
+					return _client != null;
 				}
 			}
 		}
@@ -54,7 +48,7 @@ namespace Assets.Scripts.Networking {
 		public static bool Connected {
 			get {
 				lock (TcpHandlers) {
-					return TickingThread != null;
+					return _tickingThread != null;
 				}
 			}
 		}
@@ -66,7 +60,7 @@ namespace Assets.Scripts.Networking {
 		public static bool Connecting {
 			get {
 				lock (TcpHandlers) {
-					return Client != null && TickingThread == null;
+					return _client != null && _tickingThread == null;
 				}
 			}
 		}
@@ -85,14 +79,14 @@ namespace Assets.Scripts.Networking {
 			set {
 				lock (TcpHandlers) {
 					if (_udpHandler == null && value != null) {
-						ResetPacketTimestamp = true;
+						_resetPacketTimestamp = true;
 					}
 					_udpHandler = value;
 				}
 			}
 		}
 		private static Action<ByteBuffer> _udpHandler;
-		private static bool ResetPacketTimestamp;
+		private static bool _resetPacketTimestamp;
 
 		/// <summary>
 		/// The payload to repeatedly send over UDP.
@@ -129,25 +123,23 @@ namespace Assets.Scripts.Networking {
 		private static OnDisconnected _disconnectHandler;
 
 		private static readonly Action<ByteBuffer>[] TcpHandlers = new Action<ByteBuffer>[Enum.GetNames(typeof(NetworkPacket)).Length];
-		private static DoubleClient Client;
-		private static DoubleClientHandler Handler;
-		private static TickingThread TickingThread;
+		private static DoubleClient _client;
+		private static DoubleClientHandler _handler;
+		private static TickingThread _tickingThread;
 
 
 
 		/// <summary>
 		/// Initializes the networking and starts to connect.
 		/// </summary>
-		/// <param name="ip">The address of the server.</param>
-		/// <param name="onConnected">The handler of connection event.</param>
 		public static void Start(IPAddress ip, OnConnected onConnected) {
 			lock (TcpHandlers) {
-				Assert.IsNull(Client, "The NetworkClient is already initialized.");
-				Handler = new DoubleClientHandler(onConnected);
+				Assert.IsNull(_client, "The NetworkClient is already initialized.");
+				_handler = new DoubleClientHandler(onConnected);
 				byte[] encryptionKey = new byte[16];
 				byte[] authenticationData = encryptionKey;
-				Client = new DoubleClient(Handler, encryptionKey, authenticationData, ip, NetworkUtils.Port);
-				Client.Start();
+				_client = new DoubleClient(_handler, encryptionKey, authenticationData, ip, NetworkUtils.Port);
+				_client.Start();
 			}
 		}
 
@@ -159,15 +151,15 @@ namespace Assets.Scripts.Networking {
 		public static void Stop() {
 			lock (TcpHandlers) {
 				_udpHandler = null;
-				ResetPacketTimestamp = false;
+				_resetPacketTimestamp = false;
 				_udpPayload = null;
 				_disconnectHandler = null;
-				TickingThread?.Stop();
-				TickingThread = null;
+				_tickingThread?.Stop();
+				_tickingThread = null;
 				Array.Clear(TcpHandlers, 0, TcpHandlers.Length);
-				Handler = null;
-				Client.Close();
-				Client = null;
+				_handler = null;
+				_client.Close();
+				_client = null;
 			}
 		}
 
@@ -176,8 +168,6 @@ namespace Assets.Scripts.Networking {
 		/// <summary>
 		/// Sets the handler for a specific (TCP) packet type.
 		/// </summary>
-		/// <param name="packet">The type of the packet to handle with the specified handler.</param>
-		/// <param name="handler">The action which handles the incoming packet of this type.</param>
 		public static void SetTcpHandler(NetworkPacket packet, Action<ByteBuffer> handler) {
 			lock (TcpHandlers) {
 				TcpHandlers[(byte)packet] = handler;
@@ -187,10 +177,9 @@ namespace Assets.Scripts.Networking {
 		/// <summary>
 		/// Sends the specified payload over TCP.
 		/// </summary>
-		/// <param name="payloadWriter">The action which writes the payload to a buffer.</param>
 		public static void SendTcp(Action<ByteBuffer> payloadWriter) {
 			lock (TcpHandlers) {
-				Client?.SendTcp(payloadWriter);
+				_client?.SendTcp(payloadWriter);
 			}
 		}
 
@@ -227,10 +216,10 @@ namespace Assets.Scripts.Networking {
 					OnConnected onConnected = _onConnected;
 					_onConnected = null;
 					UnityDispatcher.Invoke(() => onConnected(true, SocketError.Success, 0, false, false));
-					TickingThread = new TickingThread(NetworkUtils.UdpSendFrequency, () => {
+					_tickingThread = new TickingThread(NetworkUtils.UdpSendFrequency, () => {
 						lock (TcpHandlers) {
 							if (_udpPayload != null) {
-								Client.SendUdp(buffer => buffer.Write(_udpPayload));
+								_client.SendUdp(buffer => buffer.Write(_udpPayload));
 							}
 						}
 					});
@@ -260,9 +249,9 @@ namespace Assets.Scripts.Networking {
 						return;
 					}
 
-					if (ResetPacketTimestamp) {
+					if (_resetPacketTimestamp) {
 						_lastPacketTimestamp = packetTimestamp;
-						ResetPacketTimestamp = false;
+						_resetPacketTimestamp = false;
 					} else if (!DoubleProtocol.IsPacketNewest(ref _lastPacketTimestamp, packetTimestamp)) {
 						return;
 					}

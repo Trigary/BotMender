@@ -50,7 +50,7 @@ namespace Assets.Scripts.Blocks {
 
 
 
-		public static int TypeCount { get { return BlockTypes.Length; } }
+		public static int TypeCount => BlockTypes.Length;
 
 		public static BlockType GetType(int index) {
 			return BlockTypes[index];
@@ -80,7 +80,7 @@ namespace Assets.Scripts.Blocks {
 				parts = null;
 				return null;
 			}
-			
+
 			GameObject block = InstantiatePrefab(parent, info, rotation, position);
 			PlacedMultiBlockParent component = block.AddComponent<PlacedMultiBlockParent>();
 

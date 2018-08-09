@@ -23,7 +23,7 @@ namespace Assets.Scripts.Systems.Propulsion {
 			if (multiplier == 0) {
 				return;
 			}
-			
+
 			bot.AddForceAtPosition(direction * multiplier * Constants.Force,
 				bot.position + bot.rotation * (Block.transform.localPosition + Constants.Offset),
 				ForceMode.Impulse);

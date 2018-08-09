@@ -4,6 +4,7 @@ using Assets.Scripts.Blocks;
 using Assets.Scripts.Blocks.Info;
 using Assets.Scripts.Blocks.Live;
 using Assets.Scripts.Systems;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -27,12 +28,14 @@ namespace Assets.Scripts.Structures {
 		private BlockPosition _mainframePosition;
 		private Rigidbody _body;
 
+		[UsedImplicitly]
 		public void Awake() {
 			MoveRotateDirection = new Vector3(0, 0, 0);
 			_body = gameObject.AddComponent<Rigidbody>();
 			_body.angularDrag = RigidbodyAngularDrag;
 		}
 
+		[UsedImplicitly]
 		public void Start() { //TODO somwhere else
 			/*if (isLocalPlayer) {
 				StartCoroutine(CoroutineUtils.RepeatUnscaled(() => CmdUpdatePositionMovement(MoveRotateDirection,
@@ -49,6 +52,7 @@ namespace Assets.Scripts.Structures {
 		/// Lazily validates the data and returns false if it is found invalid.
 		/// No checks are made, the EditableStructure should be used for that.
 		/// </summary>
+		[CanBeNull]
 		public static CompleteStructure Create(ulong[] serialized, string gameObjectName) {
 			CompleteStructure structure = new GameObject(gameObjectName).AddComponent<CompleteStructure>();
 			if (!structure.Deserialize(serialized)) {
@@ -115,6 +119,7 @@ namespace Assets.Scripts.Structures {
 
 
 
+		[UsedImplicitly]
 		public void FixedUpdate() {
 			_systems.Tick(_body);
 			_systems.MoveRotate(_body, MoveRotateDirection);
@@ -180,7 +185,7 @@ namespace Assets.Scripts.Structures {
 			MoveRotateDirection = direction;
 			//CmdUpdatePositionMovement(direction, transform.position, transform.rotation, _body.velocity, _body.angularVelocity);
 		}
-		
+
 		/*private void CmdUpdatePositionMovement(Vector3 direction, Vector3 position, Quaternion rotation,
 												Vector3 velocity, Vector3 angularVelocity) {
 			if (!isLocalPlayer) {

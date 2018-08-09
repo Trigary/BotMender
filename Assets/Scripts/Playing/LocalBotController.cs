@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Structures;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Assets.Scripts.Playing {
@@ -9,6 +10,7 @@ namespace Assets.Scripts.Playing {
 		private Camera _camera;
 		private CompleteStructure _structure;
 
+		[UsedImplicitly]
 		public void Awake() {
 			_camera = Camera.main;
 			_structure = GetComponent<CompleteStructure>();
@@ -16,12 +18,14 @@ namespace Assets.Scripts.Playing {
 
 
 
+		[UsedImplicitly]
 		public void Update() {
 			if (Input.GetButtonDown("Ability")) {
 				_structure.UseActive();
 			}
 		}
 
+		[UsedImplicitly]
 		public void FixedUpdate() {
 			if (!Input.GetButton("FreeLook")) {
 				Ray ray = _camera.ScreenPointToRay(Input.mousePosition);

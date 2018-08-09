@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using JetBrains.Annotations;
+using UnityEngine;
 
 namespace Assets.Scripts.Building {
 	/// <summary>
@@ -13,12 +14,14 @@ namespace Assets.Scripts.Building {
 		private float _pitch;
 		private float _yaw;
 
+		[UsedImplicitly]
 		public void Start() {
 			transform.rotation = Quaternion.Euler(_pitch, _yaw, 0);
 		}
 
 
 
+		[UsedImplicitly]
 		public void FixedUpdate() {
 			_pitch += Input.GetAxisRaw("MouseY") * PitchFactor;
 			if (_pitch < -90) {

@@ -10,21 +10,5 @@ namespace Assets.Scripts.Utilities {
 				yield return new WaitForSeconds(delay);
 			}
 		}
-
-
-
-		public static IEnumerator Repeat(Action action, float delay) {
-			while (true) {
-				action.Invoke();
-				yield return new WaitForSeconds(delay);
-			}
-		}
-
-		public static IEnumerator RepeatUnscaled(Action action, float delay) {
-			while (true) {
-				action.Invoke();
-				yield return new WaitForSecondsRealtime(delay);
-			}
-		}
 	}
 }

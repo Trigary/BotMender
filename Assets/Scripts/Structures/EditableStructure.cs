@@ -20,6 +20,7 @@ namespace Assets.Scripts.Structures {
 		private WeaponSystem.Type _weaponType = WeaponSystem.Type.None;
 		private int _weaponCount;
 
+		[UsedImplicitly]
 		public void Start() {
 			if (_blocks.Count == 0) {
 				BlockPosition position;

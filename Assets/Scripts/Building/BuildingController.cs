@@ -7,7 +7,7 @@ using Assets.Scripts.Blocks.Info;
 using Assets.Scripts.Blocks.Placed;
 using Assets.Scripts.Playing;
 using Assets.Scripts.Structures;
-using UnityEngine.Assertions;
+using JetBrains.Annotations;
 
 namespace Assets.Scripts.Building {
 	/// <summary>
@@ -23,6 +23,7 @@ namespace Assets.Scripts.Building {
 		private BlockPosition _previousPreviewPosition;
 		private GameObject _previewObject;
 
+		[UsedImplicitly]
 		public void Awake() {
 			_camera = Camera.main;
 			_structure = GetComponent<EditableStructure>();
@@ -31,6 +32,7 @@ namespace Assets.Scripts.Building {
 
 
 
+		[UsedImplicitly]
 		public void Update() {
 			Rotate(Input.GetAxisRaw("MouseScroll"));
 			if (Input.GetButtonDown("Fire3")) {
@@ -52,7 +54,7 @@ namespace Assets.Scripts.Building {
 					}
 
 					IDictionary<BlockPosition, IPlacedBlock> notConnected = _structure.GetNotConnectedBlocks();
-					Assert.IsNotNull(notConnected, "The lack of the presence of the Mainframe was not shown among the errors.");
+					System.Diagnostics.Debug.Assert(notConnected != null, "The lack of the presence of the Mainframe was not shown among the errors.");
 					if (notConnected.Count != 0) {
 						Debug.Log("Structure error: not connected blocks");
 						return;
@@ -85,6 +87,7 @@ namespace Assets.Scripts.Building {
 			}
 		}
 
+		[UsedImplicitly]
 		public void FixedUpdate() {
 			GameObject block;
 			BlockPosition position;
