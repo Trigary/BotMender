@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Blocks;
 using Blocks.Info;
 using Blocks.Placed;
+using DoubleSocket.Utility.ByteBuffer;
 using Playing;
 using Structures;
 using UnityEngine;
@@ -14,11 +14,26 @@ namespace Building {
 	/// Allows the player to interact with the structure the script is attached to, should be used in build mode.
 	/// </summary>
 	public class BuildingController : MonoBehaviour {
-		public static readonly ulong[] ExampleStructure = {8396928UL, 8917164415UL, 17456832639UL, 8917295231UL, 26852139392UL, 6786588800UL, 8917098879UL, 26852074112UL, 9453969793UL, 9454035329UL, 9454166145UL, 11131953280UL, 30341734783UL, 15426920575UL, 13749198977UL, 18044035201UL, 30878605697UL, 4571865215UL, 4571799679UL, 5410726017UL, 7323263105UL, 37388100224UL, 41682936192UL, 30878539906UL, 30341668990UL, 24503066751UL, 24503066753UL, 11634811007UL, 11634811009UL, 14101193087UL, 14034084225UL};
+		public static ByteBuffer ExampleStructure {
+			get {
+				_exampleStructure.ReadIndex = 0;
+				return _exampleStructure;
+			}
+		}
+		// ReSharper disable once InconsistentNaming
+		private static readonly MutableByteBuffer _exampleStructure = new MutableByteBuffer();
+
+		static BuildingController() {
+			_exampleStructure.Array = new byte[] {0, 0, 128, 32, 128, 0, 5, 0, 128, 32, 131, 151, 6, 0, 128, 33, 132, 64, 9, 0, 128, 33, 127, 183, 7, 0, 129, 33, 130, 48, 7, 0, 127, 33, 130, 16, 6, 0, 128, 34, 130, 64, 8, 0, 128, 34, 129, 180, 1, 0, 127, 32, 129, 16, 1, 0, 127, 32, 128, 180, 1, 0, 129, 32, 129, 48, 1, 0, 129, 32, 128, 180, 1, 0, 129, 32, 127, 180, 1, 0, 127, 32, 127, 180, 2, 0, 127, 32, 126, 181, 2, 0, 129, 32, 126, 181, 2, 0, 129, 32, 132, 48, 1, 0, 129, 32, 130, 48, 2, 0, 127, 32, 132, 16, 1, 0, 127, 32, 130, 16, 1, 0, 127, 32, 131, 148, 1, 0, 129, 32, 131, 148, 2, 0, 128, 32, 133, 151, 3, 0, 127, 32, 133, 16, 3, 0, 129, 32, 133, 51, 1, 0, 128, 33, 131, 76, 3, 0, 127, 33, 131, 16, 3, 0, 129, 33, 131, 64, 7, 0, 127, 33, 128, 18, 7, 0, 129, 33, 128, 50};
+			_exampleStructure.WriteIndex = _exampleStructure.Array.Length;
+		}
+
+
+
 		private readonly HashSet<RealPlacedBlock> _previousNotConnected = new HashSet<RealPlacedBlock>();
 		private Camera _camera;
 		private EditableStructure _structure;
-		private int _blockType;
+		private ushort _blockType;
 		private byte _facingVariant;
 		private BlockPosition _previousPreviewPosition;
 		private GameObject _previewObject;
@@ -58,13 +73,11 @@ namespace Building {
 						return;
 					}
 
-					ulong[] serialized = _structure.Serialize();
-					Debug.Log("Structure: " + string.Join(", ", serialized.Select(value => value.ToString() + "UL").ToArray()));
-					CompleteStructure complete = CompleteStructure.Create(serialized, "BuiltStructure");
-					if (complete == null) {
-						Debug.Log("Failed to create CompleteStructure");
-						return;
-					}
+					ByteBuffer someBuffer = new MutableByteBuffer(RealPlacedBlock.SerializedSize * _structure.RealBlockCount);
+					_structure.Serialize(someBuffer);
+					Debug.Log("Structure: " + string.Join(", ", someBuffer.Array));
+					CompleteStructure complete = CompleteStructure.Create(someBuffer, "BuiltStructure");
+					Assert.IsNotNull(complete, "Own CompleteStructure creation mustn't fail.");
 
 					complete.gameObject.AddComponent<LocalBotController>();
 					_camera.gameObject.AddComponent<PlayingCameraController>()
@@ -74,11 +87,8 @@ namespace Building {
 					Destroy(gameObject);
 
 					CompleteStructure otherStructure = CompleteStructure.Create(ExampleStructure, "OtherStructure");
-					if (otherStructure != null) {
-						otherStructure.transform.position = new Vector3(150, 5, 150);
-					} else {
-						Debug.Log("Failed to create OtherStructure");
-					}
+					Assert.IsNotNull(otherStructure, "Other CompleteStructure creation mustn't fail.");
+					otherStructure.transform.position = new Vector3(150, 5, 150);
 				}).Invoke();
 			}
 		}
@@ -109,7 +119,7 @@ namespace Building {
 		}
 
 		private void Switch() {
-			_blockType = (_blockType + 1) % BlockFactory.TypeCount;
+			_blockType = (ushort)((_blockType + 1) % BlockFactory.TypeCount);
 			ShowPreview();
 			Debug.Log("Switched to: " + BlockFactory.GetType(_blockType));
 		}

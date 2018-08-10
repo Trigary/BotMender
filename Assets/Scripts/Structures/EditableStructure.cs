@@ -5,6 +5,7 @@ using Systems;
 using Blocks;
 using Blocks.Info;
 using Blocks.Placed;
+using DoubleSocket.Utility.ByteBuffer;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -14,6 +15,8 @@ namespace Structures {
 	/// A structure which is editable. It doesn't have health and it may contain not connected blocks.
 	/// </summary>
 	public class EditableStructure : MonoBehaviour {
+		public int RealBlockCount { get; private set; }
+
 		private readonly IDictionary<BlockPosition, IPlacedBlock> _blocks = new Dictionary<BlockPosition, IPlacedBlock>();
 		[CanBeNull] private BlockPosition _mainframePosition;
 		private bool _activeSystemPresent;
@@ -24,9 +27,9 @@ namespace Structures {
 			if (_blocks.Count == 0) {
 				BlockPosition position;
 				Assert.IsTrue(BlockPosition.FromVector(transform.position, out position),
-					"Failed to get BlockPosition from EditableStructure position.");
+					"Failed to get a BlockPosition from the EditableStructure position.");
 				Assert.IsTrue(TryAddBlock(position, (MultiBlockInfo)BlockFactory.GetInfo(BlockType.Mainframe), 0),
-					"Failed to set the place the Mainframe.");
+					"Failed to place the Mainframe.");
 			}
 		}
 
@@ -98,6 +101,7 @@ namespace Structures {
 				}
 			}
 
+			RealBlockCount++;
 			if (info.Type == BlockType.Mainframe) {
 				_mainframePosition = position;
 			} else if (SystemFactory.IsActiveSystem(info.Type)) {
@@ -127,6 +131,7 @@ namespace Structures {
 		}
 
 		private void RemoveBlock(IPlacedBlock block) {
+			RealBlockCount--;
 			if (block.Position.Equals(_mainframePosition)) {
 				_mainframePosition = null;
 			} else if (SystemFactory.IsActiveSystem(block.Type)) {
@@ -190,37 +195,29 @@ namespace Structures {
 
 
 		/// <summary>
-		/// Serialises the structure, saving the positions, types and rotations.
-		/// Data structure (each character represents 1 byte): XYZR TTTT
+		/// Serialises the structure into the specified buffer.
+		/// Data structure of the blocks (each character represents 1 byte): TT XYZR
 		/// </summary>
-		public ulong[] Serialize() {
-			int count = 0;
-			RealPlacedBlock[] blocks = new RealPlacedBlock[_blocks.Count];
+		public void Serialize(ByteBuffer buffer) {
 			foreach (IPlacedBlock block in _blocks.Values) {
 				RealPlacedBlock real = block as RealPlacedBlock;
 				if (real != null) {
-					blocks[count++] = real;
+					buffer.Write((ushort)block.Type);
+					buffer.Write(real.Position.X);
+					buffer.Write(real.Position.Y);
+					buffer.Write(real.Position.Z);
+					buffer.Write(real.Rotation);
 				}
 			}
-
-			ulong[] array = new ulong[count];
-			for (int index = 0; index < count; index++) {
-				RealPlacedBlock block = blocks[index];
-				BlockPosition position = block.Position;
-
-				ulong data = BitConverter.ToUInt32(new[] {position.X, position.Y, position.Z, block.Rotation}, 0);
-				array[index] = data | ((ulong)block.Type << 32);
-			}
-			return array;
 		}
 
 		/// <summary>
-		/// Overrides the current structure (read: removes all previous blocks) with the serialized one.
+		/// Overrides the current structure (read: removes all previous blocks) with the serialized one in the buffer.
 		/// Lazely validates the data and returns false, if it is found invalid.
 		/// No checks are not made, #GetNotConnectedBlocks should be called after this method.
 		/// </summary>
-		public bool Deserialize(ulong[] serialized) {
-			foreach (IPlacedBlock block in _blocks.Values) {
+		public bool Deserialize(ByteBuffer buffer) { //TODO update
+			foreach (IPlacedBlock block in _blocks.Values.ToList()) {
 				RealPlacedBlock real = block as RealPlacedBlock;
 				if (real != null) {
 					RemoveBlock(real);
@@ -228,33 +225,37 @@ namespace Structures {
 			}
 
 			try {
-				foreach (ulong value in serialized) {
-					byte[] bytes = BitConverter.GetBytes(value);
-					uint type = BitConverter.ToUInt32(bytes, 4);
+				while (buffer.BytesLeft >= RealPlacedBlock.SerializedSize) {
+					ushort type = buffer.ReadUShort();
 					if (type >= BlockFactory.TypeCount) {
 						return false;
 					}
 
 					BlockPosition position;
-					if (!BlockPosition.FromComponents(bytes[0], bytes[1], bytes[2], out position)) {
+					if (!BlockPosition.FromComponents(buffer.ReadByte(), buffer.ReadByte(), buffer.ReadByte(), out position)) {
 						return false;
 					}
 
-					BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType((int)type));
+					BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType(type));
 					SingleBlockInfo single = info as SingleBlockInfo;
 					bool result = single != null
-						? TryAddBlock(position, single, bytes[3])
-						: TryAddBlock(position, (MultiBlockInfo)info, bytes[3]);
+						? TryAddBlock(position, single, buffer.ReadByte())
+						: TryAddBlock(position, (MultiBlockInfo)info, buffer.ReadByte());
 
 					if (!result) {
 						return false;
 					}
 				}
-				return true;
 			} catch (Exception e) {
 				Debug.Log("Exception caught while deserializing into an EditableStructure: " + e);
 				return false;
 			}
+
+			if (buffer.BytesLeft != 0) {
+				Debug.Log(buffer.BytesLeft + " bytes were left out after deserializing into an EditableStructure.");
+				return false;
+			}
+			return true;
 		}
 
 

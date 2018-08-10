@@ -10,7 +10,6 @@ namespace Systems {
 	/// A class which manages a bot's systems.
 	/// </summary>
 	public class SystemManager {
-		public const float BaseMaxSpeed = 10;
 		public const float FiringPause = 0.075f; //in seconds
 		public const float EnergyFillRate = 0.25f;
 		public const float MinFiringInaccuracy = 0.25f;

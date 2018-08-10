@@ -15,7 +15,7 @@ namespace Blocks {
 	/// </summary>
 	public static class BlockFactory {
 		private static readonly BlockType[] BlockTypes = (BlockType[])Enum.GetValues(typeof(BlockType));
-		private static readonly IDictionary<BlockType, BlockInfo> Blocks = new Dictionary<BlockType, BlockInfo>();
+		private static readonly BlockInfo[] Blocks = new BlockInfo[BlockTypes.Length];
 
 		static BlockFactory() {
 			AddMulti(BlockType.Mainframe, 5000, 2500)
@@ -50,14 +50,24 @@ namespace Blocks {
 
 
 
+		/// <summary>
+		/// Gets the count of the types. If the index specified in #GetType is greater than or equal to this an error happens.
+		/// </summary>
 		public static int TypeCount => BlockTypes.Length;
 
-		public static BlockType GetType(int index) {
+		/// <summary>
+		/// Gets the BlockType associated with the specified index. This method is useful for serializations.
+		/// See #TypeCount for the safeness of this method.
+		/// </summary>
+		public static BlockType GetType(ushort index) {
 			return BlockTypes[index];
 		}
 
+		/// <summary>
+		/// Gets the BlockInfo associated with the specified block type.
+		/// </summary>
 		public static BlockInfo GetInfo(BlockType type) {
-			return Blocks[type];
+			return Blocks[(ushort)type];
 		}
 
 
@@ -127,13 +137,13 @@ namespace Blocks {
 
 
 		private static void AddSingle(BlockType type, uint health, uint mass, BlockSides connectSides) {
-			Blocks.Add(type, new SingleBlockInfo(type, health, mass, Resources.Load("Blocks/" + type) as GameObject,
-				connectSides));
+			Blocks[(ushort)type] = new SingleBlockInfo(type, health, mass, Resources.Load("Blocks/" + type) as GameObject,
+				connectSides);
 		}
 
 		private static MultiBlockInfo AddMulti(BlockType type, uint health, uint mass) {
 			MultiBlockInfo info = new MultiBlockInfo(type, health, mass, Resources.Load("Blocks/" + type) as GameObject);
-			Blocks.Add(type, info);
+			Blocks[(ushort)type] = info;
 			return info;
 		}
 

@@ -1,8 +1,8 @@
 ﻿namespace Blocks {
 	/// <summary>
-	/// The possible types of a block.
+	/// The possible types of a block. The enum's name will be used to retrieve the block prefab.
 	/// </summary>
-	public enum BlockType {
+	public enum BlockType : ushort {
 		Mainframe,
 
 		ArmorCube1,

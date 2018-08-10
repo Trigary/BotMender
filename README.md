@@ -1,21 +1,44 @@
 # BotMender
 
-A Unity game where bots can be built from 'blocks' and then taken to action.
-The current version is an early prototype.
+A TPS Unity game where bots can be built from blocks and then taken into (PvP) action.
+The current version is an early prototype and is continuously being updated.
+There is no playable build, the project has to be imported into Unity to run it.
 
 ## Blocks, building, systems
 
 Each blocks has mass, health and "connect-sides": sides on which it can connect to other blocks.
-This system is expected to get reworked a bit due to some flaws,
-because for example it is very limiting when it comes to multi-blocks.
+The block placement system is expected to get reworked a bit due to only allowing
+blocks which take a whole block unit of space.
+
+
 All blocks may also define a system: if the block is placed, the system gets installed onto the bot.
-There are 3 kinds of system: propulsion, weapon and "active".
-An active system is usually some sort of special ability which has a cooldown.
+There are 3 kinds of system: propulsion, weapon and active.
+An active system usually gives some sort of special ability which has a cooldown.
+Passive systems might get introduced in the future.
 
 ## Bots
 
 A bot is a collection of its parts (blocks), and systems.
+Since the systems are defined by the blocks, a bot can be serialized just by serializing its blocks.
 The health of a bot is the sum of its blocks' health.
-The position, type and rotation of a block can be serialized into 64 bits
-(48 bits would also be enough, but I went with 64 for simplicity's sake),
-therefore a bot structure can be serialized into a long array.
+
+# Current state
+
+This project is currently an early prototype.
+Nothing is final and everything which has been implemented is subject to improvement.
+The current goal is to implement a basic version of as many of the features as possible.
+This allows design errors to be spotted early on,
+before any radical would be required when fixing them.
+This also means that all front-end development is kept to a bare minimum.
+At the moment the short-term goal is to make the already implemented features
+smoothly work in a networked environment.
+
+# Contributing
+
+If you are thinking of contributing, feel free to do so, no need to be shy!
+As outlined in the previous paragraph, the main focus is back-end development for the moment,
+but don't let that discourage you if that's not your thing.
+If you would like to ask for guidelines as to how you could contribute,
+you should contact [Trigary](https://github.com/Trigary).
+The [codebase documentation](code-docs.md) contains a collection of information useful
+when interacting with the programming-related side of this project.

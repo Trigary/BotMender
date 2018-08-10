@@ -4,6 +4,10 @@ using Blocks;
 using UnityEngine;
 
 namespace Systems {
+	/// <summary>
+	/// A class which acts as the container of the constants registered inside it.
+	/// The constants can be accessed through the public variables of the class.
+	/// </summary>
 	public static class SystemConstantsContainer {
 		public static readonly IDictionary<BlockType, WeaponSystem.WeaponConstants> WeaponConstants = new Dictionary<BlockType, WeaponSystem.WeaponConstants>();
 		public static readonly IDictionary<BlockType, ThrusterSystem.ThrusterConstants> ThrusterConstants = new Dictionary<BlockType, ThrusterSystem.ThrusterConstants>();

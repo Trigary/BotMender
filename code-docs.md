@@ -1,16 +1,41 @@
-# Scripting documentation
+# Codebase documentation
 
-A place where some codebase related stuff are explained.
+A place where some programming related things are explained.
 
-## Adding new blocks
+## Adding new blocks, systems
 
 New blocks are specified in the `BlockFactory` class.
 Prefabs are retrieved using the `BlockType` enum's name.
-Multiblocks' "connect-sides" should be specified so that all "outbound" (read: can connect the multiblock
-with another block) connection sides are connected together.
-It is required because of how the "are these block groups connected" algorithm works.
+Multiblocks' "connect-sides" should be specified so that all "outbound"
+(read: can connect the multiblock with another block) connection sides are connected together.
+It is required because of how the "are these block groups connected" algorithm works.  
 If the block comes with a system, it has to be specified in the `SystemFactory` class.
-Weapon and active systems must also be specified in the `GetWeaponType` and `IsActiveSystem` methods respectively.
+Weapon and active systems must also be specified in the `GetWeaponType` and
+`IsActiveSystem` methods respectively.
 Weapons must also have a child `GameObject` named "Turret" attached to them.
 This turret mustn't have its own collider.
-Constants which are specific to a block can be registered in the `SystemConstantsContainer` class for later retrieval.
+Constants which are specific to a block type can be registered in the
+`SystemConstantsContainer` class for later retrieval.
+
+## Bot, block serialization
+
+A bot can be serialized by serializing its blocks, but other pieces of information
+(eg. max health) may also get saved in the future for caching reasons.
+A placed block can be serialized by serializing its position, rotation and type.
+For future compatibility reasons each position component is stored on 8 bits.
+The type is stored on 16 bits and the rotation is stored on 8 bits
+(despite only having 6 possible values) for simplicity reasons.
+The order of the data in the serialized format is the following
+(each character represents one byte): TT XYZR
+
+## Networking
+
+An open-source library made by [Trigary](https://github.com/Trigary) named
+[DoubleSocket](https://github.com/Trigary/DoubleSocket) is used to handle the networking.
+This allows the bypassing of Unity's limited and poorly documented HLAPI and LLAPI.
+The library uses a synchronized TCP and UDP socket for each party,
+therefore taking advantage of TCP's flow and congestion control while also allowing
+UDP packets to be used when reliability and ordered packets are not required.
+This library is wrapped in classes found in the `Networking` namespace.
+The `public` parts of that namespace can safely be accessed from the main Unity thread.
+For information regarding specific packets, please refer to the [packet documentation](packets.md).

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Systems;
 using Blocks;
 using Blocks.Info;
@@ -39,74 +38,52 @@ namespace Structures {
 
 
 		/// <summary>
-		/// Loads this structure into the a new GameObject using the given serialized blocks.
+		/// Loads the structure created from the given buffer into a new GameObject.
 		/// Also creates all required components for the GameObject.
-		/// Lazily validates the data and returns false if it is found invalid.
-		/// No checks are made, the EditableStructure should be used for that.
+		/// No validation is done, the EditableStructure should be used for that.
 		/// </summary>
 		[CanBeNull]
-		public static CompleteStructure Create(ulong[] serialized, string gameObjectName) {
+		public static CompleteStructure Create(ByteBuffer buffer, string gameObjectName) {
 			CompleteStructure structure = new GameObject(gameObjectName).AddComponent<CompleteStructure>();
-			if (!structure.Deserialize(serialized)) {
-				Destroy(structure);
-				return null;
-			}
-
+			structure.Deserialize(buffer);
 			structure.MaxHealth = structure.Health;
 			structure._systems.Finished();
 			structure.ApplyMass(false);
 			return structure;
 		}
 
-		private bool Deserialize(ulong[] serialized) {
-			try {
-				foreach (ulong value in serialized) {
-					byte[] bytes = BitConverter.GetBytes(value);
-					uint type = BitConverter.ToUInt32(bytes, 4);
-					if (type >= BlockFactory.TypeCount) {
-						return false;
-					}
+		private void Deserialize(ByteBuffer buffer) {
+			while (buffer.BytesLeft > 0) {
+				ushort type = buffer.ReadUShort();
+				BlockPosition position;
+				BlockPosition.FromComponents(buffer.ReadByte(), buffer.ReadByte(), buffer.ReadByte(), out position);
 
-					BlockPosition position;
-					if (!BlockPosition.FromComponents(bytes[0], bytes[1], bytes[2], out position)) {
-						return false;
-					}
+				BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType(type));
+				if (info.Type == BlockType.Mainframe) {
+					_mainframePosition = position;
+				}
 
-					BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType((int)type));
-					if (info.Type == BlockType.Mainframe) {
-						_mainframePosition = position;
-					}
-
-					SingleBlockInfo single = info as SingleBlockInfo;
-					RealLiveBlock block;
-					if (single != null) {
-						block = BlockFactory.MakeSingleLive(transform, single, bytes[3], position);
-					} else {
-						LiveMultiBlockPart[] parts;
-						block = BlockFactory.MakeMultiLive(transform, (MultiBlockInfo)info, bytes[3], position, out parts);
-						if (block == null) {
-							return false;
-						}
-
-						foreach (LiveMultiBlockPart part in parts) {
-							_blocks.Add(part.Position, part);
-						}
-					}
-
-					Health += info.Health;
-					Mass += info.Mass;
-					_blocks.Add(position, block);
-
-					BotSystem system;
-					if (SystemFactory.Create(block, out system)) {
-						_systems.Add(position, system);
+				RealLiveBlock block;
+				SingleBlockInfo single = info as SingleBlockInfo;
+				if (single != null) {
+					block = BlockFactory.MakeSingleLive(transform, single, buffer.ReadByte(), position);
+				} else {
+					LiveMultiBlockPart[] parts;
+					block = BlockFactory.MakeMultiLive(transform, (MultiBlockInfo)info, buffer.ReadByte(), position, out parts);
+					foreach (LiveMultiBlockPart part in parts) {
+						_blocks.Add(part.Position, part);
 					}
 				}
-			} catch (Exception e) {
-				Debug.Log("Exception caught while deserializing into a CompleteStructure: " + e);
-				return false;
+
+				Health += info.Health;
+				Mass += info.Mass;
+				_blocks.Add(position, block);
+
+				BotSystem system;
+				if (SystemFactory.Create(block, out system)) {
+					_systems.Add(position, system);
+				}
 			}
-			return true;
 		}
 
 
