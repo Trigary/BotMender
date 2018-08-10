@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Assets.Scripts.Blocks.Info {
+namespace Blocks.Info {
 	/// <summary>
 	/// Information about a specific block type, which is either a signle or a multi block.
 	/// </summary>

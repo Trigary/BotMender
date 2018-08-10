@@ -1,9 +1,9 @@
-﻿using Assets.Scripts.Blocks;
-using Assets.Scripts.Blocks.Live;
+﻿using Blocks;
+using Blocks.Live;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace Assets.Scripts.Systems.Propulsion {
+namespace Systems.Propulsion {
 	/// <summary>
 	/// Adds some force at the thruster's coordinates to the bot.
 	/// </summary>

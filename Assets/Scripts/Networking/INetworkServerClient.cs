@@ -1,11 +1,17 @@
-﻿namespace Assets.Scripts.Networking {
+﻿namespace Networking {
 	/// <summary>
-	/// Represents a client connected to the server. This class is only safe to use in the main Unity thread.
+	/// Represents a client connected to the server.
 	/// </summary>
 	public interface INetworkServerClient {
 		/// <summary>
 		/// The identifier assigned to this client in this session. IDs are not reused within sessions.
 		/// </summary>
-		byte Id { get; } //TODO the clients should know what to do with IDs - whose which
+		byte Id { get; }
+
+		/// <summary>
+		/// Reset the packet timestamp used to filter out late-received UDP packets.
+		/// This should be called before UDP packets are received once again after a long pause.
+		/// </summary>
+		void SetResetPacketTimestamp();
 	}
 }

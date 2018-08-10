@@ -1,16 +1,16 @@
-﻿using Assets.Scripts.Structures;
-using JetBrains.Annotations;
+﻿using Networking;
+using Structures;
 using UnityEngine;
 
-namespace Assets.Scripts.Playing {
+namespace Playing {
 	/// <summary>
 	/// Gives the player controls over the structure it is attached to, should be used in play mode.
 	/// </summary>
 	public class LocalBotController : MonoBehaviour {
 		private Camera _camera;
 		private CompleteStructure _structure;
+		private byte _lastInput;
 
-		[UsedImplicitly]
 		public void Awake() {
 			_camera = Camera.main;
 			_structure = GetComponent<CompleteStructure>();
@@ -18,14 +18,12 @@ namespace Assets.Scripts.Playing {
 
 
 
-		[UsedImplicitly]
 		public void Update() {
 			if (Input.GetButtonDown("Ability")) {
 				_structure.UseActive();
 			}
 		}
 
-		[UsedImplicitly]
 		public void FixedUpdate() {
 			if (!Input.GetButton("FreeLook")) {
 				Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
@@ -41,14 +39,10 @@ namespace Assets.Scripts.Playing {
 				_structure.FireWeapons();
 			}
 
-			Vector3 newMoveRotateInput = new Vector3(
-				Input.GetAxisRaw("Rightward"),
-				Input.GetAxisRaw("Upward"),
-				Input.GetAxisRaw("Forward")
-			);
-
-			if (!newMoveRotateInput.Equals(_structure.MoveRotateDirection)) {
-				_structure.SetMoveRotateDirection(newMoveRotateInput);
+			byte newInput = PlayerInput.Serialize();
+			if (newInput != _lastInput) {
+				_lastInput = newInput;
+				NetworkClient.UdpPayload = new[] {_lastInput};
 			}
 		}
 	}

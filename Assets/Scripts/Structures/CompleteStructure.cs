@@ -1,20 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using Assets.Scripts.Blocks;
-using Assets.Scripts.Blocks.Info;
-using Assets.Scripts.Blocks.Live;
-using Assets.Scripts.Systems;
+using Systems;
+using Blocks;
+using Blocks.Info;
+using Blocks.Live;
+using DoubleSocket.Utility.ByteBuffer;
 using JetBrains.Annotations;
+using Playing;
 using UnityEngine;
 using UnityEngine.Assertions;
+using Utilities;
 
-namespace Assets.Scripts.Structures {
+namespace Structures {
 	/// <summary>
 	/// A structure which is no longer editable, but is damagable and destructable.
 	/// Internally creates a Rigidbody which is destroyed when the script is destroyed.
 	/// </summary>
 	public class CompleteStructure : MonoBehaviour {
-		public const float PositionMovementUpdateFrequency = 5;
 		public const float RigidbodyDragMultiplier = 0.0025f;
 		public const float RigidbodyDragOffset = 0.0025f;
 		public const float RigidbodyAngularDrag = 0.075f;
@@ -22,26 +24,16 @@ namespace Assets.Scripts.Structures {
 		public uint MaxHealth { get; private set; }
 		public uint Health { get; private set; }
 		public uint Mass { get; private set; }
-		public Vector3 MoveRotateDirection { get; private set; }
 		private readonly IDictionary<BlockPosition, ILiveBlock> _blocks = new Dictionary<BlockPosition, ILiveBlock>();
 		private readonly SystemManager _systems = new SystemManager();
 		private BlockPosition _mainframePosition;
 		private Rigidbody _body;
+		private byte _inputByte;
+		private Vector3 _input = Vector3.zero;
 
-		[UsedImplicitly]
 		public void Awake() {
-			MoveRotateDirection = new Vector3(0, 0, 0);
 			_body = gameObject.AddComponent<Rigidbody>();
 			_body.angularDrag = RigidbodyAngularDrag;
-		}
-
-		[UsedImplicitly]
-		public void Start() { //TODO somwhere else
-			/*if (isLocalPlayer) {
-				StartCoroutine(CoroutineUtils.RepeatUnscaled(() => CmdUpdatePositionMovement(MoveRotateDirection,
-						transform.position, transform.rotation, _body.velocity, _body.angularVelocity),
-					1f / PositionMovementUpdateFrequency));
-			}*/
 		}
 
 
@@ -119,10 +111,9 @@ namespace Assets.Scripts.Structures {
 
 
 
-		[UsedImplicitly]
 		public void FixedUpdate() {
 			_systems.Tick(_body);
-			_systems.MoveRotate(_body, MoveRotateDirection);
+			_systems.MoveRotate(_body, _input);
 			_body.drag = _body.velocity.sqrMagnitude * RigidbodyDragMultiplier + RigidbodyDragOffset;
 		}
 
@@ -178,38 +169,35 @@ namespace Assets.Scripts.Structures {
 
 
 		/// <summary>
-		/// Applies the MoveRotateDirection change and sends a position-movement update to the server.
-		/// Should only be called by the authoritive client.
+		/// Applies the StateUpdate received from the client. Should only be called by the server.
 		/// </summary>
-		public void SetMoveRotateDirection(Vector3 direction) {
-			MoveRotateDirection = direction;
-			//CmdUpdatePositionMovement(direction, transform.position, transform.rotation, _body.velocity, _body.angularVelocity);
+		public void UpdateState(byte input) {
+			_inputByte = input;
+			_input = PlayerInput.Deserialize(input);
 		}
 
-		/*private void CmdUpdatePositionMovement(Vector3 direction, Vector3 position, Quaternion rotation,
-												Vector3 velocity, Vector3 angularVelocity) {
-			if (!isLocalPlayer) {
-				MoveRotateDirection = direction;
-				transform.position = position;
-				transform.rotation = rotation;
-				_body.velocity = velocity;
-				_body.angularVelocity = angularVelocity;
-			}
-
-			//TODO new networking
-			NetworkUtils.ForEachConnection(connectionToClient, target => TargetUpdatePositionMovement(target,
-				direction, transform.position, transform.rotation, _body.velocity, _body.angularVelocity));
-		}
-		
-		private void TargetUpdatePositionMovement(NetworkConnection target, Vector3 direction, Vector3 position,
-												Quaternion rotation, Vector3 velocity, Vector3 angularVelocity) {
-			//TODO when receiving data calculate the time the data took to travel and apply that (MAYBE)
-			MoveRotateDirection = direction;
+		/// <summary>
+		/// Applies the StateUpdate received from the server. Should only be called by a client.
+		/// </summary>
+		public void UpdateState(byte input, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angularVelocity) {
+			_inputByte = input;
+			_input = PlayerInput.Deserialize(input);
 			transform.position = position;
 			transform.rotation = rotation;
 			_body.velocity = velocity;
 			_body.angularVelocity = angularVelocity;
-		}*/
+		}
+
+		/// <summary>
+		/// Serializeses this bot's current state into the specified buffer.
+		/// </summary>
+		public void SerializeState(ByteBuffer buffer) {
+			buffer.Write(_inputByte);
+			buffer.Write(transform.position);
+			buffer.Write(transform.rotation);
+			buffer.Write(_body.velocity);
+			buffer.Write(_body.angularVelocity);
+		}
 
 
 

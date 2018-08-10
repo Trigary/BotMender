@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using Assets.Scripts.Blocks;
-using Assets.Scripts.Systems.Propulsion;
+using Systems.Propulsion;
+using Blocks;
 using UnityEngine;
 
-namespace Assets.Scripts.Systems {
+namespace Systems {
 	public static class SystemConstantsContainer {
 		public static readonly IDictionary<BlockType, WeaponSystem.WeaponConstants> WeaponConstants = new Dictionary<BlockType, WeaponSystem.WeaponConstants>();
 		public static readonly IDictionary<BlockType, ThrusterSystem.ThrusterConstants> ThrusterConstants = new Dictionary<BlockType, ThrusterSystem.ThrusterConstants>();

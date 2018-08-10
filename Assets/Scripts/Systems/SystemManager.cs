@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
-using Assets.Scripts.Blocks;
-using Assets.Scripts.Utilities;
+using Blocks;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Networking;
+using Utilities;
 
-namespace Assets.Scripts.Systems {
+namespace Systems {
 	/// <summary>
 	/// A class which manages a bot's systems.
 	/// </summary>

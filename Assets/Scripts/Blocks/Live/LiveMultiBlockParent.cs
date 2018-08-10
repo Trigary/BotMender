@@ -1,7 +1,7 @@
-﻿using Assets.Scripts.Blocks.Info;
-using Assets.Scripts.Blocks.Shared;
+﻿using Blocks.Info;
+using Blocks.Shared;
 
-namespace Assets.Scripts.Blocks.Live {
+namespace Blocks.Live {
 	/// <summary>
 	/// A real live block which is the parent of the multi block parts.
 	/// </summary>

@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-namespace Assets.Scripts.Utilities {
+namespace Utilities {
 	public class CircularList<T> : IEnumerable<T> {
 		private readonly List<T> _list = new List<T>();
 		private int _index;

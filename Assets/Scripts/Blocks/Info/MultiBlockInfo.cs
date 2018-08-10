@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Assets.Scripts.Blocks.Info {
+namespace Blocks.Info {
 	/// <summary>
 	/// Information about a specific multi block type.
 	/// </summary>

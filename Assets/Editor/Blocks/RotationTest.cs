@@ -1,7 +1,7 @@
-﻿using NUnit.Framework;
-using Assets.Scripts.Blocks;
+﻿using Blocks;
+using NUnit.Framework;
 
-namespace Assets.Editor.Blocks {
+namespace Editor.Blocks {
 	public class RotationTest {
 		/// <summary>
 		/// Rotating sides doesn't change the count of sides.

@@ -1,7 +1,6 @@
-﻿using JetBrains.Annotations;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Assets.Scripts.Playing {
+namespace Playing {
 	/// <summary>
 	/// Controls the camera it is attached to during the play mode.
 	/// Internally creates a rigidbody so that the camera can smoothly follow the object even at high speeds.
@@ -28,13 +27,11 @@ namespace Assets.Scripts.Playing {
 		private float _pitch = DefaultPitch;
 		private float _zoom = DefaultZoom;
 
-		[UsedImplicitly]
 		public void Awake() {
 			_rigidbody = gameObject.AddComponent<Rigidbody>();
 			_rigidbody.isKinematic = false;
 		}
 
-		[UsedImplicitly]
 		public void OnDestroy() {
 			Destroy(_rigidbody);
 		}
@@ -57,7 +54,6 @@ namespace Assets.Scripts.Playing {
 
 
 
-		[UsedImplicitly]
 		public void FixedUpdate() {
 			if (Structure == null) {
 				Destroy(this);

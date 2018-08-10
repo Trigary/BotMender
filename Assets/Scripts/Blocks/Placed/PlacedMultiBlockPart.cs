@@ -1,6 +1,6 @@
-﻿using Assets.Scripts.Blocks.Shared;
+﻿using Blocks.Shared;
 
-namespace Assets.Scripts.Blocks.Placed {
+namespace Blocks.Placed {
 	/// <summary>
 	/// A non-real placed block which is a part of a multi block.
 	/// </summary>

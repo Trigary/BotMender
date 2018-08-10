@@ -1,6 +1,6 @@
-﻿using Assets.Scripts.Blocks.Live;
+﻿using Blocks.Live;
 
-namespace Assets.Scripts.Systems {
+namespace Systems {
 	/// <summary>
 	/// A system which can be installed into a bot. Systems come with some of the block types.
 	/// </summary>

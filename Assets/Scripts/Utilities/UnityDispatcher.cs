@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using JetBrains.Annotations;
 using UnityEngine;
 
-namespace Assets.Scripts.Utilities {
+namespace Utilities {
 	/// <summary>
 	/// A utility class used to queue actions to be invoked on the main Unity thread.
 	/// </summary>
@@ -11,8 +10,8 @@ namespace Assets.Scripts.Utilities {
 		private static UnityDispatcher _instance;
 		private readonly Queue<Action> _actions = new Queue<Action>();
 
-		[UsedImplicitly]
 		public void Awake() {
+			DontDestroyOnLoad(this);
 			lock (_actions) {
 				_instance = this;
 			}
@@ -29,7 +28,6 @@ namespace Assets.Scripts.Utilities {
 			}
 		}
 
-		[UsedImplicitly]
 		public void Update() {
 			lock (_actions) {
 				if (_actions.Count > 0) {

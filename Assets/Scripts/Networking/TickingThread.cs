@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 
-namespace Assets.Scripts.Networking {
+namespace Networking {
 	/// <summary>
 	/// A class which controls a thread which periodically executes an action.
 	/// </summary>
@@ -34,7 +34,7 @@ namespace Assets.Scripts.Networking {
 
 
 		/// <summary>
-		/// Interrupts the thread, but does not wait for it to shut down.
+		/// Interrupts the thread, doesn't wait for it to shut down.
 		/// </summary>
 		public void Stop() {
 			_thread.Interrupt();

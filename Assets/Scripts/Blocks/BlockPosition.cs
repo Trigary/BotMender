@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace Assets.Scripts.Blocks {
+namespace Blocks {
 	/// <summary>
 	/// Specifies a block coordinate in the building mode.
 	/// </summary>
@@ -25,6 +25,7 @@ namespace Assets.Scripts.Blocks {
 		/// <summary>
 		/// Returns false if the position is out of bounds.
 		/// </summary>
+		// ReSharper disable once AnnotateCanBeNullParameter
 		public static bool FromComponents(int x, int y, int z, out BlockPosition output) {
 			if (IsValid(x, y, z)) {
 				output = new BlockPosition(x, y, z);
@@ -63,6 +64,7 @@ namespace Assets.Scripts.Blocks {
 		/// <summary>
 		/// Returns false if the offseted value is out of bounds.
 		/// </summary>
+		// ReSharper disable once AnnotateCanBeNullParameter
 		public bool GetOffseted(BlockSides side, out BlockPosition output) {
 			switch (side) {
 				case BlockSides.Right:
@@ -86,7 +88,6 @@ namespace Assets.Scripts.Blocks {
 				default:
 					throw new AssertionException("Invalid side: " + side, null);
 			}
-
 			return output != null;
 		}
 

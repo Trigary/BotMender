@@ -2,7 +2,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace Assets.Scripts.Utilities {
+namespace Utilities {
 	public static class CoroutineUtils {
 		public static IEnumerator Repeat(Action action, float delay, int times) {
 			for (int i = 0; i < times; i++) {

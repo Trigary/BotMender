@@ -1,8 +1,8 @@
-﻿using Assets.Scripts.Blocks.Info;
-using Assets.Scripts.Structures;
+﻿using Blocks.Info;
+using Structures;
 using UnityEngine;
 
-namespace Assets.Scripts.Blocks.Live {
+namespace Blocks.Live {
 	/// <summary>
 	/// A live block which has a GameObject.
 	/// </summary>

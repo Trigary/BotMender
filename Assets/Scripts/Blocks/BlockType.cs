@@ -1,4 +1,4 @@
-﻿namespace Assets.Scripts.Blocks {
+﻿namespace Blocks {
 	/// <summary>
 	/// The possible types of a block.
 	/// </summary>

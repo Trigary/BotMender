@@ -1,7 +1,8 @@
-﻿using Assets.Scripts.Blocks.Live;
+﻿using Blocks.Live;
+using JetBrains.Annotations;
 using UnityEngine;
 
-namespace Assets.Scripts.Systems {
+namespace Systems {
 	/// <summary>
 	/// A system which controls a weapon.
 	/// </summary>
@@ -76,7 +77,7 @@ namespace Assets.Scripts.Systems {
 			return true;
 		}
 
-		protected abstract void FireWeapon(Rigidbody bot, Vector3 point, RealLiveBlock block);
+		protected abstract void FireWeapon(Rigidbody bot, Vector3 point, [CanBeNull] RealLiveBlock block);
 
 
 

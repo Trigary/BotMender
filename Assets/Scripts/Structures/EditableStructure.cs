@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Assets.Scripts.Blocks;
-using Assets.Scripts.Blocks.Info;
-using Assets.Scripts.Blocks.Placed;
-using Assets.Scripts.Systems;
+using Systems;
+using Blocks;
+using Blocks.Info;
+using Blocks.Placed;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace Assets.Scripts.Structures {
+namespace Structures {
 	/// <summary>
 	/// A structure which is editable. It doesn't have health and it may contain not connected blocks.
 	/// </summary>
@@ -20,7 +20,6 @@ namespace Assets.Scripts.Structures {
 		private WeaponSystem.Type _weaponType = WeaponSystem.Type.None;
 		private int _weaponCount;
 
-		[UsedImplicitly]
 		public void Start() {
 			if (_blocks.Count == 0) {
 				BlockPosition position;

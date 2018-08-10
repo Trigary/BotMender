@@ -1,7 +1,7 @@
-﻿using Assets.Scripts.Blocks.Live;
+﻿using Blocks.Live;
 using UnityEngine;
 
-namespace Assets.Scripts.Systems.Weapon {
+namespace Systems.Weapon {
 	/// <summary>
 	/// Fires a laser beam.
 	/// </summary>

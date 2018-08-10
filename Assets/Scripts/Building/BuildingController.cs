@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Blocks;
+using Blocks.Info;
+using Blocks.Placed;
+using Playing;
+using Structures;
 using UnityEngine;
-using Assets.Scripts.Blocks;
-using Assets.Scripts.Blocks.Info;
-using Assets.Scripts.Blocks.Placed;
-using Assets.Scripts.Playing;
-using Assets.Scripts.Structures;
-using JetBrains.Annotations;
+using UnityEngine.Assertions;
 
-namespace Assets.Scripts.Building {
+namespace Building {
 	/// <summary>
 	/// Allows the player to interact with the structure the script is attached to, should be used in build mode.
 	/// </summary>
@@ -23,7 +23,6 @@ namespace Assets.Scripts.Building {
 		private BlockPosition _previousPreviewPosition;
 		private GameObject _previewObject;
 
-		[UsedImplicitly]
 		public void Awake() {
 			_camera = Camera.main;
 			_structure = GetComponent<EditableStructure>();
@@ -32,7 +31,6 @@ namespace Assets.Scripts.Building {
 
 
 
-		[UsedImplicitly]
 		public void Update() {
 			Rotate(Input.GetAxisRaw("MouseScroll"));
 			if (Input.GetButtonDown("Fire3")) {
@@ -54,7 +52,7 @@ namespace Assets.Scripts.Building {
 					}
 
 					IDictionary<BlockPosition, IPlacedBlock> notConnected = _structure.GetNotConnectedBlocks();
-					System.Diagnostics.Debug.Assert(notConnected != null, "The lack of the presence of the Mainframe was not shown among the errors.");
+					Assert.IsNotNull(notConnected, "The lack of the presence of the Mainframe was not shown among the errors.");
 					if (notConnected.Count != 0) {
 						Debug.Log("Structure error: not connected blocks");
 						return;
@@ -75,8 +73,6 @@ namespace Assets.Scripts.Building {
 					Destroy(_camera.gameObject.GetComponent<BuildingCameraController>());
 					Destroy(gameObject);
 
-
-
 					CompleteStructure otherStructure = CompleteStructure.Create(ExampleStructure, "OtherStructure");
 					if (otherStructure != null) {
 						otherStructure.transform.position = new Vector3(150, 5, 150);
@@ -87,7 +83,6 @@ namespace Assets.Scripts.Building {
 			}
 		}
 
-		[UsedImplicitly]
 		public void FixedUpdate() {
 			GameObject block;
 			BlockPosition position;
@@ -199,6 +194,7 @@ namespace Assets.Scripts.Building {
 
 
 
+		// ReSharper disable once AnnotateCanBeNullParameter
 		private bool GetSelectedBlock(out GameObject block, out BlockPosition position, out byte rotation) {
 			block = null;
 			position = null;

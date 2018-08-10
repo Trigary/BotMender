@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Assets.Scripts.Blocks.Placed {
+namespace Blocks.Placed {
 	/// <summary>
 	/// A placed block which has a GameObject.
 	/// </summary>

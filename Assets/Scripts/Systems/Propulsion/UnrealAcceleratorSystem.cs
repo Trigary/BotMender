@@ -1,7 +1,7 @@
-﻿using Assets.Scripts.Blocks.Live;
+﻿using Blocks.Live;
 using UnityEngine;
 
-namespace Assets.Scripts.Systems.Propulsion {
+namespace Systems.Propulsion {
 	/// <summary>
 	/// Changes the bot's velocity directly: doesn't apply any forces.
 	/// </summary>

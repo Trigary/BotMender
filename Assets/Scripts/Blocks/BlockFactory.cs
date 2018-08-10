@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using Assets.Scripts.Blocks.Info;
-using Assets.Scripts.Blocks.Live;
-using Assets.Scripts.Blocks.Placed;
-using Assets.Scripts.Blocks.Shared;
+using Blocks.Info;
+using Blocks.Live;
+using Blocks.Placed;
+using Blocks.Shared;
 using Boo.Lang;
 using JetBrains.Annotations;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace Assets.Scripts.Blocks {
+namespace Blocks {
 	/// <summary>
 	/// Creates new block GameObject instances.
 	/// </summary>

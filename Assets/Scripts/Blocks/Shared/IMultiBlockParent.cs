@@ -1,6 +1,6 @@
-﻿using Assets.Scripts.Blocks.Info;
+﻿using Blocks.Info;
 
-namespace Assets.Scripts.Blocks.Shared {
+namespace Blocks.Shared {
 	/// <summary>
 	/// The base class of placed and live mutli block parents.
 	/// </summary>

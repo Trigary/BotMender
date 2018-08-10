@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace Assets.Scripts.Blocks {
+namespace Blocks {
 	/// <summary>
 	/// Byte structure: FFZZYYXX.
 	/// X, Y and Z specify the rotation amount (0-3, both inclusive) around that axis.

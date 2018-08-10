@@ -1,7 +1,7 @@
-﻿using Assets.Scripts.Blocks.Info;
-using Assets.Scripts.Blocks.Shared;
+﻿using Blocks.Info;
+using Blocks.Shared;
 
-namespace Assets.Scripts.Blocks.Placed {
+namespace Blocks.Placed {
 	/// <summary>
 	/// A real placed multi block which is the parent of the multi block parts.
 	/// </summary>

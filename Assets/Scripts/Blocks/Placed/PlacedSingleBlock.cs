@@ -1,6 +1,6 @@
-﻿using Assets.Scripts.Blocks.Info;
+﻿using Blocks.Info;
 
-namespace Assets.Scripts.Blocks.Placed {
+namespace Blocks.Placed {
 	/// <summary>
 	/// A real placed block which is not a multiblock.
 	/// </summary>

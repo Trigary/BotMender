@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Assets.Scripts.Blocks.Info {
+namespace Blocks.Info {
 	/// <summary>
 	/// Information about a specific single block type.
 	/// </summary>

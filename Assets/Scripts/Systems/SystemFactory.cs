@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
-using Assets.Scripts.Blocks;
-using Assets.Scripts.Blocks.Live;
-using Assets.Scripts.Systems.Active;
-using Assets.Scripts.Systems.Propulsion;
-using Assets.Scripts.Systems.Weapon;
+using Systems.Active;
+using Systems.Propulsion;
+using Systems.Weapon;
+using Blocks;
+using Blocks.Live;
 using Boo.Lang;
 
-namespace Assets.Scripts.Systems {
+namespace Systems {
 	/// <summary>
 	/// Creates new system instances.
 	/// </summary>

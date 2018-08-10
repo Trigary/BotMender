@@ -14,6 +14,6 @@ General rules:
 8 bits: rightward | leftward | upward | downward | forward | backward | nothing | nothing  
 Each bit represents whether the specified axis is pressed or not.  
 
-**Udp_Server_Movement_StateUpdate: the server informs the client of one of the bots' state.**  
-49 byte: Byte-Input, Vector3-Position, Vector3-Rotation, Vector3-Velocity, Vector3-AngularVelocity  
+**Udp_Server_Movement_StateUpdate: the server informs the client of X many bots' states.**  
+X * 54 byte: Byte-BotId, Byte-Input, Vector3-Position, Vector4-Rotation, Vector3-Velocity, Vector3-AngularVelocity  
 The input byte's format is specified in the "Udp_Client_Movement_InputUpdate" packet.  

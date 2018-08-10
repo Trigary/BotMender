@@ -1,4 +1,4 @@
-﻿namespace Assets.Scripts.Networking {
+﻿namespace Networking {
 	public static class NetworkUtils {
 		public const int Port = 8888;
 		public const int UdpSendFrequency = 30;

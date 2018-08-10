@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Assets.Scripts.Blocks {
+namespace Blocks {
 	public static class BlockUtilities {
 		public static void SetColor(GameObject block, Color color, bool enableTransparency) {
 			Material material = block.GetComponent<Renderer>().material;

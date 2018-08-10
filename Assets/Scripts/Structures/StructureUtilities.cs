@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Assets.Scripts.Blocks;
-using Assets.Scripts.Blocks.Shared;
+using Blocks;
+using Blocks.Shared;
 using UnityEngine.Assertions;
 
-namespace Assets.Scripts.Structures {
+namespace Structures {
 	/// <summary>
 	/// Utility methods for both the EditableStructure and the CompleteStructure classes.
 	/// </summary>

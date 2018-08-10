@@ -1,7 +1,7 @@
-﻿using Assets.Scripts.Blocks.Live;
+﻿using Blocks.Live;
 using UnityEngine;
 
-namespace Assets.Scripts.Systems {
+namespace Systems {
 	/// <summary>
 	/// A system which affects the bot's movement and/or rotation.
 	/// </summary>

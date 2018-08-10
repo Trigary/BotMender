@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
-using Assets.Scripts.Utilities;
 using DoubleSocket.Client;
 using DoubleSocket.Protocol;
 using DoubleSocket.Utility.ByteBuffer;
+using JetBrains.Annotations;
 using UnityEngine.Assertions;
+using Utilities;
 
-namespace Assets.Scripts.Networking {
+namespace Networking {
 	/// <summary>
 	/// A class containing methods using which the client can send and receive data to/from the server.
 	/// The TCP and UDP handlers should be registered before the networking is initialized.
@@ -33,99 +34,62 @@ namespace Assets.Scripts.Networking {
 		/// Determines whether this client is currently initialized.
 		/// This is true if either Connected or Connecting is true.
 		/// </summary>
-		public static bool Initialized {
-			get {
-				lock (TcpHandlers) {
-					return _client != null;
-				}
-			}
-		}
+		public static bool Initialized => _client != null;
 
 		/// <summary>
 		/// Determines whether this client is currently connected.
 		/// This is true if Initialized is true but Connecting is false.
 		/// </summary>
-		public static bool Connected {
-			get {
-				lock (TcpHandlers) {
-					return _tickingThread != null;
-				}
-			}
-		}
+		public static bool Connected => _tickingThread != null;
 
 		/// <summary>
 		/// Determines whether this client is currently connecting.
 		/// This is true if Initialized is true but Connected is false.
 		/// </summary>
-		public static bool Connecting {
-			get {
-				lock (TcpHandlers) {
-					return _client != null && _tickingThread == null;
-				}
-			}
-		}
+		public static bool Connecting => _client != null && _tickingThread == null;
+
+		/// <summary>
+		/// The player id of the local client or 0 if no local client exists or if the local client is not yet connected.
+		/// </summary>
+		public static byte LocalId { get; private set; }
 
 
 
 		/// <summary>
-		/// The handler of incoming UDP packets.
+		/// The payload to repeatedly send over UDP or null if there is no such payload.
 		/// </summary>
-		public static Action<ByteBuffer> UdpHandler {
-			get {
-				lock (TcpHandlers) {
-					return _udpHandler;
-				}
-			}
-			set {
-				lock (TcpHandlers) {
-					if (_udpHandler == null && value != null) {
-						_resetPacketTimestamp = true;
-					}
-					_udpHandler = value;
-				}
-			}
-		}
-		private static Action<ByteBuffer> _udpHandler;
-		private static bool _resetPacketTimestamp;
-
-		/// <summary>
-		/// The payload to repeatedly send over UDP.
-		/// </summary>
+		[CanBeNull]
 		public static byte[] UdpPayload {
 			get {
-				lock (TcpHandlers) {
+				lock (UdpPayloadLock) {
 					return _udpPayload;
 				}
 			}
 			set {
-				lock (TcpHandlers) {
+				lock (UdpPayloadLock) {
 					_udpPayload = value;
 				}
 			}
 		}
-		private static byte[] _udpPayload;
+		[CanBeNull] private static byte[] _udpPayload;
+		private static readonly object UdpPayloadLock = new object();
+
+		/// <summary>
+		/// The handler of incoming UDP packets.
+		/// </summary>
+		public static Action<ByteBuffer> UdpHandler { get; set; }
 
 		/// <summary>
 		/// The handler of the disconnect event.
 		/// </summary>
-		public static OnDisconnected DisconnectHandler {
-			get {
-				lock (TcpHandlers) {
-					return _disconnectHandler;
-				}
-			}
-			set {
-				lock (TcpHandlers) {
-					_disconnectHandler = value;
-				}
-			}
-		}
-		private static OnDisconnected _disconnectHandler;
+		public static OnDisconnected DisconnectHandler { get; set; }
 
 		private static readonly Action<ByteBuffer>[] TcpHandlers = new Action<ByteBuffer>[Enum.GetNames(typeof(NetworkPacket)).Length];
-		private static DoubleClient _client;
+		private static readonly object SmallLock = new object();
 		private static DoubleClientHandler _handler;
+		[CanBeNull] private static DoubleClient _client;
 		private static TickingThread _tickingThread;
+		private static bool _resetPacketTimestamp;
 
 
 
@@ -133,14 +97,12 @@ namespace Assets.Scripts.Networking {
 		/// Initializes the networking and starts to connect.
 		/// </summary>
 		public static void Start(IPAddress ip, OnConnected onConnected) {
-			lock (TcpHandlers) {
-				Assert.IsNull(_client, "The NetworkClient is already initialized.");
-				_handler = new DoubleClientHandler(onConnected);
-				byte[] encryptionKey = new byte[16];
-				byte[] authenticationData = encryptionKey;
-				_client = new DoubleClient(_handler, encryptionKey, authenticationData, ip, NetworkUtils.Port);
-				_client.Start();
-			}
+			Assert.IsNull(_client, "The NetworkClient is already initialized.");
+			_handler = new DoubleClientHandler(onConnected);
+			byte[] encryptionKey = new byte[16];
+			byte[] authenticationData = encryptionKey;
+			_client = new DoubleClient(_handler, encryptionKey, authenticationData, ip, NetworkUtils.Port);
+			_client.Start();
 		}
 
 		/// <summary>
@@ -149,18 +111,18 @@ namespace Assets.Scripts.Networking {
 		/// so should only be to make this client disconnect.
 		/// </summary>
 		public static void Stop() {
-			lock (TcpHandlers) {
-				_udpHandler = null;
-				_resetPacketTimestamp = false;
-				_udpPayload = null;
-				_disconnectHandler = null;
-				_tickingThread?.Stop();
-				_tickingThread = null;
-				Array.Clear(TcpHandlers, 0, TcpHandlers.Length);
-				_handler = null;
-				_client.Close();
-				_client = null;
-			}
+			Assert.IsNotNull(_client, "The NetworkClient is not initialized.");
+			UdpPayload = null;
+			_tickingThread?.Stop();
+			_tickingThread = null;
+			LocalId = 0;
+			_resetPacketTimestamp = false;
+			DisconnectHandler = null;
+			UdpHandler = null;
+			Array.Clear(TcpHandlers, 0, TcpHandlers.Length);
+			_handler = null;
+			_client.Close();
+			_client = null;
 		}
 
 
@@ -169,8 +131,16 @@ namespace Assets.Scripts.Networking {
 		/// Sets the handler for a specific (TCP) packet type.
 		/// </summary>
 		public static void SetTcpHandler(NetworkPacket packet, Action<ByteBuffer> handler) {
-			lock (TcpHandlers) {
-				TcpHandlers[(byte)packet] = handler;
+			TcpHandlers[(byte)packet] = handler;
+		}
+
+		/// <summary>
+		/// Reset the packet timestamp used to filter out late-received UDP packets.
+		/// This should be called before UDP packets are received once again after a long pause.
+		/// </summary>
+		public static void ResetPacketTimestamp() {
+			lock (SmallLock) {
+				_resetPacketTimestamp = true;
 			}
 		}
 
@@ -178,16 +148,14 @@ namespace Assets.Scripts.Networking {
 		/// Sends the specified payload over TCP.
 		/// </summary>
 		public static void SendTcp(Action<ByteBuffer> payloadWriter) {
-			lock (TcpHandlers) {
-				_client?.SendTcp(payloadWriter);
-			}
+			_client?.SendTcp(payloadWriter);
 		}
 
 
 
 		private class DoubleClientHandler : IDoubleClientHandler {
 			private readonly MutableByteBuffer _handlerBuffer = new MutableByteBuffer();
-			private OnConnected _onConnected;
+			private readonly OnConnected _onConnected;
 			private ushort _lastPacketTimestamp;
 
 			public DoubleClientHandler(OnConnected onConnected) {
@@ -197,85 +165,111 @@ namespace Assets.Scripts.Networking {
 
 
 			public void OnConnectionFailure(SocketError error) {
-				Stop();
-				UnityDispatcher.Invoke(() => _onConnected(false, error, 0, false, false));
+				UnityDispatcher.Invoke(() => {
+					if (_client != null) {
+						Stop();
+						_onConnected(false, error, 0, false, false);
+					}
+				});
 			}
 
 			public void OnTcpAuthenticationFailure(byte errorCode) {
-				Stop();
-				UnityDispatcher.Invoke(() => _onConnected(false, SocketError.Success, errorCode, false, false));
+				UnityDispatcher.Invoke(() => {
+					if (_client != null) {
+						Stop();
+						_onConnected(false, SocketError.Success, errorCode, false, false);
+					}
+				});
 			}
 
 			public void OnAuthenticationTimeout(DoubleClient.State state) {
-				Stop();
-				UnityDispatcher.Invoke(() => _onConnected(false, SocketError.Success, 0, true, false));
+				UnityDispatcher.Invoke(() => {
+					if (_client != null) {
+						Stop();
+						_onConnected(false, SocketError.Success, 0, true, false);
+					}
+				});
 			}
 
-			public void OnFullAuthentication() {
-				lock (TcpHandlers) {
-					OnConnected onConnected = _onConnected;
-					_onConnected = null;
-					UnityDispatcher.Invoke(() => onConnected(true, SocketError.Success, 0, false, false));
-					_tickingThread = new TickingThread(NetworkUtils.UdpSendFrequency, () => {
-						lock (TcpHandlers) {
-							if (_udpPayload != null) {
-								_client.SendUdp(buffer => buffer.Write(_udpPayload));
+			public void OnFullAuthentication(ByteBuffer buffer) {
+				byte localId = buffer.ReadByte();
+				UnityDispatcher.Invoke(() => {
+					if (_client != null) {
+						LocalId = localId;
+						_onConnected(true, SocketError.Success, 0, false, false);
+
+						_tickingThread = new TickingThread(NetworkUtils.UdpSendFrequency, () => {
+							lock (UdpPayloadLock) {
+								if (_udpPayload != null) {
+									_client.SendUdp(buff => buff.Write(_udpPayload));
+								}
 							}
-						}
-					});
-				}
+						});
+					}
+				});
 			}
 
 			public void OnTcpReceived(ByteBuffer buffer) {
-				if (buffer.BytesLeft >= sizeof(NetworkPacket)) {
-					lock (TcpHandlers) {
-						Action<ByteBuffer> action = TcpHandlers[buffer.ReadByte()];
-						if (action != null) {
-							byte[] bytes = buffer.ReadBytes();
-							UnityDispatcher.Invoke(() => {
-								_handlerBuffer.Array = bytes;
-								_handlerBuffer.ReadIndex = 0;
-								_handlerBuffer.WriteIndex = bytes.Length;
-								action(_handlerBuffer);
-							});
-						}
-					}
+				if (buffer.BytesLeft < sizeof(NetworkPacket)) {
+					return;
 				}
-			}
 
-			public void OnUdpReceived(ByteBuffer buffer, ushort packetTimestamp) {
-				lock (TcpHandlers) {
-					if (_udpHandler == null) {
-						return;
-					}
+				byte packet = buffer.ReadByte();
+				if (packet >= TcpHandlers.Length) {
+					return;
+				}
 
-					if (_resetPacketTimestamp) {
-						_lastPacketTimestamp = packetTimestamp;
-						_resetPacketTimestamp = false;
-					} else if (!DoubleProtocol.IsPacketNewest(ref _lastPacketTimestamp, packetTimestamp)) {
-						return;
-					}
-
-					byte[] bytes = buffer.ReadBytes();
-					UnityDispatcher.Invoke(() => {
+				byte[] bytes = buffer.ReadBytes();
+				UnityDispatcher.Invoke(() => {
+					Action<ByteBuffer> action = TcpHandlers[packet];
+					if (action != null) {
 						_handlerBuffer.Array = bytes;
 						_handlerBuffer.ReadIndex = 0;
 						_handlerBuffer.WriteIndex = bytes.Length;
-						_udpHandler(_handlerBuffer);
-					});
+						action(_handlerBuffer);
+					}
+				});
+			}
+
+			public void OnUdpReceived(ByteBuffer buffer, ushort packetTimestamp) {
+				bool resetPacketTimestamp;
+				lock (SmallLock) {
+					resetPacketTimestamp = _resetPacketTimestamp;
+					_resetPacketTimestamp = false;
 				}
+
+				if (resetPacketTimestamp) {
+					_lastPacketTimestamp = packetTimestamp;
+				} else if (!DoubleProtocol.IsPacketNewest(ref _lastPacketTimestamp, packetTimestamp)) {
+					return;
+				}
+
+				byte[] bytes = buffer.ReadBytes();
+				UnityDispatcher.Invoke(() => {
+					if (_client != null) {
+						_handlerBuffer.Array = bytes;
+						_handlerBuffer.ReadIndex = 0;
+						_handlerBuffer.WriteIndex = bytes.Length;
+						UdpHandler(_handlerBuffer);
+					}
+				});
 			}
 
 			public void OnConnectionLost(DoubleClient.State state) {
 				if (state == DoubleClient.State.Authenticated) {
-					lock (TcpHandlers) {
-						OnDisconnected disconnectHandler = _disconnectHandler;
-						Stop();
-						UnityDispatcher.Invoke(() => disconnectHandler());
-					}
+					UnityDispatcher.Invoke(() => {
+						if (_client != null) {
+							Stop();
+							DisconnectHandler();
+						}
+					});
 				} else {
-					Stop();
-					UnityDispatcher.Invoke(() => _onConnected(false, SocketError.Success, 0, false, true));
+					UnityDispatcher.Invoke(() => {
+						if (_client != null) {
+							Stop();
+							_onConnected(false, SocketError.Success, 0, false, true);
+						}
+					});
 				}
 			}
 		}

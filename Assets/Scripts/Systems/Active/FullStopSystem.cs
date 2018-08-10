@@ -1,7 +1,7 @@
-﻿using Assets.Scripts.Blocks.Live;
+﻿using Blocks.Live;
 using UnityEngine;
 
-namespace Assets.Scripts.Systems.Active {
+namespace Systems.Active {
 	/// <summary>
 	/// Sets the bot's velocity to zero upon activation.
 	/// </summary>

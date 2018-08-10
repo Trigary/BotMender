@@ -1,6 +1,6 @@
-﻿using Assets.Scripts.Blocks.Info;
+﻿using Blocks.Info;
 
-namespace Assets.Scripts.Blocks.Live {
+namespace Blocks.Live {
 	/// <summary>
 	/// A real live block which is not a multiblock.
 	/// </summary>

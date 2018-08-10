@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Assets.Scripts.Blocks {
+namespace Blocks {
 	/// <summary>
 	/// The sides of a block. Example usage: the sides where the block can connect to other blocks.
 	/// </summary>

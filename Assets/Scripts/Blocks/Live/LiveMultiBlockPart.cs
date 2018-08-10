@@ -1,6 +1,6 @@
-﻿using Assets.Scripts.Blocks.Shared;
+﻿using Blocks.Shared;
 
-namespace Assets.Scripts.Blocks.Live {
+namespace Blocks.Live {
 	/// <summary>
 	/// A non-real live block which is a part of a multi block.
 	/// </summary>

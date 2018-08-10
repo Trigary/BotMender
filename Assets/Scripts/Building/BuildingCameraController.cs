@@ -1,7 +1,6 @@
-﻿using JetBrains.Annotations;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Assets.Scripts.Building {
+namespace Building {
 	/// <summary>
 	/// Controls the camera it is attached to during the building/edit mode.
 	/// </summary>
@@ -14,14 +13,12 @@ namespace Assets.Scripts.Building {
 		private float _pitch;
 		private float _yaw;
 
-		[UsedImplicitly]
 		public void Start() {
 			transform.rotation = Quaternion.Euler(_pitch, _yaw, 0);
 		}
 
 
 
-		[UsedImplicitly]
 		public void FixedUpdate() {
 			_pitch += Input.GetAxisRaw("MouseY") * PitchFactor;
 			if (_pitch < -90) {
