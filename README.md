@@ -4,6 +4,9 @@ A TPS Unity game where bots can be built from blocks and then taken into (PvP) a
 The current version is an early prototype and is continuously being updated.
 There is no playable build, the project has to be imported into Unity to run it.
 
+Here's an example image of a bot: *(authentic programmer graphics)*  
+![example-bot](example-bot.png)
+
 ## Blocks, building, systems
 
 Each blocks has mass, health and "connect-sides": sides on which it can connect to other blocks.
