@@ -28,7 +28,17 @@ namespace Utilities {
 			}
 		}
 
+
+
 		public void Update() {
+			CheckInvokables();
+		}
+
+		public void FixedUpdate() {
+			CheckInvokables();
+		}
+
+		private void CheckInvokables() {
 			lock (_actions) {
 				if (_actions.Count > 0) {
 					while (_actions.Count > 0) {

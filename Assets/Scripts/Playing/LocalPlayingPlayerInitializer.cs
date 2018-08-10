@@ -58,13 +58,12 @@ namespace Playing {
 			Camera.main.gameObject.AddComponent<PlayingCameraController>()
 				.Initialize(structureObject.GetComponent<Rigidbody>());
 
-			NetworkClient.UdpHandler = buffer => {
-				while (buffer.BytesLeft > 0) {
-					int playerId = buffer.ReadByte();
-					if (playerId == NetworkClient.LocalId && NetworkUtils.IsHost) {
-						buffer.ReadIndex += 53;
-					} else {
-						GameObject structure = GameObject.Find("Player#" + playerId);
+			if (NetworkUtils.IsServer) {
+				NetworkClient.UdpHandler = buffer => { };
+			} else {
+				NetworkClient.UdpHandler = buffer => {
+					while (buffer.BytesLeft > 0) {
+						GameObject structure = GameObject.Find("Player#" + buffer.ReadByte());
 						if (structure == null) {
 							buffer.ReadIndex += 53;
 						} else {
@@ -72,8 +71,8 @@ namespace Playing {
 								buffer.ReadQuaternion(), buffer.ReadVector3(), buffer.ReadVector3());
 						}
 					}
-				}
-			};
+				};
+			}
 		}
 
 
@@ -101,12 +100,10 @@ namespace Playing {
 			ServerUdpSendBuffer.Array = new byte[54 * clientCounter];
 			ServerUdpSendBuffer.WriteIndex = 0;
 			//TODO better way: run the timer on the Unity thread, create the data there and call a SendUdp method
+			//or just make the server have to specify a byte[] supplier instead of byte[]
 			NetworkServer.ForEachClient(client => {
-				if (clientCounter-- > 0) {
-					ServerUdpSendBuffer.Write(client.Id);
-					GameObject.Find("Player#" + client.Id).GetComponent<CompleteStructure>()
-						.SerializeState(ServerUdpSendBuffer);
-				}
+				ServerUdpSendBuffer.Write(client.Id);
+				GameObject.Find("Player#" + client.Id).GetComponent<CompleteStructure>().SerializeState(ServerUdpSendBuffer);
 			});
 			NetworkServer.UdpPayload = ServerUdpSendBuffer.Array;
 		}

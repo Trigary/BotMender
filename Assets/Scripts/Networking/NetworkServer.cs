@@ -10,7 +10,6 @@ using Utilities;
 namespace Networking {
 	/// <summary>
 	/// A class containing methods using which the server can send and receive data to/from the clients.
-	/// The TCP and UDP handlers should be registered before the networking is initialized.
 	/// All handlers are called on the main Unity thread.
 	/// </summary>
 	public static class NetworkServer {
@@ -87,11 +86,7 @@ namespace Networking {
 
 			_tickingThread = new TickingThread(NetworkUtils.UdpSendFrequency, () => {
 				lock (UdpPayloadLock) {
-					if (_udpPayload == null || _udpPayload.Length == 0) {
-						return;
-					}
-
-					lock (_clients) {
+					if (_udpPayload != null && _udpPayload.Length != 0) {
 						foreach (NetworkServerClient client in _clients) {
 							_server.SendUdp(client.DoubleClient, buffer => buffer.Write(UdpPayload));
 						}
@@ -246,9 +241,9 @@ namespace Networking {
 				serverClient.Initialize();
 				UnityDispatcher.Invoke(() => {
 					if (_server != null) {
-						lock (_clients) {
+						lock (UdpPayloadLock) { //Don't let the TickingThread send before the client is initialized
 							_clients.Add(serverClient);
-							_onConnected(serverClient); //Don't let the TickingThread send before the client is initialized
+							_onConnected(serverClient);
 						}
 					}
 				});
@@ -302,7 +297,11 @@ namespace Networking {
 				if (state == DoubleServer.ClientState.Authenticated) {
 					UnityDispatcher.Invoke(() => {
 						if (_server != null) {
-							_onDisconnected((NetworkServerClient)client.ExtraData);
+							NetworkServerClient serverClient = (NetworkServerClient)client.ExtraData;
+							lock (UdpPayloadLock) { //Don't let the TickingThread send before the client is initialized
+								_clients.Remove(serverClient);
+								_onDisconnected(serverClient);
+							}
 						}
 					});
 				}

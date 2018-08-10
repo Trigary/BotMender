@@ -11,7 +11,6 @@ using Utilities;
 namespace Networking {
 	/// <summary>
 	/// A class containing methods using which the client can send and receive data to/from the server.
-	/// The TCP and UDP handlers should be registered before the networking is initialized.
 	/// All handlers are called on the main Unity thread.
 	/// </summary>
 	public static class NetworkClient {
