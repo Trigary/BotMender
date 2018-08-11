@@ -46,8 +46,7 @@ namespace Blocks.Info {
 				KeyValuePair<Vector3Int, BlockSides> pair = _partConnectSides[index];
 				Vector3Int offset = Vector3Int.RoundToInt(rotationQuaternion * pair.Key);
 
-				BlockPosition position;
-				if (!origin.GetOffseted(offset.x, offset.y, offset.z, out position)) {
+				if (!origin.GetOffseted(offset.x, offset.y, offset.z, out BlockPosition position)) {
 					output = null;
 					return false;
 				}

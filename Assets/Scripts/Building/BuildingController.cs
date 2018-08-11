@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Blocks;
 using Blocks.Info;
 using Blocks.Placed;
@@ -94,10 +95,8 @@ namespace Building {
 		}
 
 		public void FixedUpdate() {
-			GameObject block;
-			BlockPosition position;
-			byte rotation;
-			if (GetSelectedBlock(out block, out position, out rotation)) {
+			// ReSharper disable once UnusedVariable
+			if (GetSelectedBlock(out GameObject block, out BlockPosition position, out byte rotation)) {
 				if (!position.Equals(_previousPreviewPosition)) {
 					ShowPreview(position, rotation);
 				}
@@ -125,10 +124,8 @@ namespace Building {
 		}
 
 		private void Place() {
-			GameObject block;
-			BlockPosition position;
-			byte rotation;
-			if (!GetSelectedBlock(out block, out position, out rotation)) {
+			// ReSharper disable once UnusedVariable
+			if (!GetSelectedBlock(out GameObject block, out BlockPosition position, out byte rotation)) {
 				return;
 			}
 
@@ -140,10 +137,7 @@ namespace Building {
 		}
 
 		private void Delete() {
-			GameObject block;
-			BlockPosition position;
-			byte rotation;
-			if (!GetSelectedBlock(out block, out position, out rotation)) {
+			if (!GetSelectedBlock(out GameObject block, out BlockPosition position, out byte rotation)) {
 				return;
 			}
 
@@ -158,10 +152,8 @@ namespace Building {
 
 
 		private void ShowPreview() {
-			GameObject block;
-			BlockPosition position;
-			byte rotation;
-			if (GetSelectedBlock(out block, out position, out rotation)) {
+			// ReSharper disable once UnusedVariable
+			if (GetSelectedBlock(out GameObject block, out BlockPosition position, out byte rotation)) {
 				ShowPreview(position, rotation);
 			}
 		}
@@ -187,8 +179,9 @@ namespace Building {
 			if (single != null) {
 				block = BlockFactory.MakeSinglePlaced(_structure.transform, single, rotation, position);
 			} else {
-				PlacedMultiBlockPart[] parts;
-				block = BlockFactory.MakeMultiPlaced(_structure.transform, (MultiBlockInfo)info, rotation, position, out parts);
+				// ReSharper disable once UnusedVariable
+				block = BlockFactory.MakeMultiPlaced(_structure.transform, (MultiBlockInfo)info, rotation,
+					position, out PlacedMultiBlockPart[] parts);
 				if (block == null) {
 					return;
 				}
@@ -209,8 +202,7 @@ namespace Building {
 			block = null;
 			position = null;
 			rotation = 0;
-			RaycastHit hit;
-			if (!Physics.Raycast(_camera.transform.position, _camera.transform.forward, out hit)
+			if (!Physics.Raycast(_camera.transform.position, _camera.transform.forward, out RaycastHit hit)
 				|| !BlockPosition.FromVector(hit.point + hit.normal / 2, out position)) {
 				return false;
 			}
@@ -232,12 +224,9 @@ namespace Building {
 				return;
 			}
 
-			foreach (IPlacedBlock block in notConnected.Values) {
-				RealPlacedBlock real = block as RealPlacedBlock;
-				if (real != null) {
-					BlockUtilities.SetColor(real.gameObject, Color.red, false);
-					_previousNotConnected.Add(real);
-				}
+			foreach (RealPlacedBlock real in notConnected.Values.OfType<RealPlacedBlock>()) {
+				BlockUtilities.SetColor(real.gameObject, Color.red, false);
+				_previousNotConnected.Add(real);
 			}
 		}
 	}

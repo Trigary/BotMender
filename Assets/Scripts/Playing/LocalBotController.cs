@@ -27,8 +27,7 @@ namespace Playing {
 		public void FixedUpdate() {
 			if (!Input.GetButton("FreeLook")) {
 				Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
-				RaycastHit hit;
-				if (Physics.Raycast(ray, out hit)) {
+				if (Physics.Raycast(ray, out RaycastHit hit)) {
 					_structure.TrackTarget(hit.point);
 				} else {
 					_structure.TrackTarget(ray.origin + ray.direction * 500);

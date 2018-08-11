@@ -25,8 +25,7 @@ namespace Structures {
 
 		public void Start() {
 			if (_blocks.Count == 0) {
-				BlockPosition position;
-				Assert.IsTrue(BlockPosition.FromVector(transform.position, out position),
+				Assert.IsTrue(BlockPosition.FromVector(transform.position, out BlockPosition position),
 					"Failed to get a BlockPosition from the EditableStructure position.");
 				Assert.IsTrue(TryAddBlock(position, (MultiBlockInfo)BlockFactory.GetInfo(BlockType.Mainframe), 0),
 					"Failed to place the Mainframe.");
@@ -55,13 +54,12 @@ namespace Structures {
 				}
 			}
 
-			SingleBlockInfo single = info as SingleBlockInfo;
-			if (single != null) {
+			if (info is SingleBlockInfo single) {
 				return !_blocks.ContainsKey(position)
 					&& CanConnect(position, Rotation.RotateSides(single.ConnectSides, rotation));
 			} else {
-				KeyValuePair<BlockPosition, BlockSides>[] positions;
-				return ((MultiBlockInfo)info).GetRotatedPositions(position, rotation, out positions)
+				return ((MultiBlockInfo)info).GetRotatedPositions(position, rotation,
+						out KeyValuePair<BlockPosition, BlockSides>[] positions)
 					&& !positions.Any(pair => _blocks.ContainsKey(pair.Key))
 					&& positions.Any(pair => CanConnect(pair.Key, pair.Value));
 			}
@@ -84,13 +82,11 @@ namespace Structures {
 				return false;
 			}
 
-			SingleBlockInfo single = info as SingleBlockInfo;
-			if (single != null) {
+			if (info is SingleBlockInfo single) {
 				_blocks.Add(position, BlockFactory.MakeSinglePlaced(transform, single, rotation, position));
 			} else {
-				PlacedMultiBlockPart[] parts;
 				PlacedMultiBlockParent parent = BlockFactory.MakeMultiPlaced(transform, (MultiBlockInfo)info,
-					rotation, position, out parts);
+					rotation, position, out PlacedMultiBlockPart[] parts);
 				if (parent == null) {
 					return false;
 				}
@@ -123,8 +119,7 @@ namespace Structures {
 		/// Works for both multi and single blocks.
 		/// </summary>
 		public void RemoveBlock(BlockPosition position) {
-			IPlacedBlock block;
-			if (!_blocks.TryGetValue(position, out block)) {
+			if (!_blocks.TryGetValue(position, out IPlacedBlock block)) {
 				throw new AssertionException("Can't remove block at a position where no blocks exist.", null);
 			}
 			RemoveBlock(block);
@@ -216,7 +211,7 @@ namespace Structures {
 		/// Lazely validates the data and returns false, if it is found invalid.
 		/// No checks are not made, #GetNotConnectedBlocks should be called after this method.
 		/// </summary>
-		public bool Deserialize(ByteBuffer buffer) { //TODO update
+		public bool Deserialize(ByteBuffer buffer) {
 			foreach (IPlacedBlock block in _blocks.Values.ToList()) {
 				RealPlacedBlock real = block as RealPlacedBlock;
 				if (real != null) {
@@ -231,14 +226,13 @@ namespace Structures {
 						return false;
 					}
 
-					BlockPosition position;
-					if (!BlockPosition.FromComponents(buffer.ReadByte(), buffer.ReadByte(), buffer.ReadByte(), out position)) {
+					if (!BlockPosition.FromComponents(buffer.ReadByte(), buffer.ReadByte(), buffer.ReadByte(),
+						out BlockPosition position)) {
 						return false;
 					}
 
 					BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType(type));
-					SingleBlockInfo single = info as SingleBlockInfo;
-					bool result = single != null
+					bool result = info is SingleBlockInfo single
 						? TryAddBlock(position, single, buffer.ReadByte())
 						: TryAddBlock(position, (MultiBlockInfo)info, buffer.ReadByte());
 
@@ -271,11 +265,9 @@ namespace Structures {
 
 			for (int bit = 0; bit < 6; bit++) {
 				BlockSides side = rotatedConnectSides & (BlockSides)(1 << bit);
-				BlockPosition offseted;
-				IPlacedBlock block;
 				if (side == BlockSides.None
-					|| !position.GetOffseted(side, out offseted)
-					|| !_blocks.TryGetValue(offseted, out block)) {
+					|| !position.GetOffseted(side, out BlockPosition offseted)
+					|| !_blocks.TryGetValue(offseted, out IPlacedBlock block)) {
 					continue;
 				}
 

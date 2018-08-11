@@ -85,8 +85,7 @@ namespace Blocks {
 		[CanBeNull]
 		public static PlacedMultiBlockParent MakeMultiPlaced(Transform parent, MultiBlockInfo info, byte rotation, BlockPosition position,
 															out PlacedMultiBlockPart[] parts) {
-			KeyValuePair<BlockPosition, BlockSides>[] partPositions;
-			if (!info.GetRotatedPositions(position, rotation, out partPositions)) {
+			if (!info.GetRotatedPositions(position, rotation, out KeyValuePair<BlockPosition, BlockSides>[] partPositions)) {
 				parts = null;
 				return null;
 			}
@@ -94,10 +93,9 @@ namespace Blocks {
 			GameObject block = InstantiatePrefab(parent, info, rotation, position);
 			PlacedMultiBlockParent component = block.AddComponent<PlacedMultiBlockParent>();
 
-			IMultiBlockPart[] tempParts;
 			// ReSharper disable once CoVariantArrayConversion
 			InitializeMulti(component, info, rotation, position, partPositions, count => new PlacedMultiBlockPart[count],
-				pair => new PlacedMultiBlockPart(pair.Value, pair.Key), out tempParts);
+				pair => new PlacedMultiBlockPart(pair.Value, pair.Key), out IMultiBlockPart[] tempParts);
 			parts = (PlacedMultiBlockPart[])tempParts;
 			return component;
 		}
@@ -117,8 +115,7 @@ namespace Blocks {
 		[CanBeNull]
 		public static LiveMultiBlockParent MakeMultiLive(Transform parent, MultiBlockInfo info, byte rotation, BlockPosition position,
 														out LiveMultiBlockPart[] parts) {
-			KeyValuePair<BlockPosition, BlockSides>[] partPositions;
-			if (!info.GetRotatedPositions(position, rotation, out partPositions)) {
+			if (!info.GetRotatedPositions(position, rotation, out KeyValuePair<BlockPosition, BlockSides>[] partPositions)) {
 				parts = null;
 				return null;
 			}
@@ -126,10 +123,9 @@ namespace Blocks {
 			GameObject block = InstantiatePrefab(parent, info, rotation, position);
 			LiveMultiBlockParent component = block.AddComponent<LiveMultiBlockParent>();
 
-			IMultiBlockPart[] tempParts;
 			// ReSharper disable once CoVariantArrayConversion
 			InitializeMulti(component, info, rotation, position, partPositions, count => new LiveMultiBlockPart[count],
-				pair => new LiveMultiBlockPart(pair.Value, pair.Key), out tempParts);
+				pair => new LiveMultiBlockPart(pair.Value, pair.Key), out IMultiBlockPart[] tempParts);
 			parts = (LiveMultiBlockPart[])tempParts;
 			return component;
 		}

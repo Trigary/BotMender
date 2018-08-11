@@ -27,11 +27,9 @@ namespace Structures {
 				}
 
 				BlockSides side = block.ConnectSides & (BlockSides)(1 << bit);
-				BlockPosition offseted;
-				T other;
 				if (side == BlockSides.None
-					|| !block.Position.GetOffseted(side, out offseted)
-					|| !blocks.TryGetValue(offseted, out other)) {
+					|| !block.Position.GetOffseted(side, out BlockPosition offseted)
+					|| !blocks.TryGetValue(offseted, out T other)) {
 					continue;
 				}
 

@@ -29,8 +29,7 @@ namespace Systems {
 		/// Create a new system instance from the block if the block comes with a system.
 		/// </summary>
 		public static bool Create(RealLiveBlock block, out BotSystem system) {
-			Function<RealLiveBlock, BotSystem> function;
-			if (!Constructors.TryGetValue(block.Info.Type, out function)) {
+			if (!Constructors.TryGetValue(block.Info.Type, out Function<RealLiveBlock, BotSystem> function)) {
 				system = null;
 				return false;
 			}

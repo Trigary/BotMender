@@ -33,21 +33,14 @@ namespace Systems {
 		/// </summary>
 		public void Add(BlockPosition position, BotSystem system) {
 			_systems.Add(position, system);
-
-			PropulsionSystem propulsion = system as PropulsionSystem;
-			if (propulsion != null) {
+			if (system is PropulsionSystem propulsion) {
 				_propulsions.Add(propulsion);
-				return;
-			}
-
-			WeaponSystem weapon = system as WeaponSystem;
-			if (weapon != null) {
+			} else if (system is WeaponSystem weapon) {
 				_weapons.Add(weapon);
-				return;
+			} else {
+				Assert.IsNull(_active, "The active system can only be set once.");
+				_active = system as ActiveSystem;
 			}
-
-			Assert.IsNull(_active, "The active system can only be set once.");
-			_active = system as ActiveSystem;
 		}
 
 		/// <summary>
@@ -62,25 +55,18 @@ namespace Systems {
 		/// If a system is present at a position, remove it. Returns whether a system was removed.
 		/// </summary>
 		public bool TryRemove(BlockPosition position) {
-			BotSystem system;
-			if (!_systems.TryGetValue(position, out system)) {
+			if (!_systems.TryGetValue(position, out BotSystem system)) {
 				return false;
 			}
+
 			_systems.Remove(position);
-
-			PropulsionSystem propulsion = system as PropulsionSystem;
-			if (propulsion != null) {
+			if (system is PropulsionSystem propulsion) {
 				_propulsions.Remove(propulsion);
-				return true;
-			}
-
-			WeaponSystem weapon = system as WeaponSystem;
-			if (weapon != null) {
+			} else if (system is WeaponSystem weapon) {
 				_weapons.Remove(weapon);
-				return true;
+			} else {
+				_active = null;
 			}
-
-			_active = null;
 			return true;
 		}
 

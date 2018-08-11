@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Systems;
 using Blocks;
 using Blocks.Info;
@@ -55,8 +56,7 @@ namespace Structures {
 		private void Deserialize(ByteBuffer buffer) {
 			while (buffer.BytesLeft > 0) {
 				ushort type = buffer.ReadUShort();
-				BlockPosition position;
-				BlockPosition.FromComponents(buffer.ReadByte(), buffer.ReadByte(), buffer.ReadByte(), out position);
+				BlockPosition.FromComponents(buffer.ReadByte(), buffer.ReadByte(), buffer.ReadByte(), out BlockPosition position);
 
 				BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType(type));
 				if (info.Type == BlockType.Mainframe) {
@@ -64,12 +64,11 @@ namespace Structures {
 				}
 
 				RealLiveBlock block;
-				SingleBlockInfo single = info as SingleBlockInfo;
-				if (single != null) {
+				if (info is SingleBlockInfo single) {
 					block = BlockFactory.MakeSingleLive(transform, single, buffer.ReadByte(), position);
 				} else {
-					LiveMultiBlockPart[] parts;
-					block = BlockFactory.MakeMultiLive(transform, (MultiBlockInfo)info, buffer.ReadByte(), position, out parts);
+					block = BlockFactory.MakeMultiLive(transform, (MultiBlockInfo)info, buffer.ReadByte(),
+						position, out LiveMultiBlockPart[] parts);
 					foreach (LiveMultiBlockPart part in parts) {
 						_blocks.Add(part.Position, part);
 					}
@@ -78,9 +77,7 @@ namespace Structures {
 				Health += info.Health;
 				Mass += info.Mass;
 				_blocks.Add(position, block);
-
-				BotSystem system;
-				if (SystemFactory.Create(block, out system)) {
+				if (SystemFactory.Create(block, out BotSystem system)) {
 					_systems.Add(position, system);
 				}
 			}
@@ -134,12 +131,9 @@ namespace Structures {
 		private void RemoveNotConnectedBlocks() {
 			IDictionary<BlockPosition, ILiveBlock> blocks = new Dictionary<BlockPosition, ILiveBlock>(_blocks);
 			StructureUtilities.RemoveConnected(blocks[_mainframePosition], blocks);
-			foreach (ILiveBlock block in blocks.Values) {
-				RealLiveBlock real = block as RealLiveBlock;
-				if (real != null) {
-					Health -= real.Health;
-					RemoveBlock(real);
-				}
+			foreach (RealLiveBlock real in blocks.Values.OfType<RealLiveBlock>()) {
+				Health -= real.Health;
+				RemoveBlock(real);
 			}
 		}
 
@@ -204,11 +198,7 @@ namespace Structures {
 		private void ApplyMass(bool keepLocation) {
 			Vector3 center = new Vector3();
 			uint mass = 0;
-			foreach (ILiveBlock block in _blocks.Values) {
-				RealLiveBlock real = block as RealLiveBlock;
-				if (real == null) {
-					continue;
-				}
+			foreach (RealLiveBlock real in _blocks.Values.OfType<RealLiveBlock>()) {
 				center += real.transform.localPosition * real.Info.Mass;
 				mass += real.Info.Mass;
 			}
@@ -218,11 +208,8 @@ namespace Structures {
 				transform.position += center;
 			}
 
-			foreach (ILiveBlock block in _blocks.Values) {
-				RealLiveBlock real = block as RealLiveBlock;
-				if (real != null) {
-					real.transform.position -= center;
-				}
+			foreach (RealLiveBlock real in _blocks.Values.OfType<RealLiveBlock>()) {
+				real.transform.position -= center;
 			}
 			_body.mass = (float)Mass / 1000;
 		}

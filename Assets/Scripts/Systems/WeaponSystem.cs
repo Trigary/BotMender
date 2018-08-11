@@ -59,8 +59,7 @@ namespace Systems {
 			Vector3 direction = Quaternion.Euler(inaccuracy * Random.Range(-1f, 1f),
 				inaccuracy * Random.Range(-1f, 1f), 0) * TurretHeading;
 
-			RaycastHit hit;
-			if (Physics.Raycast(TurretEnd, direction, out hit)) {
+			if (Physics.Raycast(TurretEnd, direction, out RaycastHit hit)) {
 				if (hit.transform == bot.transform) {
 					return false;
 				}
