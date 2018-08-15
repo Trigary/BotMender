@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using Building;
-using DoubleSocket.Utility.ByteBuffer;
+using DoubleSocket.Utility.BitBuffer;
 using Networking;
 using Structures;
 using UnityEngine;
@@ -62,10 +62,10 @@ namespace Playing {
 				NetworkClient.UdpHandler = buffer => { };
 			} else {
 				NetworkClient.UdpHandler = buffer => {
-					while (buffer.BytesLeft > 0) {
+					while (buffer.TotalBitsLeft >= 54 * 8) {
 						GameObject structure = GameObject.Find("Player#" + buffer.ReadByte());
 						if (structure == null) {
-							buffer.ReadIndex += 53;
+							buffer.AdvanceReader(53 * 8);
 						} else {
 							structure.GetComponent<CompleteStructure>().UpdateState(buffer.ReadByte(), buffer.ReadVector3(),
 								buffer.ReadQuaternion(), buffer.ReadVector3(), buffer.ReadVector3());
@@ -90,15 +90,14 @@ namespace Playing {
 
 
 
-		private static readonly MutableByteBuffer ServerUdpSendBuffer = new MutableByteBuffer();
+		private static readonly MutableBitBuffer ServerUdpSendBuffer = new MutableBitBuffer();
 
-		private static void ServerOnUdpReceived(INetworkServerClient sender, ByteBuffer buffer) {
+		private static void ServerOnUdpReceived(INetworkServerClient sender, BitBuffer buffer) {
 			GameObject.Find("Player#" + sender.Id).GetComponent<CompleteStructure>()
 				.UpdateState(buffer.ReadByte());
 
 			int clientCounter = NetworkServer.ClientCount;
-			ServerUdpSendBuffer.Array = new byte[54 * clientCounter];
-			ServerUdpSendBuffer.WriteIndex = 0;
+			ServerUdpSendBuffer.ClearContents(new byte[54 * clientCounter]);
 			//TODO better way: run the timer on the Unity thread, create the data there and call a SendUdp method
 			//or just make the server have to specify a byte[] supplier instead of byte[]
 			NetworkServer.ForEachClient(client => {

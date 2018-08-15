@@ -5,7 +5,7 @@ using Systems;
 using Blocks;
 using Blocks.Info;
 using Blocks.Placed;
-using DoubleSocket.Utility.ByteBuffer;
+using DoubleSocket.Utility.BitBuffer;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -27,7 +27,7 @@ namespace Structures {
 			if (_blocks.Count == 0) {
 				Assert.IsTrue(BlockPosition.FromVector(transform.position, out BlockPosition position),
 					"Failed to get a BlockPosition from the EditableStructure position.");
-				Assert.IsTrue(TryAddBlock(position, (MultiBlockInfo)BlockFactory.GetInfo(BlockType.Mainframe), 0),
+				Assert.IsTrue(AddBlock(position, (MultiBlockInfo)BlockFactory.GetInfo(BlockType.Mainframe), 0),
 					"Failed to place the Mainframe.");
 			}
 		}
@@ -78,10 +78,13 @@ namespace Structures {
 		/// Tries to add the block. Returns the same as #CanAddBlock.
 		/// </summary>
 		public bool TryAddBlock(BlockPosition position, BlockInfo info, byte rotation) {
-			if (!CanAddBlock(position, info, rotation)) {
-				return false;
-			}
+			return CanAddBlock(position, info, rotation) && AddBlock(position, info, rotation);
+		}
 
+		/// <summary>
+		/// Tries to add the block, but skips the CanAddBlock test.
+		/// </summary>
+		private bool AddBlock(BlockPosition position, BlockInfo info, byte rotation) {
 			if (info is SingleBlockInfo single) {
 				_blocks.Add(position, BlockFactory.MakeSinglePlaced(transform, single, rotation, position));
 			} else {
@@ -191,17 +194,17 @@ namespace Structures {
 
 		/// <summary>
 		/// Serialises the structure into the specified buffer.
-		/// Data structure of the blocks (each character represents 1 byte): TT XYZR
+		/// Each block takes up RealPlacedBlock.SerializedBitsSize bits.
 		/// </summary>
-		public void Serialize(ByteBuffer buffer) {
+		public void Serialize(BitBuffer buffer) {
 			foreach (IPlacedBlock block in _blocks.Values) {
 				RealPlacedBlock real = block as RealPlacedBlock;
 				if (real != null) {
-					buffer.Write((ushort)block.Type);
-					buffer.Write(real.Position.X);
-					buffer.Write(real.Position.Y);
-					buffer.Write(real.Position.Z);
-					buffer.Write(real.Rotation);
+					buffer.WriteBits((ushort)block.Type, 14);
+					buffer.WriteBits(real.Position.X, 7);
+					buffer.WriteBits(real.Position.Y, 7);
+					buffer.WriteBits(real.Position.Z, 7);
+					Rotation.Serialize(buffer, real.Rotation);
 				}
 			}
 		}
@@ -211,7 +214,7 @@ namespace Structures {
 		/// Lazely validates the data and returns false, if it is found invalid.
 		/// No checks are not made, #GetNotConnectedBlocks should be called after this method.
 		/// </summary>
-		public bool Deserialize(ByteBuffer buffer) {
+		public bool Deserialize(BitBuffer buffer) {
 			foreach (IPlacedBlock block in _blocks.Values.ToList()) {
 				RealPlacedBlock real = block as RealPlacedBlock;
 				if (real != null) {
@@ -220,36 +223,31 @@ namespace Structures {
 			}
 
 			try {
-				while (buffer.BytesLeft >= RealPlacedBlock.SerializedSize) {
-					ushort type = buffer.ReadUShort();
+				while (buffer.TotalBitsLeft >= RealPlacedBlock.SerializedBitsSize) {
+					ushort type = (ushort)buffer.ReadBits(14);
 					if (type >= BlockFactory.TypeCount) {
 						return false;
 					}
 
-					if (!BlockPosition.FromComponents(buffer.ReadByte(), buffer.ReadByte(), buffer.ReadByte(),
-						out BlockPosition position)) {
+					if (!BlockPosition.FromComponents((int)buffer.ReadBits(7), (int)buffer.ReadBits(7),
+						(int)buffer.ReadBits(7), out BlockPosition position)) {
 						return false;
 					}
 
 					BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType(type));
 					bool result = info is SingleBlockInfo single
-						? TryAddBlock(position, single, buffer.ReadByte())
-						: TryAddBlock(position, (MultiBlockInfo)info, buffer.ReadByte());
+						? AddBlock(position, single, Rotation.Deserialize(buffer))
+						: AddBlock(position, (MultiBlockInfo)info, Rotation.Deserialize(buffer));
 
 					if (!result) {
 						return false;
 					}
 				}
+				return true;
 			} catch (Exception e) {
 				Debug.Log("Exception caught while deserializing into an EditableStructure: " + e);
 				return false;
 			}
-
-			if (buffer.BytesLeft != 0) {
-				Debug.Log(buffer.BytesLeft + " bytes were left out after deserializing into an EditableStructure.");
-				return false;
-			}
-			return true;
 		}
 
 
@@ -259,10 +257,6 @@ namespace Structures {
 		/// connection sides can connect to any other block.
 		/// </summary>
 		private bool CanConnect(BlockPosition position, BlockSides rotatedConnectSides) {
-			if (_blocks.Count == 0) {
-				return true;
-			}
-
 			for (int bit = 0; bit < 6; bit++) {
 				BlockSides side = rotatedConnectSides & (BlockSides)(1 << bit);
 				if (side == BlockSides.None

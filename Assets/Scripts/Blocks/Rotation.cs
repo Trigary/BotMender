@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using DoubleSocket.Utility.BitBuffer;
+using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Blocks {
@@ -39,6 +40,22 @@ namespace Blocks {
 		}
 
 		/// <summary>
+		/// Serializes a rotation into a buffer using 5 bits.
+		/// </summary>
+		public static void Serialize(BitBuffer buffer, byte rotation) {
+			BlockSides facing = GetFacing(rotation);
+			buffer.WriteBits(BlockSide.ToOrdinal(facing), 3);
+			buffer.WriteBits((ulong)GetAmount(rotation, (facing & BlockSides.Y) != BlockSides.None ? 1 : 0), 2);
+		}
+
+		/// <summary>
+		/// Deserializes a rotation from a buffer's first 5 bits.
+		/// </summary>
+		public static byte Deserialize(BitBuffer buffer) {
+			return GetByte(BlockSide.FromOrdinal((byte)buffer.ReadBits(3)), (byte)buffer.ReadBits(2));
+		}
+
+		/// <summary>
 		/// The parameters specify how many times the object should be rotated around the axises.
 		/// They can be any numbers, they DON'T have to be less than 4
 		/// (except 'extra', which specifies extra information).
@@ -49,7 +66,7 @@ namespace Blocks {
 
 		/// <summary>
 		/// Returns the rotation amount (0-3, both inclusive) around the specified axis (0-2, both inclusive).
-		/// Can also be used to get the axs the rotation is facing using the axis: 3
+		/// Can also be used to get the axis the rotation is facing using the axis: 3
 		/// </summary>
 		public static int GetAmount(byte rotation, int axis) {
 			return (rotation & (3 << (2 * axis))) >> (2 * axis);
@@ -91,7 +108,7 @@ namespace Blocks {
 			}
 
 			int facingAxis = GetAmount(rotation, 3);
-			int variantStorage = facingAxis == 2 ? 0 : facingAxis;
+			int variantStorage = facingAxis == 1 ? 1 : 0;
 			int output = (int)sides;
 
 			for (int axis = 2; axis >= 0; axis--) {

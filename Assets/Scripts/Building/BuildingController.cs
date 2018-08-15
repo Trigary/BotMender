@@ -4,7 +4,7 @@ using System.Linq;
 using Blocks;
 using Blocks.Info;
 using Blocks.Placed;
-using DoubleSocket.Utility.ByteBuffer;
+using DoubleSocket.Utility.BitBuffer;
 using Playing;
 using Structures;
 using UnityEngine;
@@ -15,18 +15,17 @@ namespace Building {
 	/// Allows the player to interact with the structure the script is attached to, should be used in build mode.
 	/// </summary>
 	public class BuildingController : MonoBehaviour {
-		public static ByteBuffer ExampleStructure {
+		public static BitBuffer ExampleStructure {
 			get {
-				_exampleStructure.ReadIndex = 0;
+				_exampleStructure.SetContents(_exampleStructure.Array);
 				return _exampleStructure;
 			}
 		}
 		// ReSharper disable once InconsistentNaming
-		private static readonly MutableByteBuffer _exampleStructure = new MutableByteBuffer();
+		private static readonly MutableBitBuffer _exampleStructure = new MutableBitBuffer();
 
 		static BuildingController() {
-			_exampleStructure.Array = new byte[] {0, 0, 128, 32, 128, 0, 5, 0, 128, 32, 131, 151, 6, 0, 128, 33, 132, 64, 9, 0, 128, 33, 127, 183, 7, 0, 129, 33, 130, 48, 7, 0, 127, 33, 130, 16, 6, 0, 128, 34, 130, 64, 8, 0, 128, 34, 129, 180, 1, 0, 127, 32, 129, 16, 1, 0, 127, 32, 128, 180, 1, 0, 129, 32, 129, 48, 1, 0, 129, 32, 128, 180, 1, 0, 129, 32, 127, 180, 1, 0, 127, 32, 127, 180, 2, 0, 127, 32, 126, 181, 2, 0, 129, 32, 126, 181, 2, 0, 129, 32, 132, 48, 1, 0, 129, 32, 130, 48, 2, 0, 127, 32, 132, 16, 1, 0, 127, 32, 130, 16, 1, 0, 127, 32, 131, 148, 1, 0, 129, 32, 131, 148, 2, 0, 128, 32, 133, 151, 3, 0, 127, 32, 133, 16, 3, 0, 129, 32, 133, 51, 1, 0, 128, 33, 131, 76, 3, 0, 127, 33, 131, 16, 3, 0, 129, 33, 131, 64, 7, 0, 127, 33, 128, 18, 7, 0, 129, 33, 128, 50};
-			_exampleStructure.WriteIndex = _exampleStructure.Array.Length;
+			_exampleStructure.SetContents(new byte[] {0, 0, 48, 36, 28, 6, 64, 48, 36, 4, 6, 192, 47, 36, 12, 6, 0, 48, 52, 20, 7, 192, 47, 4, 140, 7, 192, 47, 20, 12, 7, 64, 48, 4, 132, 7, 64, 48, 20, 4, 8, 0, 48, 244, 171, 9, 0, 80, 4, 148, 1, 64, 16, 4, 132, 1, 64, 16, 244, 171, 1, 192, 15, 4, 140, 1, 192, 15, 244, 171, 2, 192, 15, 228, 107, 2, 64, 16, 228, 107, 1, 0, 16, 52, 36, 2, 64, 16, 52, 4, 2, 192, 15, 52, 12, 1, 192, 15, 20, 36, 1, 192, 15, 36, 36, 1, 64, 16, 20, 36, 1, 64, 16, 36, 36, 2, 0, 16, 68, 228, 3, 64, 16, 68, 196, 3, 192, 15, 68, 228, 3, 192, 47, 228, 19, 3, 64, 48, 228, 211});
 		}
 
 
@@ -38,25 +37,27 @@ namespace Building {
 		private byte _facingVariant;
 		private BlockPosition _previousPreviewPosition;
 		private GameObject _previewObject;
+		private bool _inputPlace;
+		private bool _inputRemove;
 
 		public void Awake() {
 			_camera = Camera.main;
 			_structure = GetComponent<EditableStructure>();
-			_structure.Deserialize(ExampleStructure);
+			Assert.IsTrue(_structure.Deserialize(ExampleStructure), "Failed to load the example structure.");
 		}
 
 
 
 		public void Update() {
+			if (Input.GetButtonDown("Fire1")) {
+				_inputPlace = true;
+			} else if (Input.GetButtonDown("Fire2")) {
+				_inputRemove = true;
+			}
+
 			Rotate(Input.GetAxisRaw("MouseScroll"));
 			if (Input.GetButtonDown("Fire3")) {
 				Switch();
-			}
-
-			if (Input.GetButtonDown("Fire1")) {
-				Place();
-			} else if (Input.GetButtonDown("Fire2")) {
-				Delete();
 			}
 
 			if (Input.GetButtonDown("Ability")) {
@@ -74,12 +75,14 @@ namespace Building {
 						return;
 					}
 
-					ByteBuffer someBuffer = new MutableByteBuffer(RealPlacedBlock.SerializedSize * _structure.RealBlockCount);
+					BitBuffer someBuffer = new MutableBitBuffer((RealPlacedBlock.SerializedBitsSize
+						* _structure.RealBlockCount + 7) / 8);
 					_structure.Serialize(someBuffer);
 					Debug.Log("Structure: " + string.Join(", ", someBuffer.Array));
 					CompleteStructure complete = CompleteStructure.Create(someBuffer, "BuiltStructure");
 					Assert.IsNotNull(complete, "Own CompleteStructure creation mustn't fail.");
 
+					complete.transform.position = new Vector3(0, 10, 0);
 					complete.gameObject.AddComponent<LocalBotController>();
 					_camera.gameObject.AddComponent<PlayingCameraController>()
 						.Initialize(complete.GetComponent<Rigidbody>());
@@ -95,6 +98,14 @@ namespace Building {
 		}
 
 		public void FixedUpdate() {
+			if (_inputPlace) {
+				_inputPlace = false;
+				Place();
+			} else if (_inputRemove) {
+				_inputRemove = false;
+				Delete();
+			}
+
 			// ReSharper disable once UnusedVariable
 			if (GetSelectedBlock(out GameObject block, out BlockPosition position, out byte rotation)) {
 				if (!position.Equals(_previousPreviewPosition)) {
@@ -174,13 +185,12 @@ namespace Building {
 				}
 			}
 
-			SingleBlockInfo single = info as SingleBlockInfo;
 			RealPlacedBlock block;
-			if (single != null) {
-				block = BlockFactory.MakeSinglePlaced(_structure.transform, single, rotation, position);
+			if (info is SingleBlockInfo single) {
+				block = BlockFactory.MakeSinglePlaced (_structure.transform, single, rotation, position);
 			} else {
 				// ReSharper disable once UnusedVariable
-				block = BlockFactory.MakeMultiPlaced(_structure.transform, (MultiBlockInfo)info, rotation,
+				block = BlockFactory.MakeMultiPlaced (_structure.transform, (MultiBlockInfo)info, rotation,
 					position, out PlacedMultiBlockPart[] parts);
 				if (block == null) {
 					return;

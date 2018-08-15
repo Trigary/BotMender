@@ -8,7 +8,7 @@ namespace Blocks {
 	/// </summary>
 	public class BlockPosition : IEquatable<BlockPosition> {
 		public const byte Min = 0; //Inclusive
-		public const byte Max = 255; //Inclusive
+		public const byte Max = 127; //Inclusive
 
 		public readonly byte X;
 		public readonly byte Y;

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using DoubleSocket.Protocol;
 using DoubleSocket.Server;
-using DoubleSocket.Utility.ByteBuffer;
+using DoubleSocket.Utility.BitBuffer;
 using JetBrains.Annotations;
 using UnityEngine.Assertions;
 using Utilities;
@@ -26,7 +26,7 @@ namespace Networking {
 		/// <summary>
 		/// Fired when a TCP or UDP packet is received.
 		/// </summary>
-		public delegate void OnPacketReceived(INetworkServerClient sender, ByteBuffer buffer);
+		public delegate void OnPacketReceived(INetworkServerClient sender, BitBuffer buffer);
 
 
 
@@ -63,7 +63,7 @@ namespace Networking {
 		private static readonly object UdpPayloadLock = new object();
 
 		private static readonly OnPacketReceived[] TcpHandlers = new OnPacketReceived[Enum.GetNames(typeof(NetworkPacket)).Length];
-		private static ResettingByteBuffer _resettingByteBuffer;
+		private static ResettingBitBuffer _resettingByteBuffer;
 		private static HashSet<NetworkServerClient> _clients;
 		private static DoubleServerHandler _handler;
 		[CanBeNull] private static DoubleServer _server;
@@ -78,7 +78,7 @@ namespace Networking {
 								OnPacketReceived udpHandler) {
 			Assert.IsNull(_server, "The NetworkServer is already initialized.");
 
-			_resettingByteBuffer = new ResettingByteBuffer(DoubleProtocol.TcpBufferArraySize);
+			_resettingByteBuffer = new ResettingBitBuffer(DoubleProtocol.TcpBufferArraySize);
 			_clients = new HashSet<NetworkServerClient>();
 			_handler = new DoubleServerHandler(onConnected, onDisconnected, udpHandler);
 			_server = new DoubleServer(_handler, NetworkUtils.ServerMaxConnectionCount,
@@ -130,7 +130,7 @@ namespace Networking {
 		/// <summary>
 		/// Sends the specified payload over TCP to the specified client.
 		/// </summary>
-		public static void SendTcp(INetworkServerClient recipient, Action<ByteBuffer> payloadWriter) {
+		public static void SendTcp(INetworkServerClient recipient, Action<BitBuffer> payloadWriter) {
 			_server?.SendTcp(((NetworkServerClient)recipient).DoubleClient, payloadWriter);
 		}
 
@@ -150,16 +150,16 @@ namespace Networking {
 		/// <summary>
 		/// Sends the specified payload over TCP to all clients.
 		/// </summary>
-		public static void SendTcpToAll(Action<ByteBuffer> payloadWriter) {
+		public static void SendTcpToAll(Action<BitBuffer> payloadWriter) {
 			if (_server == null) {
 				return;
 			}
 
-			Action<ByteBuffer> realWriter;
+			Action<BitBuffer> realWriter;
 			using (_resettingByteBuffer) {
 				payloadWriter(_resettingByteBuffer);
 				realWriter = buffer => buffer.Write(_resettingByteBuffer.Array,
-					0, _resettingByteBuffer.WriteIndex);
+					0, _resettingByteBuffer.Size);
 			}
 
 			foreach (NetworkServerClient client in _clients) {
@@ -170,16 +170,16 @@ namespace Networking {
 		/// <summary>
 		/// Sends the specified payload over TCP to all clients except one.
 		/// </summary>
-		public static void SendTcpToAll(Action<ByteBuffer> payloadWriter, INetworkServerClient excluding) {
+		public static void SendTcpToAll(Action<BitBuffer> payloadWriter, INetworkServerClient excluding) {
 			if (_server == null) {
 				return;
 			}
 
-			Action<ByteBuffer> realWriter;
+			Action<BitBuffer> realWriter;
 			using (_resettingByteBuffer) {
 				payloadWriter(_resettingByteBuffer);
 				realWriter = buffer => buffer.Write(_resettingByteBuffer.Array,
-					0, _resettingByteBuffer.WriteIndex);
+					0, _resettingByteBuffer.Size);
 			}
 
 			foreach (NetworkServerClient client in _clients) {
@@ -192,16 +192,16 @@ namespace Networking {
 		/// <summary>
 		/// Sends the specified payload over TCP to all clients which pass the specified filter.
 		/// </summary>
-		public static void SendTcpToAll(Action<ByteBuffer> payloadWriter, Predicate<INetworkServerClient> filter) {
+		public static void SendTcpToAll(Action<BitBuffer> payloadWriter, Predicate<INetworkServerClient> filter) {
 			if (_server == null) {
 				return;
 			}
 
-			Action<ByteBuffer> realWriter;
+			Action<BitBuffer> realWriter;
 			using (_resettingByteBuffer) {
 				payloadWriter(_resettingByteBuffer);
 				realWriter = buffer => buffer.Write(_resettingByteBuffer.Array,
-					0, _resettingByteBuffer.WriteIndex);
+					0, _resettingByteBuffer.Size);
 			}
 
 			foreach (NetworkServerClient client in _clients) {
@@ -214,7 +214,7 @@ namespace Networking {
 
 
 		private class DoubleServerHandler : IDoubleServerHandler {
-			private readonly MutableByteBuffer _handlerBuffer = new MutableByteBuffer();
+			private readonly MutableBitBuffer _handlerBuffer = new MutableBitBuffer();
 			private readonly OnConnected _onConnected;
 			private readonly OnDisconnected _onDisconnected;
 			private readonly OnPacketReceived _udpHandler;
@@ -228,7 +228,7 @@ namespace Networking {
 
 
 
-			public bool TcpAuthenticateClient(IDoubleServerClient client, ByteBuffer buffer, out byte[] encryptionKey,
+			public bool TcpAuthenticateClient(IDoubleServerClient client, BitBuffer buffer, out byte[] encryptionKey,
 											out byte errorCode) {
 				encryptionKey = buffer.ReadBytes();
 				errorCode = 0;
@@ -236,7 +236,7 @@ namespace Networking {
 				return true;
 			}
 
-			public Action<ByteBuffer> OnFullAuthentication(IDoubleServerClient client) {
+			public Action<BitBuffer> OnFullAuthentication(IDoubleServerClient client) {
 				NetworkServerClient serverClient = (NetworkServerClient)client.ExtraData;
 				serverClient.Initialize();
 				UnityDispatcher.Invoke(() => {
@@ -250,8 +250,8 @@ namespace Networking {
 				return buffer => buffer.Write(serverClient.Id);
 			}
 
-			public void OnTcpReceived(IDoubleServerClient client, ByteBuffer buffer) {
-				if (buffer.BytesLeft < sizeof(NetworkPacket)) {
+			public void OnTcpReceived(IDoubleServerClient client, BitBuffer buffer) {
+				if (buffer.TotalBitsLeft < 8) {
 					return;
 				}
 
@@ -265,16 +265,14 @@ namespace Networking {
 					if (_server != null) {
 						OnPacketReceived action = TcpHandlers[packet];
 						if (action != null) {
-							_handlerBuffer.Array = bytes;
-							_handlerBuffer.ReadIndex = 0;
-							_handlerBuffer.WriteIndex = bytes.Length;
+							_handlerBuffer.SetContents(bytes);
 							action((NetworkServerClient)client.ExtraData, _handlerBuffer);
 						}
 					}
 				});
 			}
 
-			public void OnUdpReceived(IDoubleServerClient client, ByteBuffer buffer, ushort packetTimestamp) {
+			public void OnUdpReceived(IDoubleServerClient client, BitBuffer buffer, uint packetTimestamp) {
 				NetworkServerClient serverClient = (NetworkServerClient)client.ExtraData;
 				if (serverClient.TakeResetPacketTimestamp()) {
 					serverClient.LastPacketTimestamp = packetTimestamp;
@@ -285,9 +283,7 @@ namespace Networking {
 				byte[] bytes = buffer.ReadBytes();
 				UnityDispatcher.Invoke(() => {
 					if (_server != null) {
-						_handlerBuffer.Array = bytes;
-						_handlerBuffer.ReadIndex = 0;
-						_handlerBuffer.WriteIndex = bytes.Length;
+						_handlerBuffer.SetContents(bytes);
 						_udpHandler(serverClient, _handlerBuffer);
 					}
 				});
@@ -316,7 +312,7 @@ namespace Networking {
 			public byte Id { get; private set; }
 
 			public IDoubleServerClient DoubleClient { get; }
-			public ushort LastPacketTimestamp;
+			public uint LastPacketTimestamp;
 
 			private bool _resetPacketTimestamp;
 

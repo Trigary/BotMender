@@ -22,11 +22,16 @@ Constants which are specific to a block type can be registered in the
 A bot can be serialized by serializing its blocks, but other pieces of information
 (eg. max health) may also get saved in the future for caching reasons.
 A placed block can be serialized by serializing its position, rotation and type.
-For future compatibility reasons each position component is stored on 8 bits.
-The type is stored on 16 bits and the rotation is stored on 8 bits
-(despite only having 6 possible values) for simplicity reasons.
-The order of the data in the serialized format is the following
-(each character represents one byte): TT XYZR
+The following table describes how many bits each serialized piece of data takes and also their order:
+
+Data | Size
+---: | :---:
+Type | 14
+X | 7
+Y | 7
+Z | 7
+Rotation | 5
+*Total* | 40
 
 ## Networking
 

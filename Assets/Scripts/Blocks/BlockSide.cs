@@ -52,5 +52,36 @@ namespace Blocks {
 				return BlockSides.None;
 			}
 		}
+
+		/// <summary>
+		/// Gets the ordinal value associated with the specified side.
+		/// Returns 255 if the parameter contains multiple sides.
+		/// </summary>
+		public static byte ToOrdinal(BlockSides side) {
+			switch (side) {
+				case BlockSides.Right:
+					return 0;
+				case BlockSides.Left:
+					return 1;
+				case BlockSides.Top:
+					return 2;
+				case BlockSides.Bottom:
+					return 3;
+				case BlockSides.Front:
+					return 4;
+				case BlockSides.Back:
+					return 5;
+				default:
+					return 255;
+			}
+		}
+
+		/// <summary>
+		/// Gets the side associated with the ordinal.
+		/// Returns None if the ordinal is invalid.
+		/// </summary>
+		public static BlockSides FromOrdinal(byte ordinal) {
+			return ordinal > 5 ? BlockSides.None : (BlockSides)(1 << ordinal);
+		}
 	}
 }

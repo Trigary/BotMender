@@ -4,7 +4,8 @@ using Systems;
 using Blocks;
 using Blocks.Info;
 using Blocks.Live;
-using DoubleSocket.Utility.ByteBuffer;
+using Blocks.Placed;
+using DoubleSocket.Utility.BitBuffer;
 using JetBrains.Annotations;
 using Playing;
 using UnityEngine;
@@ -44,7 +45,7 @@ namespace Structures {
 		/// No validation is done, the EditableStructure should be used for that.
 		/// </summary>
 		[CanBeNull]
-		public static CompleteStructure Create(ByteBuffer buffer, string gameObjectName) {
+		public static CompleteStructure Create(BitBuffer buffer, string gameObjectName) {
 			CompleteStructure structure = new GameObject(gameObjectName).AddComponent<CompleteStructure>();
 			structure.Deserialize(buffer);
 			structure.MaxHealth = structure.Health;
@@ -53,10 +54,11 @@ namespace Structures {
 			return structure;
 		}
 
-		private void Deserialize(ByteBuffer buffer) {
-			while (buffer.BytesLeft > 0) {
-				ushort type = buffer.ReadUShort();
-				BlockPosition.FromComponents(buffer.ReadByte(), buffer.ReadByte(), buffer.ReadByte(), out BlockPosition position);
+		private void Deserialize(BitBuffer buffer) {
+			while (buffer.TotalBitsLeft >= RealPlacedBlock.SerializedBitsSize) {
+				ushort type = (ushort)buffer.ReadBits(14);
+				BlockPosition.FromComponents((int)buffer.ReadBits(7), (int)buffer.ReadBits(7),
+					(int)buffer.ReadBits(7), out BlockPosition position);
 
 				BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType(type));
 				if (info.Type == BlockType.Mainframe) {
@@ -65,9 +67,9 @@ namespace Structures {
 
 				RealLiveBlock block;
 				if (info is SingleBlockInfo single) {
-					block = BlockFactory.MakeSingleLive(transform, single, buffer.ReadByte(), position);
+					block = BlockFactory.MakeSingleLive(transform, single, Rotation.Deserialize(buffer), position);
 				} else {
-					block = BlockFactory.MakeMultiLive(transform, (MultiBlockInfo)info, buffer.ReadByte(),
+					block = BlockFactory.MakeMultiLive(transform, (MultiBlockInfo)info, Rotation.Deserialize(buffer),
 						position, out LiveMultiBlockPart[] parts);
 					foreach (LiveMultiBlockPart part in parts) {
 						_blocks.Add(part.Position, part);
@@ -162,8 +164,8 @@ namespace Structures {
 		/// <summary>
 		/// Serializeses this bot's current state into the specified buffer.
 		/// </summary>
-		public void SerializeState(ByteBuffer buffer) {
-			buffer.Write(_inputByte);
+		public void SerializeState(BitBuffer buffer) {
+			buffer.Write(_inputByte); //TODO more efficient inputbyte encoding
 			buffer.Write(transform.position);
 			buffer.Write(transform.rotation);
 			buffer.Write(_body.velocity);

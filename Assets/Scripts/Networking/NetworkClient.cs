@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using DoubleSocket.Client;
 using DoubleSocket.Protocol;
-using DoubleSocket.Utility.ByteBuffer;
+using DoubleSocket.Utility.BitBuffer;
 using JetBrains.Annotations;
 using UnityEngine.Assertions;
 using Utilities;
@@ -76,14 +76,14 @@ namespace Networking {
 		/// <summary>
 		/// The handler of incoming UDP packets.
 		/// </summary>
-		public static Action<ByteBuffer> UdpHandler { get; set; }
+		public static Action<BitBuffer> UdpHandler { get; set; }
 
 		/// <summary>
 		/// The handler of the disconnect event.
 		/// </summary>
 		public static OnDisconnected DisconnectHandler { get; set; }
 
-		private static readonly Action<ByteBuffer>[] TcpHandlers = new Action<ByteBuffer>[Enum.GetNames(typeof(NetworkPacket)).Length];
+		private static readonly Action<BitBuffer>[] TcpHandlers = new Action<BitBuffer>[Enum.GetNames(typeof(NetworkPacket)).Length];
 		private static readonly object SmallLock = new object();
 		private static DoubleClientHandler _handler;
 		[CanBeNull] private static DoubleClient _client;
@@ -129,7 +129,7 @@ namespace Networking {
 		/// <summary>
 		/// Sets the handler for a specific (TCP) packet type.
 		/// </summary>
-		public static void SetTcpHandler(NetworkPacket packet, Action<ByteBuffer> handler) {
+		public static void SetTcpHandler(NetworkPacket packet, Action<BitBuffer> handler) {
 			TcpHandlers[(byte)packet] = handler;
 		}
 
@@ -146,16 +146,16 @@ namespace Networking {
 		/// <summary>
 		/// Sends the specified payload over TCP.
 		/// </summary>
-		public static void SendTcp(Action<ByteBuffer> payloadWriter) {
+		public static void SendTcp(Action<BitBuffer> payloadWriter) {
 			_client?.SendTcp(payloadWriter);
 		}
 
 
 
 		private class DoubleClientHandler : IDoubleClientHandler {
-			private readonly MutableByteBuffer _handlerBuffer = new MutableByteBuffer();
+			private readonly MutableBitBuffer _handlerBuffer = new MutableBitBuffer();
 			private readonly OnConnected _onConnected;
-			private ushort _lastPacketTimestamp;
+			private uint _lastPacketTimestamp;
 
 			public DoubleClientHandler(OnConnected onConnected) {
 				_onConnected = onConnected;
@@ -190,7 +190,7 @@ namespace Networking {
 				});
 			}
 
-			public void OnFullAuthentication(ByteBuffer buffer) {
+			public void OnFullAuthentication(BitBuffer buffer) {
 				byte localId = buffer.ReadByte();
 				UnityDispatcher.Invoke(() => {
 					if (_client != null) {
@@ -208,8 +208,8 @@ namespace Networking {
 				});
 			}
 
-			public void OnTcpReceived(ByteBuffer buffer) {
-				if (buffer.BytesLeft < sizeof(NetworkPacket)) {
+			public void OnTcpReceived(BitBuffer buffer) {
+				if (buffer.TotalBitsLeft < 8) {
 					return;
 				}
 
@@ -220,17 +220,15 @@ namespace Networking {
 
 				byte[] bytes = buffer.ReadBytes();
 				UnityDispatcher.Invoke(() => {
-					Action<ByteBuffer> action = TcpHandlers[packet];
+					Action<BitBuffer> action = TcpHandlers[packet];
 					if (action != null) {
-						_handlerBuffer.Array = bytes;
-						_handlerBuffer.ReadIndex = 0;
-						_handlerBuffer.WriteIndex = bytes.Length;
+						_handlerBuffer.SetContents(bytes);
 						action(_handlerBuffer);
 					}
 				});
 			}
 
-			public void OnUdpReceived(ByteBuffer buffer, ushort packetTimestamp) {
+			public void OnUdpReceived(BitBuffer buffer, uint packetTimestamp) { //TODO latency measurement UI
 				bool resetPacketTimestamp;
 				lock (SmallLock) {
 					resetPacketTimestamp = _resetPacketTimestamp;
@@ -246,9 +244,7 @@ namespace Networking {
 				byte[] bytes = buffer.ReadBytes();
 				UnityDispatcher.Invoke(() => {
 					if (_client != null) {
-						_handlerBuffer.Array = bytes;
-						_handlerBuffer.ReadIndex = 0;
-						_handlerBuffer.WriteIndex = bytes.Length;
+						_handlerBuffer.SetContents(bytes);
 						UdpHandler(_handlerBuffer);
 					}
 				});

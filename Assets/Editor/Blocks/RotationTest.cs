@@ -1,8 +1,35 @@
 ﻿using Blocks;
+using DoubleSocket.Utility.BitBuffer;
 using NUnit.Framework;
 
 namespace Editor.Blocks {
+	/// <summary>
+	/// Tests regarding rotations - the Rotation class.
+	/// </summary>
 	public class RotationTest {
+		/// <summary>
+		/// Tests the serialize, deserialize methods.
+		/// </summary>
+		[Test]
+		public void SerializeDeserialize() {
+			ResettingBitBuffer buffer = new ResettingBitBuffer(1);
+			for (int facingBit = 0; facingBit < 6; facingBit++) {
+				for (byte variant = 0; variant < 4; variant++) {
+					byte rotation = Rotation.GetByte((BlockSides)(1 << facingBit), variant);
+
+					using (buffer) {
+						Rotation.Serialize(buffer, rotation);
+						Assert.AreEqual(
+							rotation,
+							Rotation.Deserialize(buffer)
+						);
+					}
+				}
+			}
+		}
+
+
+
 		/// <summary>
 		/// Rotating sides doesn't change the count of sides.
 		/// </summary>
