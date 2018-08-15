@@ -39,12 +39,16 @@ namespace Utilities {
 		}
 
 		private void CheckInvokables() {
-			lock (_actions) {
-				if (_actions.Count > 0) {
-					while (_actions.Count > 0) {
-						_actions.Dequeue()();
+			while (true) {
+				Action action;
+				lock (_actions) {
+					if (_actions.Count != 0) {
+						action = _actions.Dequeue();
+					} else {
+						return;
 					}
 				}
+				action();
 			}
 		}
 	}

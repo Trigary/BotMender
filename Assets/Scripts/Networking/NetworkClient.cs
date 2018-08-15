@@ -5,6 +5,7 @@ using DoubleSocket.Client;
 using DoubleSocket.Protocol;
 using DoubleSocket.Utility.BitBuffer;
 using JetBrains.Annotations;
+using UnityEngine;
 using UnityEngine.Assertions;
 using Utilities;
 
@@ -51,6 +52,20 @@ namespace Networking {
 		/// The player id of the local client or 0 if no local client exists or if the local client is not yet connected.
 		/// </summary>
 		public static byte LocalId { get; private set; }
+
+		/// <summary>
+		/// The UDP latency from the server to this client. The delay the dispatching gives is not included.
+		/// Its initial value is -1.
+		/// </summary>
+		public static int UdpPreDispatchLatency => Mathf.RoundToInt(_udpPreDispatchLatency);
+		private static float _udpPreDispatchLatency = -1;
+
+		/// <summary>
+		/// The UDP latency from the server to this client. The delay the dispatching gives is included.
+		/// Its initial value is -1.
+		/// </summary>
+		public static float UdpTotalLatency => Mathf.RoundToInt(_udpTotalLatency);
+		private static float _udpTotalLatency = -1;
 
 
 
@@ -115,6 +130,8 @@ namespace Networking {
 			_tickingThread?.Stop();
 			_tickingThread = null;
 			LocalId = 0;
+			_udpPreDispatchLatency = -1;
+			_udpTotalLatency = -1;
 			_resetPacketTimestamp = false;
 			DisconnectHandler = null;
 			UdpHandler = null;
@@ -228,7 +245,7 @@ namespace Networking {
 				});
 			}
 
-			public void OnUdpReceived(BitBuffer buffer, uint packetTimestamp) { //TODO latency measurement UI
+			public void OnUdpReceived(BitBuffer buffer, uint packetTimestamp) {
 				bool resetPacketTimestamp;
 				lock (SmallLock) {
 					resetPacketTimestamp = _resetPacketTimestamp;
@@ -241,13 +258,22 @@ namespace Networking {
 					return;
 				}
 
+				SetLatency(ref _udpPreDispatchLatency, packetTimestamp);
 				byte[] bytes = buffer.ReadBytes();
 				UnityDispatcher.Invoke(() => {
 					if (_client != null) {
+						SetLatency(ref _udpTotalLatency, packetTimestamp);
+						Debug.Log($"PreDispatch {UdpPreDispatchLatency} | Total {UdpTotalLatency} | Diff {UdpTotalLatency - UdpPreDispatchLatency}");
+						//TODO latency measurement UI
 						_handlerBuffer.SetContents(bytes);
 						UdpHandler(_handlerBuffer);
 					}
 				});
+			}
+
+			private static void SetLatency(ref float current, uint packetTimestamp) {
+				// ReSharper disable once PossibleNullReferenceException
+				current += (DoubleProtocol.TripTime(_client.ConnectionStartTimestamp, packetTimestamp) - current) * NetworkUtils.ClientUdpLatencyLerpValue;
 			}
 
 			public void OnConnectionLost(DoubleClient.State state) {

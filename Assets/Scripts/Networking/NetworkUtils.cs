@@ -3,6 +3,8 @@
 		public const int Port = 8888;
 		public const int UdpSendFrequency = 30;
 
+		public const float ClientUdpLatencyLerpValue = 0.15f;
+
 		public const int ServerMaxConnectionCount = 10; //TODO is this the right place for this?
 		public const int ServerMaxPendingConnections = 15;
 
