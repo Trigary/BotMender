@@ -6,12 +6,12 @@ namespace Utilities {
 	/// A class used to configure the application and execute general actions on specific events, eg. application close.
 	/// </summary>
 	public class GameConfigurator : MonoBehaviour {
-		public void Awake() {
+		private void Awake() {
 			DontDestroyOnLoad(this);
 			Application.runInBackground = true;
 		}
 
-		public void OnApplicationQuit() {
+		private void OnApplicationQuit() {
 			if (NetworkClient.Initialized) {
 				NetworkClient.Stop();
 			}

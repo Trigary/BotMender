@@ -10,7 +10,7 @@ namespace Utilities {
 		private static UnityDispatcher _instance;
 		private readonly Queue<Action> _actions = new Queue<Action>();
 
-		public void Awake() {
+		private void Awake() {
 			DontDestroyOnLoad(this);
 			lock (_actions) {
 				_instance = this;
@@ -30,11 +30,11 @@ namespace Utilities {
 
 
 
-		public void Update() {
+		private void Update() {
 			CheckInvokables();
 		}
 
-		public void FixedUpdate() {
+		private void FixedUpdate() {
 			CheckInvokables();
 		}
 

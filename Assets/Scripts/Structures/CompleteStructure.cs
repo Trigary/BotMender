@@ -32,7 +32,7 @@ namespace Structures {
 		private byte _inputByte;
 		private Vector3 _input = Vector3.zero;
 
-		public void Awake() {
+		private void Awake() {
 			_body = gameObject.AddComponent<Rigidbody>();
 			_body.angularDrag = RigidbodyAngularDrag;
 		}
@@ -87,7 +87,7 @@ namespace Structures {
 
 
 
-		public void FixedUpdate() {
+		private void FixedUpdate() {
 			_systems.Tick(_body);
 			_systems.MoveRotate(_body, _input);
 			_body.drag = _body.velocity.sqrMagnitude * RigidbodyDragMultiplier + RigidbodyDragOffset;

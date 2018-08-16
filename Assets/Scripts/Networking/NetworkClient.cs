@@ -64,7 +64,7 @@ namespace Networking {
 		/// The UDP latency from the server to this client. The delay the dispatching gives is included.
 		/// Its initial value is -1.
 		/// </summary>
-		public static float UdpTotalLatency => Mathf.RoundToInt(_udpTotalLatency);
+		public static int UdpTotalLatency => Mathf.RoundToInt(_udpTotalLatency);
 		private static float _udpTotalLatency = -1;
 
 
@@ -263,8 +263,7 @@ namespace Networking {
 				UnityDispatcher.Invoke(() => {
 					if (_client != null) {
 						SetLatency(ref _udpTotalLatency, packetTimestamp);
-						Debug.Log($"PreDispatch {UdpPreDispatchLatency} | Total {UdpTotalLatency} | Diff {UdpTotalLatency - UdpPreDispatchLatency}");
-						//TODO latency measurement UI
+						DebugHud.SetLatency(UdpPreDispatchLatency, UdpTotalLatency);
 						_handlerBuffer.SetContents(bytes);
 						UdpHandler(_handlerBuffer);
 					}
@@ -273,7 +272,7 @@ namespace Networking {
 
 			private static void SetLatency(ref float current, uint packetTimestamp) {
 				// ReSharper disable once PossibleNullReferenceException
-				current += (DoubleProtocol.TripTime(_client.ConnectionStartTimestamp, packetTimestamp) - current) * NetworkUtils.ClientUdpLatencyLerpValue;
+				current += (DoubleProtocol.TripTime(_client.ConnectionStartTimestamp, packetTimestamp) - current) * 0.1f;
 			}
 
 			public void OnConnectionLost(DoubleClient.State state) {

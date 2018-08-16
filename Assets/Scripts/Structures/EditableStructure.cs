@@ -23,7 +23,7 @@ namespace Structures {
 		private WeaponSystem.Type _weaponType = WeaponSystem.Type.None;
 		private int _weaponCount;
 
-		public void Start() {
+		private void Start() {
 			if (_blocks.Count == 0) {
 				Assert.IsTrue(BlockPosition.FromVector(transform.position, out BlockPosition position),
 					"Failed to get a BlockPosition from the EditableStructure position.");

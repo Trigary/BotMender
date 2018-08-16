@@ -40,7 +40,7 @@ namespace Building {
 		private bool _inputPlace;
 		private bool _inputRemove;
 
-		public void Awake() {
+		private void Awake() {
 			_camera = Camera.main;
 			_structure = GetComponent<EditableStructure>();
 			Assert.IsTrue(_structure.Deserialize(ExampleStructure), "Failed to load the example structure.");
@@ -48,7 +48,7 @@ namespace Building {
 
 
 
-		public void Update() {
+		private void Update() {
 			if (Input.GetButtonDown("Fire1")) {
 				_inputPlace = true;
 			} else if (Input.GetButtonDown("Fire2")) {
@@ -97,7 +97,7 @@ namespace Building {
 			}
 		}
 
-		public void FixedUpdate() {
+		private void FixedUpdate() {
 			if (_inputPlace) {
 				_inputPlace = false;
 				Place();

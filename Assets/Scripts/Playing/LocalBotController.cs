@@ -14,14 +14,14 @@ namespace Playing {
 		private byte _lastInput;
 		private bool _inputChanged;
 
-		public void Awake() {
+		private void Awake() {
 			_camera = Camera.main;
 			_structure = GetComponent<CompleteStructure>();
 		}
 
 
 
-		public void Update() {
+		private void Update() {
 			if (Input.GetButtonDown("Fire1")) {
 				_inputFire = true;
 			}
@@ -36,7 +36,7 @@ namespace Playing {
 			}
 		}
 
-		public void FixedUpdate() {
+		private void FixedUpdate() {
 			if (!Input.GetButton("FreeLook")) {
 				Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
 				if (Physics.Raycast(ray, out RaycastHit hit)) {

@@ -10,7 +10,7 @@ using Utilities;
 
 namespace Playing {
 	public class LocalPlayingPlayerInitializer : MonoBehaviour { //TODO clean this class up
-		public void Start() {
+		private void Start() {
 			Debug.Log("Initializating networking...");
 			NetworkClient.Start(IPAddress.Loopback, (success, connectionFailure,
 													authenticationFailure, timeout, connectionLost) => {

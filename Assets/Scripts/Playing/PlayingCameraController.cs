@@ -20,19 +20,19 @@ namespace Playing {
 		public const float MaxZoom = 8f; //Furthest
 		public const float MinZoom = 0.1f; //Closest
 
-		public Rigidbody Structure { get; private set; }
+		private Rigidbody _structure;
 		private Rigidbody _rigidbody;
 		private float _verticalOffset = VerticalOffsetOffset;
 		private float _yaw;
 		private float _pitch = DefaultPitch;
 		private float _zoom = DefaultZoom;
 
-		public void Awake() {
+		private void Awake() {
 			_rigidbody = gameObject.AddComponent<Rigidbody>();
 			_rigidbody.isKinematic = false;
 		}
 
-		public void OnDestroy() {
+		private void OnDestroy() {
 			Destroy(_rigidbody);
 		}
 
@@ -40,10 +40,10 @@ namespace Playing {
 		/// Initializes the camera controller with the structure it should follow.
 		/// </summary>
 		public void Initialize(Rigidbody structure) {
-			Structure = structure;
+			_structure = structure;
 
-			Bounds bounds = new Bounds(Structure.position, Vector3.zero);
-			foreach (Transform child in Structure.transform) {
+			Bounds bounds = new Bounds(_structure.position, Vector3.zero);
+			foreach (Transform child in _structure.transform) {
 				Renderer childRenderer = child.GetComponent<Renderer>();
 				if (childRenderer != null) {
 					bounds.Encapsulate(childRenderer.bounds);
@@ -54,8 +54,8 @@ namespace Playing {
 
 
 
-		public void FixedUpdate() {
-			if (Structure == null) {
+		private void FixedUpdate() {
+			if (_structure == null) {
 				Destroy(this);
 				return;
 			}
@@ -64,7 +64,7 @@ namespace Playing {
 			transform.position = center;
 			//TODO center changes when blocks are destroyed -> when blocks are destroyed, update a center-offset
 			transform.rotation = Quaternion.identity;
-			_rigidbody.velocity = Structure.velocity;
+			_rigidbody.velocity = _structure.velocity;
 
 			float deltaZoom = Input.GetAxisRaw("MouseScroll") * ZoomFactor;
 			if (deltaZoom != 0) {
@@ -96,7 +96,7 @@ namespace Playing {
 		}
 
 		private Vector3 Center() {
-			Vector3 center = Structure.position;
+			Vector3 center = _structure.position;
 			center.y += _verticalOffset;
 			return center;
 		}
