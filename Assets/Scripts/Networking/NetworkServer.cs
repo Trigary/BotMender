@@ -44,6 +44,21 @@ namespace Networking {
 
 
 		/// <summary>
+		/// The handler of the incoming UDP packets.
+		/// </summary>
+		public static OnPacketReceived UdpHandler { get; set; }
+
+		/// <summary>
+		/// The handler of the connect event.
+		/// </summary>
+		public static OnConnected ConnectHandler { get; set; }
+
+		/// <summary>
+		/// The handler of the disconnect event.
+		/// </summary>
+		public static OnDisconnected DisconnectHandler { get; set; }
+
+		/// <summary>
 		/// The payload to repeatedly send over UDP or null if there is no such payload.
 		/// </summary>
 		[CanBeNull]
@@ -74,13 +89,12 @@ namespace Networking {
 		/// <summary>
 		/// Initializes the networking and starts accepting connections.
 		/// </summary>
-		public static void Start(OnConnected onConnected, OnDisconnected onDisconnected,
-								OnPacketReceived udpHandler) {
+		public static void Start() {
 			Assert.IsNull(_server, "The NetworkServer is already initialized.");
 
 			_resettingByteBuffer = new ResettingBitBuffer(DoubleProtocol.TcpBufferArraySize);
 			_clients = new HashSet<NetworkServerClient>();
-			_handler = new DoubleServerHandler(onConnected, onDisconnected, udpHandler);
+			_handler = new DoubleServerHandler();
 			_server = new DoubleServer(_handler, NetworkUtils.ServerMaxConnectionCount,
 				NetworkUtils.ServerMaxPendingConnections, NetworkUtils.Port);
 
@@ -215,16 +229,6 @@ namespace Networking {
 
 		private class DoubleServerHandler : IDoubleServerHandler {
 			private readonly MutableBitBuffer _handlerBuffer = new MutableBitBuffer();
-			private readonly OnConnected _onConnected;
-			private readonly OnDisconnected _onDisconnected;
-			private readonly OnPacketReceived _udpHandler;
-
-			public DoubleServerHandler(OnConnected onConnected, OnDisconnected onDisconnected,
-										OnPacketReceived udpHandler) {
-				_onConnected = onConnected;
-				_onDisconnected = onDisconnected;
-				_udpHandler = udpHandler;
-			}
 
 
 
@@ -243,7 +247,7 @@ namespace Networking {
 					if (_server != null) {
 						lock (UdpPayloadLock) { //Don't let the TickingThread send before the client is initialized
 							_clients.Add(serverClient);
-							_onConnected(serverClient);
+							ConnectHandler(serverClient);
 						}
 					}
 				});
@@ -284,7 +288,7 @@ namespace Networking {
 				UnityDispatcher.Invoke(() => {
 					if (_server != null) {
 						_handlerBuffer.SetContents(bytes);
-						_udpHandler(serverClient, _handlerBuffer);
+						UdpHandler(serverClient, _handlerBuffer);
 					}
 				});
 			}
@@ -296,7 +300,7 @@ namespace Networking {
 							NetworkServerClient serverClient = (NetworkServerClient)client.ExtraData;
 							lock (UdpPayloadLock) { //Don't let the TickingThread send before the client is initialized
 								_clients.Remove(serverClient);
-								_onDisconnected(serverClient);
+								DisconnectHandler(serverClient);
 							}
 						}
 					});

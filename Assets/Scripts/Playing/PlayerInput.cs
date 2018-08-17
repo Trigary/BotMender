@@ -1,40 +1,54 @@
-﻿using UnityEngine;
+﻿using DoubleSocket.Utility.BitBuffer;
+using UnityEngine;
 
 namespace Playing {
 	/// <summary>
 	/// A utility class containing methods regarding the player's input.
 	/// </summary>
 	public static class PlayerInput {
+		public const int SerializedBitsSize = 6;
+
 		/// <summary>
 		/// Reads the current player input and serializes it into a byte.
 		/// </summary>
 		public static byte Serialize() {
-			int input = 0;
-			SetInputAxis(ref input, "Rightward", 0);
-			SetInputAxis(ref input, "Upward", 2);
-			SetInputAxis(ref input, "Forward", 4);
-			return (byte)input;
+			int serialized = 0;
+			SetInputAxis(ref serialized, Input.GetAxisRaw("Rightward"), 0);
+			SetInputAxis(ref serialized, Input.GetAxisRaw("Upward"), 2);
+			SetInputAxis(ref serialized, Input.GetAxisRaw("Forward"), 4);
+			return (byte)serialized;
 		}
 
-		private static void SetInputAxis(ref int input, string axis, int offset) {
-			float value = Input.GetAxisRaw(axis);
+		/// <summary>
+		/// Serializes the specified iput into the buffer.
+		/// </summary>
+		public static void Serialize(BitBuffer buffer, Vector3 input) {
+			int serialized = 0;
+			SetInputAxis(ref serialized, input.x, 0);
+			SetInputAxis(ref serialized, input.y, 0);
+			SetInputAxis(ref serialized, input.z, 0);
+			buffer.WriteBits((ulong)serialized, 6);
+		}
+
+		private static void SetInputAxis(ref int serialized, float value, int offset) {
 			if (value > 0) {
-				input |= 1 << offset;
+				serialized |= 1 << offset;
 			} else if (value < 0) {
-				input |= 1 << (offset + 1);
+				serialized |= 1 << (offset + 1);
 			}
 		}
 
 
 
 		/// <summary>
-		/// Converts the serialized byte representation of the player input into a Vector3 representation.
+		/// Converts the serialized representation of the player input found in the buffer into a Vector3 representation.
 		/// </summary>
-		public static Vector3 Deserialize(byte input) {
+		public static Vector3 Deserialize(BitBuffer buffer) {
+			int input = (int)buffer.ReadBits(6);
 			return new Vector3(GetInputAxis(input, 0), GetInputAxis(input, 2), GetInputAxis(input, 4));
 		}
 
-		private static float GetInputAxis(byte input, int offset) {
+		private static float GetInputAxis(int input, int offset) {
 			if ((input & (1 << offset)) == (1 << offset)) {
 				return 1;
 			} else if ((input & (1 << (offset + 1))) == (1 << (offset + 1))) {

@@ -5,9 +5,6 @@ namespace Blocks.Placed {
 	/// A placed block which has a GameObject.
 	/// </summary>
 	public abstract class RealPlacedBlock : MonoBehaviour, IPlacedBlock {
-		/// <summary>
-		/// The size of a serialized RealPlacedBlock in bytes.
-		/// </summary>
 		public const int SerializedBitsSize = 40;
 
 		public BlockSides ConnectSides { get; protected set; }

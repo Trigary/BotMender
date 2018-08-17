@@ -28,6 +28,11 @@ namespace Networking {
 		/// </summary>
 		public delegate void OnDisconnected();
 
+		/// <summary>
+		/// Fired when an UDP packet was received.
+		/// </summary>
+		public delegate void OnUdpReceived(BitBuffer buffer, long packetTimestamp);
+
 
 
 		/// <summary>
@@ -48,8 +53,11 @@ namespace Networking {
 		/// </summary>
 		public static bool Connecting => _client != null && _tickingThread == null;
 
+
+
 		/// <summary>
 		/// The player id of the local client or 0 if no local client exists or if the local client is not yet connected.
+		/// Does not get reset until Start is called after a disconnects happens.
 		/// </summary>
 		public static byte LocalId { get; private set; }
 
@@ -66,8 +74,6 @@ namespace Networking {
 		/// </summary>
 		public static int UdpTotalLatency => Mathf.RoundToInt(_udpTotalLatency);
 		private static float _udpTotalLatency = -1;
-
-
 
 		/// <summary>
 		/// The payload to repeatedly send over UDP or null if there is no such payload.
@@ -91,7 +97,7 @@ namespace Networking {
 		/// <summary>
 		/// The handler of incoming UDP packets.
 		/// </summary>
-		public static Action<BitBuffer> UdpHandler { get; set; }
+		public static OnUdpReceived UdpHandler { get; set; }
 
 		/// <summary>
 		/// The handler of the disconnect event.
@@ -112,6 +118,7 @@ namespace Networking {
 		/// </summary>
 		public static void Start(IPAddress ip, OnConnected onConnected) {
 			Assert.IsNull(_client, "The NetworkClient is already initialized.");
+			LocalId = 0;
 			_handler = new DoubleClientHandler(onConnected);
 			byte[] encryptionKey = new byte[16];
 			byte[] authenticationData = encryptionKey;
@@ -129,7 +136,6 @@ namespace Networking {
 			UdpPayload = null;
 			_tickingThread?.Stop();
 			_tickingThread = null;
-			LocalId = 0;
 			_udpPreDispatchLatency = -1;
 			_udpTotalLatency = -1;
 			_resetPacketTimestamp = false;
@@ -258,21 +264,21 @@ namespace Networking {
 					return;
 				}
 
-				SetLatency(ref _udpPreDispatchLatency, packetTimestamp);
+				UpdateLatency(ref _udpPreDispatchLatency, packetTimestamp);
 				byte[] bytes = buffer.ReadBytes();
 				UnityDispatcher.Invoke(() => {
 					if (_client != null) {
-						SetLatency(ref _udpTotalLatency, packetTimestamp);
+						UpdateLatency(ref _udpTotalLatency, packetTimestamp);
 						DebugHud.SetLatency(UdpPreDispatchLatency, UdpTotalLatency);
 						_handlerBuffer.SetContents(bytes);
-						UdpHandler(_handlerBuffer);
+						UdpHandler(_handlerBuffer, _client.ConnectionStartTimestamp + packetTimestamp);
 					}
 				});
 			}
 
-			private static void SetLatency(ref float current, uint packetTimestamp) {
+			private static void UpdateLatency(ref float latency, uint packetTimestamp) {
 				// ReSharper disable once PossibleNullReferenceException
-				current += (DoubleProtocol.TripTime(_client.ConnectionStartTimestamp, packetTimestamp) - current) * 0.1f;
+				latency += (DoubleProtocol.TripTime(_client.ConnectionStartTimestamp, packetTimestamp) - latency) * 0.1f;
 			}
 
 			public void OnConnectionLost(DoubleClient.State state) {

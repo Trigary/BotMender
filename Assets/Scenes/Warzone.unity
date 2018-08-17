@@ -382,7 +382,7 @@ GameObject:
   - component: {fileID: 688482576}
   - component: {fileID: 688482575}
   m_Layer: 5
-  m_Name: Text
+  m_Name: DebugHud
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -417,7 +417,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e2f9e0ecb3cc6b644911dee9b37a4989, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _hud: {fileID: 688482576}
 --- !u!114 &688482576
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -450,7 +449,9 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "Latency (Net/Total/Diff): \nFPS: "
+  m_Text: 'Latency: 00 / 00 / 00
+
+    FPS: 00'
 --- !u!222 &688482577
 CanvasRenderer:
   m_ObjectHideFlags: 0

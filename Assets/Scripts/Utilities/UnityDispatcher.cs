@@ -17,6 +17,12 @@ namespace Utilities {
 			}
 		}
 
+		private void OnDestroy() {
+			lock (_actions) {
+				_instance = null;
+			}
+		}
+
 
 
 		/// <summary>

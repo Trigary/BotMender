@@ -37,8 +37,6 @@ namespace Building {
 		private byte _facingVariant;
 		private BlockPosition _previousPreviewPosition;
 		private GameObject _previewObject;
-		private bool _inputPlace;
-		private bool _inputRemove;
 
 		private void Awake() {
 			_camera = Camera.main;
@@ -50,14 +48,24 @@ namespace Building {
 
 		private void Update() {
 			if (Input.GetButtonDown("Fire1")) {
-				_inputPlace = true;
+				Place();
 			} else if (Input.GetButtonDown("Fire2")) {
-				_inputRemove = true;
+				Delete();
 			}
 
 			Rotate(Input.GetAxisRaw("MouseScroll"));
 			if (Input.GetButtonDown("Fire3")) {
 				Switch();
+			}
+
+			// ReSharper disable once UnusedVariable
+			if (GetSelectedBlock(out GameObject block, out BlockPosition position, out byte rotation)) {
+				if (!position.Equals(_previousPreviewPosition)) {
+					ShowPreview(position, rotation);
+				}
+			} else {
+				Destroy(_previewObject);
+				_previousPreviewPosition = null;
 			}
 
 			if (Input.GetButtonDown("Ability")) {
@@ -79,7 +87,7 @@ namespace Building {
 						* _structure.RealBlockCount + 7) / 8);
 					_structure.Serialize(someBuffer);
 					Debug.Log("Structure: " + string.Join(", ", someBuffer.Array));
-					CompleteStructure complete = CompleteStructure.Create(someBuffer, "BuiltStructure");
+					CompleteStructure complete = CompleteStructure.Create(someBuffer, 1, "BuiltStructure");
 					Assert.IsNotNull(complete, "Own CompleteStructure creation mustn't fail.");
 
 					complete.transform.position = new Vector3(0, 10, 0);
@@ -90,30 +98,10 @@ namespace Building {
 					Destroy(_camera.gameObject.GetComponent<BuildingCameraController>());
 					Destroy(gameObject);
 
-					CompleteStructure otherStructure = CompleteStructure.Create(ExampleStructure, "OtherStructure");
+					CompleteStructure otherStructure = CompleteStructure.Create(ExampleStructure, 2, "OtherStructure");
 					Assert.IsNotNull(otherStructure, "Other CompleteStructure creation mustn't fail.");
 					otherStructure.transform.position = new Vector3(150, 5, 150);
 				}).Invoke();
-			}
-		}
-
-		private void FixedUpdate() {
-			if (_inputPlace) {
-				_inputPlace = false;
-				Place();
-			} else if (_inputRemove) {
-				_inputRemove = false;
-				Delete();
-			}
-
-			// ReSharper disable once UnusedVariable
-			if (GetSelectedBlock(out GameObject block, out BlockPosition position, out byte rotation)) {
-				if (!position.Equals(_previousPreviewPosition)) {
-					ShowPreview(position, rotation);
-				}
-			} else {
-				Destroy(_previewObject);
-				_previousPreviewPosition = null;
 			}
 		}
 

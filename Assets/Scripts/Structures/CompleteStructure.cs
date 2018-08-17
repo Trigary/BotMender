@@ -10,7 +10,6 @@ using JetBrains.Annotations;
 using Playing;
 using UnityEngine;
 using UnityEngine.Assertions;
-using Utilities;
 
 namespace Structures {
 	/// <summary>
@@ -22,6 +21,7 @@ namespace Structures {
 		public const float RigidbodyDragOffset = 0.0025f;
 		public const float RigidbodyAngularDrag = 0.075f;
 
+		public byte Id { get; private set; }
 		public uint MaxHealth { get; private set; }
 		public uint Health { get; private set; }
 		public uint Mass { get; private set; }
@@ -29,7 +29,6 @@ namespace Structures {
 		private readonly SystemManager _systems = new SystemManager();
 		private BlockPosition _mainframePosition;
 		private Rigidbody _body;
-		private byte _inputByte;
 		private Vector3 _input = Vector3.zero;
 
 		private void Awake() {
@@ -45,8 +44,9 @@ namespace Structures {
 		/// No validation is done, the EditableStructure should be used for that.
 		/// </summary>
 		[CanBeNull]
-		public static CompleteStructure Create(BitBuffer buffer, string gameObjectName) {
+		public static CompleteStructure Create(BitBuffer buffer, byte id, string gameObjectName) {
 			CompleteStructure structure = new GameObject(gameObjectName).AddComponent<CompleteStructure>();
+			structure.Id = id;
 			structure.Deserialize(buffer);
 			structure.MaxHealth = structure.Health;
 			structure._systems.Finished();
@@ -86,6 +86,15 @@ namespace Structures {
 		}
 
 
+
+		/// <summary>
+		/// Should only be called by the NetworkedPhyiscs class.
+		/// This method applies the player input, simulating a FixedUpdate.
+		/// Does not replace the FixedUpdate call, this method relies on it being called before the next normal physics step.
+		/// </summary>
+		public void SimulatedPhysicsUpdate() {
+			_systems.MoveRotate(_body, _input);
+		}
 
 		private void FixedUpdate() {
 			_systems.Tick(_body);
@@ -142,34 +151,30 @@ namespace Structures {
 
 
 		/// <summary>
-		/// Applies the StateUpdate received from the client. Should only be called by the server.
+		/// Applies the state given as the parameter. Should only be called by a client.
 		/// </summary>
-		public void UpdateState(byte input) {
-			_inputByte = input;
-			_input = PlayerInput.Deserialize(input);
+		public void ClientUpdateState(BotState state) {
+			_input = state.Input;
+			transform.position = state.Position;
+			transform.rotation = state.Rotation;
+			_body.velocity = state.Velocity;
+			_body.angularVelocity = state.AngularVelocity;
 		}
 
 		/// <summary>
-		/// Applies the StateUpdate received from the server. Should only be called by a client.
+		/// Applies the input update received from the client specified in the buffer.
+		/// Should only be called by the server.
 		/// </summary>
-		public void UpdateState(byte input, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angularVelocity) {
-			_inputByte = input;
-			_input = PlayerInput.Deserialize(input);
-			transform.position = position;
-			transform.rotation = rotation;
-			_body.velocity = velocity;
-			_body.angularVelocity = angularVelocity;
+		public void ServerUpdateState(Vector3 input) {
+			_input = input;
 		}
 
 		/// <summary>
-		/// Serializeses this bot's current state into the specified buffer.
+		/// Serializeses this bot's current state and its ID into the specified buffer.
+		/// Should only be called by the server.
 		/// </summary>
 		public void SerializeState(BitBuffer buffer) {
-			buffer.Write(_inputByte); //TODO more efficient inputbyte encoding
-			buffer.Write(transform.position);
-			buffer.Write(transform.rotation);
-			buffer.Write(_body.velocity);
-			buffer.Write(_body.angularVelocity);
+			BotState.SerializeState(buffer, Id, _input, transform, _body);
 		}
 
 

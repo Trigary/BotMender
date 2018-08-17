@@ -9,10 +9,7 @@ namespace Playing {
 	public class LocalBotController : MonoBehaviour {
 		private Camera _camera;
 		private CompleteStructure _structure;
-		private bool _inputFire;
-		private bool _inputAbility;
 		private byte _lastInput;
-		private bool _inputChanged;
 
 		private void Awake() {
 			_camera = Camera.main;
@@ -22,21 +19,13 @@ namespace Playing {
 
 
 		private void Update() {
-			if (Input.GetButtonDown("Fire1")) {
-				_inputFire = true;
+			if (Input.GetButton("Fire1")) {
+				_structure.FireWeapons();
 			}
 			if (Input.GetButtonDown("Ability")) {
-				_inputAbility = true;
+				_structure.UseActive();
 			}
 
-			byte newInput = PlayerInput.Serialize();
-			if (newInput != _lastInput) {
-				_lastInput = newInput;
-				_inputChanged = true;
-			}
-		}
-
-		private void FixedUpdate() {
 			if (!Input.GetButton("FreeLook")) {
 				Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
 				if (Physics.Raycast(ray, out RaycastHit hit)) {
@@ -46,20 +35,9 @@ namespace Playing {
 				}
 			}
 
-			if (_inputFire) {
-				if (!Input.GetButton("Fire1")) {
-					_inputFire = false;
-				}
-				_structure.FireWeapons();
-			}
-
-			if (_inputAbility) {
-				_inputAbility = false;
-				_structure.UseActive();
-			}
-
-			if (_inputChanged) {
-				_inputChanged = false;
+			byte newInput = PlayerInput.Serialize();
+			if (newInput != _lastInput) {
+				_lastInput = newInput;
 				NetworkClient.UdpPayload = new[] {_lastInput};
 			}
 		}
