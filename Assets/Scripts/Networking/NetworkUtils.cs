@@ -1,10 +1,18 @@
-﻿namespace Networking {
+﻿using UnityEngine;
+
+namespace Networking {
 	public static class NetworkUtils {
 		public const int Port = 8888;
 		public const int UdpSendFrequency = 30;
 
 		public const int ServerMaxConnectionCount = 10; //TODO is this the right place for this?
 		public const int ServerMaxPendingConnections = 15;
+
+
+
+		// ReSharper disable once ConvertToConstant.Global
+		public static readonly bool SimulateLatency = true;
+		public static float SimulatedLatency => Random.Range(50f, 75f) / 1000;
 
 
 

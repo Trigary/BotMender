@@ -187,7 +187,7 @@ namespace Networking {
 
 
 			public void OnConnectionFailure(SocketError error) {
-				UnityDispatcher.Invoke(() => {
+				UnityDispatcher.InvokeNoDelay(() => {
 					if (_client != null) {
 						Stop();
 						_onConnected(false, error, 0, false, false);
@@ -196,7 +196,7 @@ namespace Networking {
 			}
 
 			public void OnTcpAuthenticationFailure(byte errorCode) {
-				UnityDispatcher.Invoke(() => {
+				UnityDispatcher.InvokeNoDelay(() => {
 					if (_client != null) {
 						Stop();
 						_onConnected(false, SocketError.Success, errorCode, false, false);
@@ -205,7 +205,7 @@ namespace Networking {
 			}
 
 			public void OnAuthenticationTimeout(DoubleClient.State state) {
-				UnityDispatcher.Invoke(() => {
+				UnityDispatcher.InvokeNoDelay(() => {
 					if (_client != null) {
 						Stop();
 						_onConnected(false, SocketError.Success, 0, true, false);
@@ -215,7 +215,7 @@ namespace Networking {
 
 			public void OnFullAuthentication(BitBuffer buffer) {
 				byte localId = buffer.ReadByte();
-				UnityDispatcher.Invoke(() => {
+				UnityDispatcher.InvokeNoDelay(() => {
 					if (_client != null) {
 						LocalId = localId;
 						_onConnected(true, SocketError.Success, 0, false, false);
@@ -242,7 +242,7 @@ namespace Networking {
 				}
 
 				byte[] bytes = buffer.ReadBytes();
-				UnityDispatcher.Invoke(() => {
+				UnityDispatcher.InvokePacketHandling(() => {
 					Action<BitBuffer> action = TcpHandlers[packet];
 					if (action != null) {
 						_handlerBuffer.SetContents(bytes);
@@ -266,7 +266,7 @@ namespace Networking {
 
 				UpdateLatency(ref _udpPreDispatchLatency, packetTimestamp);
 				byte[] bytes = buffer.ReadBytes();
-				UnityDispatcher.Invoke(() => {
+				UnityDispatcher.InvokePacketHandling(() => {
 					if (_client != null) {
 						UpdateLatency(ref _udpTotalLatency, packetTimestamp);
 						DebugHud.SetLatency(UdpPreDispatchLatency, UdpTotalLatency);
@@ -283,14 +283,14 @@ namespace Networking {
 
 			public void OnConnectionLost(DoubleClient.State state) {
 				if (state == DoubleClient.State.Authenticated) {
-					UnityDispatcher.Invoke(() => {
+					UnityDispatcher.InvokeNoDelay(() => {
 						if (_client != null) {
 							Stop();
 							DisconnectHandler();
 						}
 					});
 				} else {
-					UnityDispatcher.Invoke(() => {
+					UnityDispatcher.InvokeNoDelay(() => {
 						if (_client != null) {
 							Stop();
 							_onConnected(false, SocketError.Success, 0, false, true);

@@ -90,7 +90,7 @@ namespace Playing {
 
 
 		private static void ServerUdpReceived(INetworkServerClient sender, BitBuffer buffer) {
-			RetrievePlayer(sender.Id).ServerUpdateState(PlayerInput.Deserialize(buffer));
+			RetrievePlayer(sender.Id)?.ServerUpdateState(PlayerInput.Deserialize(buffer));
 		}
 
 		private void ClientOnlyUdpReceived(BitBuffer buffer, long packetTimestamp) {
@@ -99,12 +99,16 @@ namespace Playing {
 				RetrievePlayer(_tempBotState.Id)?.ClientUpdateState(_tempBotState);
 			}
 
-			int ticksPassed = ((int)(DoubleProtocol.TimeMillis - packetTimestamp + 19) / 20) - 1;
-			if (ticksPassed <= 0) { //TODO some latency simulation is required
+			//TODO everything below seems to make little visible difference at the moment with a ping of ~80
+			//focus on interpolation instead or implement the TCP packet which spawns for players (for the client-onlys)
+			//so the difference could possibly be seen
+
+			int ticksPassed = ((int)(DoubleProtocol.TimeMillis - packetTimestamp + 10) / 20) - 1;
+			if (ticksPassed <= 0) {
 				return;
 			}
 
-			if (ticksPassed >= 50) {
+			if (ticksPassed >= 25) {
 				Debug.Log($"Skipping {ticksPassed} physics fast-forwarding steps due to their high count");
 				return;
 			}
@@ -114,7 +118,7 @@ namespace Playing {
 				foreach (CompleteStructure structure in _playerStructures.Values) {
 					structure.SimulatedPhysicsUpdate();
 				}
-				Physics.Simulate(Time.fixedUnscaledDeltaTime); //TODO
+				Physics.Simulate(Time.fixedUnscaledDeltaTime);
 			}
 			Physics.autoSimulation = true;
 		}

@@ -243,7 +243,7 @@ namespace Networking {
 			public Action<BitBuffer> OnFullAuthentication(IDoubleServerClient client) {
 				NetworkServerClient serverClient = (NetworkServerClient)client.ExtraData;
 				serverClient.Initialize();
-				UnityDispatcher.Invoke(() => {
+				UnityDispatcher.InvokeNoDelay(() => {
 					if (_server != null) {
 						lock (UdpPayloadLock) { //Don't let the TickingThread send before the client is initialized
 							_clients.Add(serverClient);
@@ -265,7 +265,7 @@ namespace Networking {
 				}
 
 				byte[] bytes = buffer.ReadBytes();
-				UnityDispatcher.Invoke(() => {
+				UnityDispatcher.InvokePacketHandling(() => {
 					if (_server != null) {
 						OnPacketReceived action = TcpHandlers[packet];
 						if (action != null) {
@@ -285,7 +285,7 @@ namespace Networking {
 				}
 
 				byte[] bytes = buffer.ReadBytes();
-				UnityDispatcher.Invoke(() => {
+				UnityDispatcher.InvokePacketHandling(() => {
 					if (_server != null) {
 						_handlerBuffer.SetContents(bytes);
 						UdpHandler(serverClient, _handlerBuffer);
@@ -295,7 +295,7 @@ namespace Networking {
 
 			public void OnLostConnection(IDoubleServerClient client, DoubleServer.ClientState state) {
 				if (state == DoubleServer.ClientState.Authenticated) {
-					UnityDispatcher.Invoke(() => {
+					UnityDispatcher.InvokeNoDelay(() => {
 						if (_server != null) {
 							NetworkServerClient serverClient = (NetworkServerClient)client.ExtraData;
 							lock (UdpPayloadLock) { //Don't let the TickingThread send before the client is initialized
@@ -336,7 +336,7 @@ namespace Networking {
 				lock (SmallLock) {
 					Id = newid;
 				}
-				UnityDispatcher.Invoke(() => {
+				UnityDispatcher.InvokeNoDelay(() => {
 					lock (SmallLock) {
 					}
 				});

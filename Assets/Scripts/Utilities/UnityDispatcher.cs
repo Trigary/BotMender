@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Networking;
 using UnityEngine;
 
 namespace Utilities {
@@ -27,8 +28,25 @@ namespace Utilities {
 
 		/// <summary>
 		/// Queues the specfied action to be invoked on the main Unity thread.
+		/// Depending on current (hardcoded) settings, delay may be applied
+		/// when using this method in order to simulate latency.
 		/// </summary>
-		public static void Invoke(Action action) {
+		public static void InvokePacketHandling(Action action) {
+			lock (_instance._actions) {
+				if (NetworkUtils.SimulateLatency) {
+					_instance._actions.Enqueue(() =>
+						_instance.StartCoroutine(CoroutineUtils.Delay(action, NetworkUtils.SimulatedLatency)));
+				} else {
+					_instance._actions.Enqueue(action);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Queues the specfied action to be invoked on the main Unity thread.
+		/// Tries to add no additional delay.
+		/// </summary>
+		public static void InvokeNoDelay(Action action) {
 			lock (_instance._actions) {
 				_instance._actions.Enqueue(action);
 			}
