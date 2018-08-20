@@ -10,9 +10,10 @@ namespace Systems.Propulsion {
 
 
 
-		public override void MoveRotate(Rigidbody bot, Vector3 direction) {
-			bot.AddForce(bot.transform.rotation * new Vector3(0, direction.y, direction.z), ForceMode.VelocityChange);
-			bot.transform.RotateAround(bot.transform.position, bot.transform.up, direction.x);
+		public override void MoveRotate(Rigidbody bot, Vector3 direction, float timestepMultiplier) {
+			bot.AddForce(bot.transform.rotation * new Vector3(0, direction.y, direction.z) * timestepMultiplier,
+				ForceMode.VelocityChange);
+			bot.transform.RotateAround(bot.transform.position, bot.transform.up, direction.x * timestepMultiplier);
 		}
 	}
 }

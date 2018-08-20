@@ -95,9 +95,9 @@ namespace Systems {
 		/// <summary>
 		/// Executes the propulsion systems.
 		/// </summary>
-		public void MoveRotate(Rigidbody bot, Vector3 direction) {
+		public void MoveRotate(Rigidbody bot, Vector3 direction, float timestepMultiplier) {
 			foreach (PropulsionSystem system in _propulsions) {
-				system.MoveRotate(bot, direction);
+				system.MoveRotate(bot, direction, timestepMultiplier);
 			}
 		}
 

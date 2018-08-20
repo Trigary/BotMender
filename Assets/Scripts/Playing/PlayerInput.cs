@@ -27,7 +27,7 @@ namespace Playing {
 			SetInputAxis(ref serialized, input.x, 0);
 			SetInputAxis(ref serialized, input.y, 0);
 			SetInputAxis(ref serialized, input.z, 0);
-			buffer.WriteBits((ulong)serialized, 6);
+			buffer.WriteBits((ulong)serialized, SerializedBitsSize);
 		}
 
 		private static void SetInputAxis(ref int serialized, float value, int offset) {
@@ -44,7 +44,7 @@ namespace Playing {
 		/// Converts the serialized representation of the player input found in the buffer into a Vector3 representation.
 		/// </summary>
 		public static Vector3 Deserialize(BitBuffer buffer) {
-			int input = (int)buffer.ReadBits(6);
+			int input = (int)buffer.ReadBits(SerializedBitsSize);
 			return new Vector3(GetInputAxis(input, 0), GetInputAxis(input, 2), GetInputAxis(input, 4));
 		}
 

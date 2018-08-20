@@ -9,6 +9,7 @@ namespace Utilities {
 		private void Awake() {
 			DontDestroyOnLoad(this);
 			Application.runInBackground = true;
+			Physics.autoSimulation = false;
 		}
 
 		private void OnApplicationQuit() {

@@ -20,10 +20,13 @@ namespace Playing {
 			GameObject gameObject = new GameObject("NetworkedPhysics");
 			_instance = gameObject.AddComponent<NetworkedPhyiscs>();
 			if (NetworkUtils.IsServer) {
-				NetworkClient.UdpHandler = (buffer, timestamp) => { };
-				NetworkServer.UdpHandler = ServerUdpReceived;
+				NetworkClient.UdpHandler = buffer => { };
+				NetworkServer.UdpHandler = (sender, buffer) => {
+					_instance._lastUdpSender = sender;
+					_instance._lastUdpPacket = buffer.Array;
+				};
 			} else {
-				NetworkClient.UdpHandler = _instance.ClientOnlyUdpReceived;
+				NetworkClient.UdpHandler = buffer => _instance._lastUdpPacket = buffer.Array;
 			}
 			return gameObject;
 		}
@@ -52,8 +55,11 @@ namespace Playing {
 
 		private static NetworkedPhyiscs _instance;
 		private readonly IDictionary<byte, CompleteStructure> _playerStructures = new Dictionary<byte, CompleteStructure>();
-		private readonly MutableBitBuffer _serverUdpSendBuffer = new MutableBitBuffer();
+		private readonly MutableBitBuffer _sharedBuffer = new MutableBitBuffer();
 		private readonly BotState _tempBotState = new BotState();
+		private long _lastSkippedFastForward;
+		private INetworkServerClient _lastUdpSender;
+		private byte[] _lastUdpPacket;
 
 		private void OnDestroy() {
 			_instance = null;
@@ -70,12 +76,43 @@ namespace Playing {
 		}
 
 		private void ServerFixedUpdate() {
-			_serverUdpSendBuffer.ClearContents(new byte[(BotState.SerializedBitsSize * NetworkServer.ClientCount + 7) / 8]);
-			NetworkServer.ForEachClient(client => RetrievePlayer(client.Id).SerializeState(_serverUdpSendBuffer));
-			NetworkServer.UdpPayload = _serverUdpSendBuffer.Array;
+			if (LoadUdpPacket() && _sharedBuffer.TotalBitsLeft >= PlayerInput.SerializedBitsSize) {
+				RetrievePlayer(_lastUdpSender.Id)?.ServerUpdateState(PlayerInput.Deserialize(_sharedBuffer));
+			}
+
+			int bitSize = 48 + BotState.SerializedBitsSize * NetworkServer.ClientCount;
+			_sharedBuffer.ClearContents(new byte[(bitSize + 7) / 8]);
+			_sharedBuffer.WriteBits((ulong)DoubleProtocol.TimeMillis, 48);
+			NetworkServer.ForEachClient(client => RetrievePlayer(client.Id).SerializeState(_sharedBuffer));
+			NetworkServer.UdpPayload = _sharedBuffer.Array;
+
+			Physics.Simulate(0.02f);
 		}
 
 		private void ClientOnlyFixedUpdate() {
+			//TODO focus on interpolation next and TCP packets to make multiple bots appear on non-host
+			if (!LoadUdpPacket()) {
+				Physics.Simulate(0.02f);
+				return;
+			}
+
+			long currentMillis = DoubleProtocol.TimeMillis;
+			int dataAge = (int)(currentMillis - (long)_sharedBuffer.ReadBits(48));
+			while (_sharedBuffer.TotalBitsLeft >= BotState.SerializedBitsSize) {
+				_tempBotState.Update(_sharedBuffer);
+				RetrievePlayer(_tempBotState.Id)?.ClientUpdateState(_tempBotState);
+			}
+
+			if (dataAge <= 1) {
+				return;
+			} else if (dataAge >= 500) {
+				if (_lastSkippedFastForward + 250 < currentMillis) {
+					Debug.Log($"Skipping {dataAge}ms of networking fast-forward simulation to avoid delays. " +
+						"Hiding this error for 100ms.");
+					_lastSkippedFastForward = currentMillis;
+				}
+			}
+
 			//TODO guessed inputs:
 			// - the player changes its input
 			// - the client guesses when that input will be received by the server and converts that to client-side fixed tick
@@ -85,42 +122,34 @@ namespace Playing {
 			// - question: when to remove this guessed input?
 			// - guessed inputs should be able to be delayed if he remove criteria isn't met before the guessed time
 			//  (should happen ~50% of the time)
-		}
 
-
-
-		private static void ServerUdpReceived(INetworkServerClient sender, BitBuffer buffer) {
-			RetrievePlayer(sender.Id)?.ServerUpdateState(PlayerInput.Deserialize(buffer));
-		}
-
-		private void ClientOnlyUdpReceived(BitBuffer buffer, long packetTimestamp) {
-			while (buffer.TotalBitsLeft >= BotState.SerializedBitsSize) {
-				_tempBotState.Update(buffer);
-				RetrievePlayer(_tempBotState.Id)?.ClientUpdateState(_tempBotState);
-			}
-
-			//TODO everything below seems to make little visible difference at the moment with a ping of ~80
-			//focus on interpolation instead or implement the TCP packet which spawns for players (for the client-onlys)
-			//so the difference could possibly be seen
-
-			int ticksPassed = ((int)(DoubleProtocol.TimeMillis - packetTimestamp + 10) / 20) - 1;
-			if (ticksPassed <= 0) {
-				return;
-			}
-
-			if (ticksPassed >= 25) {
-				Debug.Log($"Skipping {ticksPassed} physics fast-forwarding steps due to their high count");
-				return;
-			}
-
-			Physics.autoSimulation = false;
-			while (ticksPassed-- > 0) {
+			int fullSteps = dataAge / 20;
+			while (fullSteps-- > 0) {
 				foreach (CompleteStructure structure in _playerStructures.Values) {
-					structure.SimulatedPhysicsUpdate();
+					structure.SimulatedPhysicsUpdate(1f);
 				}
-				Physics.Simulate(Time.fixedUnscaledDeltaTime);
+				Physics.Simulate(0.02f);
 			}
-			Physics.autoSimulation = true;
+
+			int mod = dataAge % 20;
+			if (mod != 0) {
+				float timestepMultiplier = mod / 20f;
+				foreach (CompleteStructure structure in _playerStructures.Values) {
+					structure.SimulatedPhysicsUpdate(timestepMultiplier);
+				}
+				Physics.Simulate(mod / 1000f);
+			}
+		}
+
+
+
+		private bool LoadUdpPacket() {
+			if (_lastUdpPacket != null) {
+				_sharedBuffer.SetContents(_lastUdpPacket);
+				_lastUdpPacket = null;
+				return true;
+			}
+			return false;
 		}
 	}
 }

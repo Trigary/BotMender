@@ -13,6 +13,6 @@ namespace Systems {
 		/// <summary>
 		/// Handle the movement input.
 		/// </summary>
-		public abstract void MoveRotate(Rigidbody bot, Vector3 direction);
+		public abstract void MoveRotate(Rigidbody bot, Vector3 direction, float timestepMultiplier);
 	}
 }

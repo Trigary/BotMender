@@ -28,11 +28,6 @@ namespace Networking {
 		/// </summary>
 		public delegate void OnDisconnected();
 
-		/// <summary>
-		/// Fired when an UDP packet was received.
-		/// </summary>
-		public delegate void OnUdpReceived(BitBuffer buffer, long packetTimestamp);
-
 
 
 		/// <summary>
@@ -97,7 +92,7 @@ namespace Networking {
 		/// <summary>
 		/// The handler of incoming UDP packets.
 		/// </summary>
-		public static OnUdpReceived UdpHandler { get; set; }
+		public static Action<BitBuffer> UdpHandler { get; set; }
 
 		/// <summary>
 		/// The handler of the disconnect event.
@@ -271,7 +266,7 @@ namespace Networking {
 						UpdateLatency(ref _udpTotalLatency, packetTimestamp);
 						DebugHud.SetLatency(UdpPreDispatchLatency, UdpTotalLatency);
 						_handlerBuffer.SetContents(bytes);
-						UdpHandler(_handlerBuffer, _client.ConnectionStartTimestamp + packetTimestamp);
+						UdpHandler(_handlerBuffer);
 					}
 				});
 			}

@@ -18,13 +18,13 @@ namespace Systems.Propulsion {
 
 
 
-		public override void MoveRotate(Rigidbody bot, Vector3 direction) {
+		public override void MoveRotate(Rigidbody bot, Vector3 direction, float timestepMultiplier) {
 			float multiplier = ForceData(bot.transform, _facing, direction.x, direction.y, direction.z, out direction);
 			if (multiplier == 0) {
 				return;
 			}
 
-			bot.AddForceAtPosition(direction * multiplier * Constants.Force,
+			bot.AddForceAtPosition(direction * multiplier * Constants.Force * timestepMultiplier,
 				bot.position + bot.rotation * (Block.transform.localPosition + Constants.Offset),
 				ForceMode.Impulse);
 		}

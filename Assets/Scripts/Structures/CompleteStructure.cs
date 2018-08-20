@@ -89,16 +89,16 @@ namespace Structures {
 
 		/// <summary>
 		/// Should only be called by the NetworkedPhyiscs class.
-		/// This method applies the player input, simulating a FixedUpdate.
+		/// This method applies the player input, simulating a part of or a while FixedUpdate (see: timestepMultiplier).
 		/// Does not replace the FixedUpdate call, this method relies on it being called before the next normal physics step.
 		/// </summary>
-		public void SimulatedPhysicsUpdate() {
-			_systems.MoveRotate(_body, _input);
+		public void SimulatedPhysicsUpdate(float timestepMultiplier) {
+			_systems.MoveRotate(_body, _input, timestepMultiplier);
 		}
 
 		private void FixedUpdate() {
 			_systems.Tick(_body);
-			_systems.MoveRotate(_body, _input);
+			_systems.MoveRotate(_body, _input, 1f);
 			_body.drag = _body.velocity.sqrMagnitude * RigidbodyDragMultiplier + RigidbodyDragOffset;
 		}
 
