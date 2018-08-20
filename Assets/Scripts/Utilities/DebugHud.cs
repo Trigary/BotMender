@@ -23,7 +23,7 @@ namespace Utilities {
 		}
 
 		private void OnGUI() {
-			_hud.text = $@"Latency: {_latencyNet} / {_latencyTotal} / {_latencyTotal - _latencyNet}
+			_hud.text = $@"Latency: {_latencyNet} / {_latencyTotal}
 FPS: {(int)(1 / _fpsDeltaTime)}";
 		}
 

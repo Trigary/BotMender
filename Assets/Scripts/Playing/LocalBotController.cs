@@ -1,5 +1,4 @@
-﻿using Networking;
-using Structures;
+﻿using Structures;
 using UnityEngine;
 
 namespace Playing {
@@ -38,7 +37,7 @@ namespace Playing {
 			byte newInput = PlayerInput.Serialize();
 			if (newInput != _lastInput) {
 				_lastInput = newInput;
-				NetworkClient.UdpPayload = new[] {_lastInput};
+				NetworkedPhyiscs.LocalInputChanged(_lastInput);
 			}
 		}
 	}

@@ -25,11 +25,11 @@ namespace Structures {
 		public uint MaxHealth { get; private set; }
 		public uint Health { get; private set; }
 		public uint Mass { get; private set; }
+		public Vector3 Input { get; private set; } = Vector3.zero;
 		private readonly IDictionary<BlockPosition, ILiveBlock> _blocks = new Dictionary<BlockPosition, ILiveBlock>();
 		private readonly SystemManager _systems = new SystemManager();
 		private BlockPosition _mainframePosition;
 		private Rigidbody _body;
-		private Vector3 _input = Vector3.zero;
 
 		private void Awake() {
 			_body = gameObject.AddComponent<Rigidbody>();
@@ -93,12 +93,12 @@ namespace Structures {
 		/// Does not replace the FixedUpdate call, this method relies on it being called before the next normal physics step.
 		/// </summary>
 		public void SimulatedPhysicsUpdate(float timestepMultiplier) {
-			_systems.MoveRotate(_body, _input, timestepMultiplier);
+			_systems.MoveRotate(_body, Input, timestepMultiplier);
 		}
 
 		private void FixedUpdate() {
 			_systems.Tick(_body);
-			_systems.MoveRotate(_body, _input, 1f);
+			_systems.MoveRotate(_body, Input, 1f);
 			_body.drag = _body.velocity.sqrMagnitude * RigidbodyDragMultiplier + RigidbodyDragOffset;
 		}
 
@@ -153,8 +153,8 @@ namespace Structures {
 		/// <summary>
 		/// Applies the state given as the parameter. Should only be called by a client.
 		/// </summary>
-		public void ClientUpdateState(BotState state) {
-			_input = state.Input;
+		public void UpdateWholeState(BotState state) {
+			Input = state.Input;
 			transform.position = state.Position;
 			transform.rotation = state.Rotation;
 			_body.velocity = state.Velocity;
@@ -163,10 +163,10 @@ namespace Structures {
 
 		/// <summary>
 		/// Applies the input update received from the client specified in the buffer.
-		/// Should only be called by the server.
+		/// Should only be called by the server or the local client.
 		/// </summary>
-		public void ServerUpdateState(Vector3 input) {
-			_input = input;
+		public void UpdateInputOnly(Vector3 input) {
+			Input = input;
 		}
 
 		/// <summary>
@@ -174,7 +174,7 @@ namespace Structures {
 		/// Should only be called by the server.
 		/// </summary>
 		public void SerializeState(BitBuffer buffer) {
-			BotState.SerializeState(buffer, Id, _input, transform, _body);
+			BotState.SerializeState(buffer, Id, Input, transform, _body);
 		}
 
 

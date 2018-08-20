@@ -31,11 +31,14 @@ namespace Utilities {
 		/// Depending on current (hardcoded) settings, delay may be applied
 		/// when using this method in order to simulate latency.
 		/// </summary>
-		public static void InvokePacketHandling(Action action) {
+		public static void InvokePacketHandling(bool udp, Action action) {
 			lock (_instance._actions) {
-				if (NetworkUtils.SimulateLatency) {
-					_instance._actions.Enqueue(() =>
-						_instance.StartCoroutine(CoroutineUtils.Delay(action, NetworkUtils.SimulatedLatency)));
+				if (NetworkUtils.SimulateUdpNetworkConditions) {
+					_instance._actions.Enqueue(() => {
+						if (!udp || !NetworkUtils.ShouldLoseUdpPacket) {
+							_instance.StartCoroutine(CoroutineUtils.Delay(action, NetworkUtils.SimulatedLatency));
+						}
+					});
 				} else {
 					_instance._actions.Enqueue(action);
 				}

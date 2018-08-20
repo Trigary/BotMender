@@ -11,7 +11,8 @@ namespace Networking {
 
 
 		// ReSharper disable once ConvertToConstant.Global
-		public static readonly bool SimulateLatency = true;
+		public static readonly bool SimulateUdpNetworkConditions = true;
+		public static bool ShouldLoseUdpPacket => Random.Range(0, 100) < 10;
 		public static float SimulatedLatency => Random.Range(50f, 75f) / 1000;
 
 

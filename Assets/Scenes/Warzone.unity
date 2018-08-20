@@ -449,7 +449,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: 'Latency: 00 / 00 / 00
+  m_Text: 'Latency: 00 / 00
 
     FPS: 00'
 --- !u!222 &688482577

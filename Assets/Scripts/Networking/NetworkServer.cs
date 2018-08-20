@@ -265,7 +265,7 @@ namespace Networking {
 				}
 
 				byte[] bytes = buffer.ReadBytes();
-				UnityDispatcher.InvokePacketHandling(() => {
+				UnityDispatcher.InvokePacketHandling(false, () => {
 					if (_server != null) {
 						OnPacketReceived action = TcpHandlers[packet];
 						if (action != null) {
@@ -285,7 +285,7 @@ namespace Networking {
 				}
 
 				byte[] bytes = buffer.ReadBytes();
-				UnityDispatcher.InvokePacketHandling(() => {
+				UnityDispatcher.InvokePacketHandling(true, () => {
 					if (_server != null) {
 						_handlerBuffer.SetContents(bytes);
 						UdpHandler(serverClient, _handlerBuffer);

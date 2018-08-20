@@ -237,7 +237,7 @@ namespace Networking {
 				}
 
 				byte[] bytes = buffer.ReadBytes();
-				UnityDispatcher.InvokePacketHandling(() => {
+				UnityDispatcher.InvokePacketHandling(false, () => {
 					Action<BitBuffer> action = TcpHandlers[packet];
 					if (action != null) {
 						_handlerBuffer.SetContents(bytes);
@@ -261,7 +261,7 @@ namespace Networking {
 
 				UpdateLatency(ref _udpPreDispatchLatency, packetTimestamp);
 				byte[] bytes = buffer.ReadBytes();
-				UnityDispatcher.InvokePacketHandling(() => {
+				UnityDispatcher.InvokePacketHandling(true, () => {
 					if (_client != null) {
 						UpdateLatency(ref _udpTotalLatency, packetTimestamp);
 						DebugHud.SetLatency(UdpPreDispatchLatency, UdpTotalLatency);
