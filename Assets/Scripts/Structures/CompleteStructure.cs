@@ -19,7 +19,7 @@ namespace Structures {
 	public class CompleteStructure : MonoBehaviour {
 		public const float RigidbodyDragMultiplier = 0.0025f;
 		public const float RigidbodyDragOffset = 0.0025f;
-		public const float RigidbodyAngularDrag = 0.075f;
+		public const float RigidbodyAngularDrag = 3f;
 
 		public byte Id { get; private set; }
 		public uint MaxHealth { get; private set; }

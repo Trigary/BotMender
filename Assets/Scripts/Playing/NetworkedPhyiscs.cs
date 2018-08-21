@@ -64,7 +64,7 @@ namespace Playing {
 				int latency = NetworkClient.UdpTotalLatency;
 				long key = DoubleProtocol.TimeMillis + latency;
 				_instance._guessedInputs.Remove(key);
-				_instance._guessedInputs.Add(key, new GuessedInput(newInput, latency / 2));
+				_instance._guessedInputs.Add(key, new GuessedInput(newInput, latency * 5 / 4));
 			}
 		}
 
@@ -133,14 +133,15 @@ namespace Playing {
 
 			while (_guessedInputs.Count > 0) {
 				KeyValuePair<long, GuessedInput> guessed = _guessedInputs.First();
-				if (guessed.Key > lastMillis) {
+				if (guessed.Key >= lastMillis) {
 					break;
 				}
+
 				_guessedInputs.Remove(guessed.Key);
-				guessed.Value.RemainingDelay -= (int)(lastMillis - guessed.Key) + 1;
+				guessed.Value.RemainingDelay -= (int)(lastMillis - guessed.Key);
 				if (guessed.Value.RemainingDelay > 0) {
-					_guessedInputs.Remove(lastMillis + 1);
-					_guessedInputs.Add(lastMillis + 1, guessed.Value);
+					_guessedInputs.Remove(lastMillis);
+					_guessedInputs.Add(lastMillis, guessed.Value);
 				}
 			}
 
@@ -148,12 +149,14 @@ namespace Playing {
 				int delta = (int)(guessed.Key - lastMillis);
 				if (delta > toSimulate) {
 					break;
+				} else if (delta == 0) {
+					localStructure.UpdateInputOnly(guessed.Value.Input);
+				} else {
+					Simulate(delta);
+					localStructure.UpdateInputOnly(guessed.Value.Input);
+					toSimulate -= delta;
+					lastMillis = guessed.Key;
 				}
-
-				Simulate(delta);
-				localStructure.UpdateInputOnly(guessed.Value.Input);
-				toSimulate -= delta;
-				lastMillis = guessed.Key;
 			}
 
 			if (toSimulate != 0) {
@@ -169,12 +172,13 @@ namespace Playing {
 				_tempBotState.Update(_sharedBuffer);
 				RetrievePlayer(_tempBotState.Id)?.UpdateWholeState(_tempBotState);
 			}
+
 			if (toSimulate <= 0) {
 				toSimulate = 0;
 				_silentSkipFastForwardUntil = 0;
 			} else if (toSimulate >= 500) {
 				if (currentMillis < _silentSkipFastForwardUntil) {
-					Debug.Log($"Skipping {toSimulate}ms of networking fast-forward simulation to avoid delays. " +
+					Debug.Log($"Skipping {toSimulate}ms of networking fast-forward simulation to avoid delays." +
 						"Hiding this error for at most 100ms.");
 					_silentSkipFastForwardUntil = currentMillis + 100;
 				}
@@ -201,6 +205,7 @@ namespace Playing {
 				}
 				Physics.Simulate(0.02f);
 			}
+
 			int mod = millis % 20;
 			if (mod != 0) {
 				float timestepMultiplier = mod / 20f;
@@ -210,6 +215,8 @@ namespace Playing {
 				Physics.Simulate(mod / 1000f);
 			}
 		}
+
+
 
 		private class GuessedInput {
 			public readonly Vector3 Input;

@@ -451,6 +451,8 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: 'Latency: 00 / 00
 
+    UDP loss: 00%
+
     FPS: 00'
 --- !u!222 &688482577
 CanvasRenderer:

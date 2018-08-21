@@ -54,7 +54,7 @@ namespace Playing {
 
 
 
-		private void FixedUpdate() {
+		private void Update() {
 			if (_structure == null) {
 				Destroy(this);
 				return;
