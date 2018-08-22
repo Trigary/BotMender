@@ -45,15 +45,21 @@ namespace Playing {
 
 		private static void OnSuccess() {
 			NetworkedPhyiscs.Create();
+			NetworkClient.DisconnectHandler = () => { };
 			if (NetworkUtils.IsServer) {
-				NetworkClient.DisconnectHandler = () => { };
 				NetworkServer.ConnectHandler = ServerOnClientConnected;
 				NetworkServer.DisconnectHandler = ServerOnClientDisconnected;
 			} else {
-				NetworkClient.DisconnectHandler = () => NetworkedPhyiscs.RegisterPlayer(NetworkClient.LocalId, null);
+				NetworkClient.SetTcpHandler(TcpPacketType.Server_State_Joined, buffer => {
+					while (buffer.TotalBitsLeft >= 8) {
+						OnClientConnected(buffer.ReadByte());
+					}
+				});
+				NetworkClient.SetTcpHandler(TcpPacketType.Server_State_Left,
+					buffer => OnClientDisconnected(buffer.ReadByte()));
 			}
 
-			GameObject structureObject = ServerOnClientConnected(NetworkClient.LocalId);
+			GameObject structureObject = OnClientConnected(NetworkClient.LocalId);
 			structureObject.gameObject.AddComponent<LocalBotController>();
 			Camera.main.gameObject.AddComponent<PlayingCameraController>()
 				.Initialize(structureObject.GetComponent<Rigidbody>());
@@ -61,12 +67,7 @@ namespace Playing {
 
 
 
-		private static void ServerOnClientConnected(INetworkServerClient client) {
-			Debug.Log("Client connected: " + client.Id);
-			ServerOnClientConnected(client.Id);
-		}
-
-		private static GameObject ServerOnClientConnected(byte clientId) {
+		private static GameObject OnClientConnected(byte clientId) {
 			CompleteStructure structure = CompleteStructure.Create(BuildingController.ExampleStructure,
 				clientId, "Player#" + clientId);
 			Assert.IsNotNull(structure, "The example structure creation must be successful.");
@@ -74,10 +75,29 @@ namespace Playing {
 			return structure.gameObject;
 		}
 
+		private static void OnClientDisconnected(byte clientId) {
+			Destroy(NetworkedPhyiscs.RetrievePlayer(clientId).gameObject);
+			NetworkedPhyiscs.RegisterPlayer(clientId, null);
+		}
+
+
+
+		private static void ServerOnClientConnected(INetworkServerClient client) {
+			Debug.Log("Client connected: " + client.Id);
+			OnClientConnected(client.Id);
+			NetworkServer.SendTcpToAll(client, TcpPacketType.Server_State_Joined, buffer => buffer.Write(client.Id));
+			NetworkServer.SendTcp(client, TcpPacketType.Server_State_Joined,
+				buffer => NetworkServer.ForEachClient(other => {
+					if (other != client) {
+						buffer.Write(other.Id);
+					}
+				}));
+		}
+
 		private static void ServerOnClientDisconnected(INetworkServerClient client) {
 			Debug.Log("Client disconnected: " + client.Id);
-			Destroy(NetworkedPhyiscs.RetrievePlayer(client.Id).gameObject);
-			NetworkedPhyiscs.RegisterPlayer(client.Id, null);
+			OnClientDisconnected(client.Id);
+			NetworkServer.SendTcpToAll(TcpPacketType.Server_State_Left, buffer => buffer.Write(client.Id));
 		}
 	}
 }

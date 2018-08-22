@@ -98,7 +98,6 @@ namespace Structures {
 
 		private void FixedUpdate() {
 			_systems.Tick(_body);
-			_systems.MoveRotate(_body, Input, 1f);
 			_body.drag = _body.velocity.sqrMagnitude * RigidbodyDragMultiplier + RigidbodyDragOffset;
 		}
 

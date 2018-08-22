@@ -87,6 +87,8 @@ namespace Playing {
 
 
 
+		//TODO interpolation to make it smoother when I apply state updates
+
 		private void FixedUpdate() {
 			if (NetworkUtils.IsServer) {
 				ServerFixedUpdate();
@@ -103,7 +105,7 @@ namespace Playing {
 				}
 			}
 			_lastServerUdpPackets.Clear();
-			Physics.Simulate(0.02f);
+			Simulate(20);
 
 			int bitSize = 48 + BotState.SerializedBitsSize * NetworkServer.ClientCount;
 			_sharedBuffer.ClearContents(new byte[(bitSize + 7) / 8]);
@@ -113,7 +115,6 @@ namespace Playing {
 		}
 
 		private void ClientOnlyFixedUpdate() {
-			//TODO focus on interpolation next and TCP packets to make multiple bots appear on non-host
 			CompleteStructure localStructure = RetrievePlayer(NetworkClient.LocalId);
 			int toSimulate;
 			long lastMillis;

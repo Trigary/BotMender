@@ -15,7 +15,7 @@ namespace Systems.Propulsion {
 				ForceMode.VelocityChange);
 
 			Vector3 angularVelocity = bot.angularVelocity;
-			angularVelocity.y = Mathf.Clamp(angularVelocity.y + direction.x * 0.25f * timestepMultiplier, -1.5f, 1.5f);
+			angularVelocity.y = Mathf.Clamp(angularVelocity.y + direction.x * 0.35f * timestepMultiplier, -1.5f, 1.5f);
 			bot.angularVelocity = angularVelocity;
 		}
 	}

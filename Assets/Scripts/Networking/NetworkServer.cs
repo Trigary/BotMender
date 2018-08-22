@@ -77,7 +77,7 @@ namespace Networking {
 		[CanBeNull] private static byte[] _udpPayload;
 		private static readonly object UdpPayloadLock = new object();
 
-		private static readonly OnPacketReceived[] TcpHandlers = new OnPacketReceived[Enum.GetNames(typeof(NetworkPacket)).Length];
+		private static readonly OnPacketReceived[] TcpHandlers = new OnPacketReceived[Enum.GetNames(typeof(TcpPacketType)).Length];
 		private static ResettingBitBuffer _resettingByteBuffer;
 		private static HashSet<NetworkServerClient> _clients;
 		private static DoubleServerHandler _handler;
@@ -137,15 +137,18 @@ namespace Networking {
 		/// <summary>
 		/// Sets the handler for a specific (TCP) packet type.
 		/// </summary>
-		public static void SetTcpHandler(NetworkPacket packet, OnPacketReceived handler) {
-			TcpHandlers[(byte)packet] = handler;
+		public static void SetTcpHandler(TcpPacketType type, OnPacketReceived handler) {
+			TcpHandlers[(byte)type] = handler;
 		}
 
 		/// <summary>
 		/// Sends the specified payload over TCP to the specified client.
 		/// </summary>
-		public static void SendTcp(INetworkServerClient recipient, Action<BitBuffer> payloadWriter) {
-			_server?.SendTcp(((NetworkServerClient)recipient).DoubleClient, payloadWriter);
+		public static void SendTcp(INetworkServerClient recipient, TcpPacketType type, Action<BitBuffer> payloadWriter) {
+			_server?.SendTcp(((NetworkServerClient)recipient).DoubleClient, buffer => {
+				buffer.Write((byte)type);
+				payloadWriter(buffer);
+			});
 		}
 
 
@@ -164,63 +167,37 @@ namespace Networking {
 		/// <summary>
 		/// Sends the specified payload over TCP to all clients.
 		/// </summary>
-		public static void SendTcpToAll(Action<BitBuffer> payloadWriter) {
-			if (_server == null) {
-				return;
-			}
-
-			Action<BitBuffer> realWriter;
-			using (_resettingByteBuffer) {
-				payloadWriter(_resettingByteBuffer);
-				realWriter = buffer => buffer.Write(_resettingByteBuffer.Array,
-					0, _resettingByteBuffer.Size);
-			}
-
-			foreach (NetworkServerClient client in _clients) {
-				_server.SendTcp(client.DoubleClient, realWriter);
-			}
+		public static void SendTcpToAll(TcpPacketType type, Action<BitBuffer> payloadWriter) {
+			SendTcpToAll(client => true, type, payloadWriter);
 		}
 
 		/// <summary>
 		/// Sends the specified payload over TCP to all clients except one.
 		/// </summary>
-		public static void SendTcpToAll(Action<BitBuffer> payloadWriter, INetworkServerClient excluding) {
-			if (_server == null) {
-				return;
-			}
-
-			Action<BitBuffer> realWriter;
-			using (_resettingByteBuffer) {
-				payloadWriter(_resettingByteBuffer);
-				realWriter = buffer => buffer.Write(_resettingByteBuffer.Array,
-					0, _resettingByteBuffer.Size);
-			}
-
-			foreach (NetworkServerClient client in _clients) {
-				if (client != excluding) {
-					_server.SendTcp(client.DoubleClient, realWriter);
-				}
-			}
+		public static void SendTcpToAll(INetworkServerClient excluding, TcpPacketType type, Action<BitBuffer> payloadWriter) {
+			SendTcpToAll(client => client != excluding, type, payloadWriter);
 		}
 
 		/// <summary>
 		/// Sends the specified payload over TCP to all clients which pass the specified filter.
 		/// </summary>
-		public static void SendTcpToAll(Action<BitBuffer> payloadWriter, Predicate<INetworkServerClient> filter) {
+		public static void SendTcpToAll(Predicate<INetworkServerClient> filter, TcpPacketType type,
+										Action<BitBuffer> payloadWriter) {
 			if (_server == null) {
 				return;
 			}
 
-			Action<BitBuffer> realWriter;
 			using (_resettingByteBuffer) {
+				_resettingByteBuffer.Write((byte)type);
 				payloadWriter(_resettingByteBuffer);
-				realWriter = buffer => buffer.Write(_resettingByteBuffer.Array,
+				// ReSharper disable once ConvertToLocalFunction
+				Action<BitBuffer> realWriter = buffer => buffer.Write(_resettingByteBuffer.Array,
 					0, _resettingByteBuffer.Size);
-			}
 
-			foreach (NetworkServerClient client in _clients) {
-				if (filter(client)) {
-					_server.SendTcp(client.DoubleClient, realWriter);
+				foreach (NetworkServerClient client in _clients) {
+					if (filter(client)) {
+						_server.SendTcp(client.DoubleClient, realWriter);
+					}
 				}
 			}
 		}
@@ -276,7 +253,7 @@ namespace Networking {
 				});
 			}
 
-			public void OnUdpReceived(IDoubleServerClient client, BitBuffer buffer, uint packetTimestamp) {
+			public void OnUdpReceived(IDoubleServerClient client, BitBuffer buffer, ushort packetTimestamp) {
 				NetworkServerClient serverClient = (NetworkServerClient)client.ExtraData;
 				if (serverClient.TakeResetPacketTimestamp()) {
 					serverClient.LastPacketTimestamp = packetTimestamp;
@@ -316,7 +293,7 @@ namespace Networking {
 			public byte Id { get; private set; }
 
 			public IDoubleServerClient DoubleClient { get; }
-			public uint LastPacketTimestamp;
+			public ushort LastPacketTimestamp;
 
 			private bool _resetPacketTimestamp;
 

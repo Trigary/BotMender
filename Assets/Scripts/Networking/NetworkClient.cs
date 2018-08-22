@@ -99,7 +99,7 @@ namespace Networking {
 		/// </summary>
 		public static OnDisconnected DisconnectHandler { get; set; }
 
-		private static readonly Action<BitBuffer>[] TcpHandlers = new Action<BitBuffer>[Enum.GetNames(typeof(NetworkPacket)).Length];
+		private static readonly Action<BitBuffer>[] TcpHandlers = new Action<BitBuffer>[Enum.GetNames(typeof(TcpPacketType)).Length];
 		private static readonly object SmallLock = new object();
 		private static DoubleClientHandler _handler;
 		[CanBeNull] private static DoubleClient _client;
@@ -147,8 +147,18 @@ namespace Networking {
 		/// <summary>
 		/// Sets the handler for a specific (TCP) packet type.
 		/// </summary>
-		public static void SetTcpHandler(NetworkPacket packet, Action<BitBuffer> handler) {
-			TcpHandlers[(byte)packet] = handler;
+		public static void SetTcpHandler(TcpPacketType type, Action<BitBuffer> handler) {
+			TcpHandlers[(byte)type] = handler;
+		}
+
+		/// <summary>
+		/// Sends the specified payload over TCP.
+		/// </summary>
+		public static void SendTcp(TcpPacketType type, Action<BitBuffer> payloadWriter) {
+			_client?.SendTcp(buffer => {
+				buffer.Write((byte)type);
+				payloadWriter(buffer);
+			});
 		}
 
 		/// <summary>
@@ -161,19 +171,12 @@ namespace Networking {
 			}
 		}
 
-		/// <summary>
-		/// Sends the specified payload over TCP.
-		/// </summary>
-		public static void SendTcp(Action<BitBuffer> payloadWriter) {
-			_client?.SendTcp(payloadWriter);
-		}
-
 
 
 		private class DoubleClientHandler : IDoubleClientHandler {
 			private readonly MutableBitBuffer _handlerBuffer = new MutableBitBuffer();
 			private readonly OnConnected _onConnected;
-			private uint _lastPacketTimestamp;
+			private ushort _lastPacketTimestamp;
 
 			public DoubleClientHandler(OnConnected onConnected) {
 				_onConnected = onConnected;
@@ -246,7 +249,7 @@ namespace Networking {
 				});
 			}
 
-			public void OnUdpReceived(BitBuffer buffer, uint packetTimestamp) {
+			public void OnUdpReceived(BitBuffer buffer, ushort packetTimestamp) {
 				bool resetPacketTimestamp;
 				lock (SmallLock) {
 					resetPacketTimestamp = _resetPacketTimestamp;
@@ -271,7 +274,7 @@ namespace Networking {
 				});
 			}
 
-			private static void UpdateLatency(ref float latency, uint packetTimestamp) {
+			private static void UpdateLatency(ref float latency, ushort packetTimestamp) {
 				// ReSharper disable once PossibleNullReferenceException
 				latency += (DoubleProtocol.TripTime(_client.ConnectionStartTimestamp, packetTimestamp) - latency) * 0.1f;
 			}
@@ -280,8 +283,9 @@ namespace Networking {
 				if (state == DoubleClient.State.Authenticated) {
 					UnityDispatcher.InvokeNoDelay(() => {
 						if (_client != null) {
+							OnDisconnected handler = DisconnectHandler;
 							Stop();
-							DisconnectHandler();
+							handler();
 						}
 					});
 				} else {
