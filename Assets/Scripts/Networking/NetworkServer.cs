@@ -41,6 +41,11 @@ namespace Networking {
 		/// </summary>
 		public static int ClientCount => _clients?.Count ?? -1;
 
+		/// <summary>
+		/// Returns true if the ClientCount is bigger than 0.
+		/// </summary>
+		public static bool HasClients => _clients != null && _clients.Count > 0;
+
 
 
 		/// <summary>
@@ -101,8 +106,8 @@ namespace Networking {
 			_tickingThread = new TickingThread(NetworkUtils.UdpSendFrequency, () => {
 				lock (UdpPayloadLock) {
 					if (_udpPayload != null && _udpPayload.Length != 0) {
-						foreach (NetworkServerClient client in _clients) {
-							_server.SendUdp(client.DoubleClient, buffer => buffer.Write(UdpPayload));
+						foreach (NetworkServerClient serverClient in _clients) {
+							_server.SendUdp(serverClient.DoubleClient, buffer => buffer.Write(UdpPayload));
 						}
 					}
 				}
@@ -157,25 +162,42 @@ namespace Networking {
 		/// Executes the specified action for each connected client.
 		/// </summary>
 		public static void ForEachClient(Action<INetworkServerClient> action) {
+			ForEachClient(serverClient => true, action);
+		}
+
+		/// <summary>
+		/// Executes the specified action for each connected client except one.
+		/// </summary>
+		public static void ForEachClient(INetworkServerClient excluding, Action<INetworkServerClient> action) {
+			ForEachClient(serverClient => serverClient != excluding, action);
+		}
+
+		/// <summary>
+		/// Executes the specified action for each connected client which passes the specified filter.
+		/// </summary>
+		public static void ForEachClient(Predicate<INetworkServerClient> filter, Action<INetworkServerClient> action) {
 			if (_server != null) {
 				foreach (NetworkServerClient serverClient in _clients) {
-					action(serverClient);
+					if (filter(serverClient)) {
+						action(serverClient);
+					}
 				}
 			}
 		}
+
 
 		/// <summary>
 		/// Sends the specified payload over TCP to all clients.
 		/// </summary>
 		public static void SendTcpToAll(TcpPacketType type, Action<BitBuffer> payloadWriter) {
-			SendTcpToAll(client => true, type, payloadWriter);
+			SendTcpToAll(serverClient => true, type, payloadWriter);
 		}
 
 		/// <summary>
 		/// Sends the specified payload over TCP to all clients except one.
 		/// </summary>
 		public static void SendTcpToAll(INetworkServerClient excluding, TcpPacketType type, Action<BitBuffer> payloadWriter) {
-			SendTcpToAll(client => client != excluding, type, payloadWriter);
+			SendTcpToAll(serverClient => serverClient != excluding, type, payloadWriter);
 		}
 
 		/// <summary>
@@ -194,9 +216,9 @@ namespace Networking {
 				Action<BitBuffer> realWriter = buffer => buffer.Write(_resettingByteBuffer.Array,
 					0, _resettingByteBuffer.Size);
 
-				foreach (NetworkServerClient client in _clients) {
-					if (filter(client)) {
-						_server.SendTcp(client.DoubleClient, realWriter);
+				foreach (NetworkServerClient serverClient in _clients) {
+					if (filter(serverClient)) {
+						_server.SendTcp(serverClient.DoubleClient, realWriter);
 					}
 				}
 			}

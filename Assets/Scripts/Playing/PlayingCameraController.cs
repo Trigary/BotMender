@@ -55,7 +55,7 @@ namespace Playing {
 
 
 		private void Update() {
-			if (!_structure.gameObject.activeInHierarchy) { //TODO does this work?
+			if (!_structure.gameObject.activeInHierarchy) {
 				Destroy(this);
 				return;
 			}

@@ -59,7 +59,7 @@ namespace Playing {
 					buffer => OnClientDisconnected(buffer.ReadByte()));
 			}
 
-			GameObject structureObject = OnClientConnected(NetworkClient.LocalId);
+			GameObject structureObject = OnClientConnected(NetworkUtils.LocalId);
 			structureObject.gameObject.AddComponent<LocalBotController>();
 			Camera.main.gameObject.AddComponent<PlayingCameraController>()
 				.Initialize(structureObject.GetComponent<Rigidbody>());
@@ -86,12 +86,11 @@ namespace Playing {
 			Debug.Log("Client connected: " + client.Id);
 			OnClientConnected(client.Id);
 			NetworkServer.SendTcpToAll(client, TcpPacketType.Server_State_Joined, buffer => buffer.Write(client.Id));
-			NetworkServer.SendTcp(client, TcpPacketType.Server_State_Joined,
-				buffer => NetworkServer.ForEachClient(other => {
-					if (other != client) {
-						buffer.Write(other.Id);
-					}
-				}));
+
+			if (NetworkServer.HasClients) {
+				NetworkServer.SendTcp(client, TcpPacketType.Server_State_Joined,
+					buffer => NetworkServer.ForEachClient(client, other => buffer.Write(other.Id)));
+			}
 		}
 
 		private static void ServerOnClientDisconnected(INetworkServerClient client) {

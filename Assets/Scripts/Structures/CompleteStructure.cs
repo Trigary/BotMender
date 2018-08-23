@@ -25,7 +25,7 @@ namespace Structures {
 		public uint MaxHealth { get; private set; }
 		public uint Health { get; private set; }
 		public uint Mass { get; private set; }
-		public Vector3 Input { get; private set; } = Vector3.zero;
+		public Vector3 MovementInput { get; private set; } = Vector3.zero;
 		private readonly IDictionary<BlockPosition, ILiveBlock> _blocks = new Dictionary<BlockPosition, ILiveBlock>();
 		private readonly SystemManager _systems = new SystemManager();
 		private BlockPosition _mainframePosition;
@@ -93,7 +93,7 @@ namespace Structures {
 		/// Does not replace the FixedUpdate call, this method relies on it being called before the next normal physics step.
 		/// </summary>
 		public void SimulatedPhysicsUpdate(float timestepMultiplier) {
-			_systems.MoveRotate(_body, Input, timestepMultiplier);
+			_systems.MoveRotate(_body, MovementInput, timestepMultiplier);
 		}
 
 		private void FixedUpdate() {
@@ -153,7 +153,8 @@ namespace Structures {
 		/// Applies the state given as the parameter. Should only be called by a client.
 		/// </summary>
 		public void UpdateWholeState(BotState state) {
-			Input = state.Input;
+			MovementInput = state.MovementInput;
+			_systems.TrackedPosition = state.TrackedPosition;
 			transform.position = state.Position;
 			transform.rotation = state.Rotation;
 			_body.velocity = state.Velocity;
@@ -164,8 +165,11 @@ namespace Structures {
 		/// Applies the input update received from the client specified in the buffer.
 		/// Should only be called by the server or the local client.
 		/// </summary>
-		public void UpdateInputOnly(Vector3 input) {
-			Input = input;
+		public void UpdateInputOnly(Vector3 movementInput, Vector3? trackedPosition) {
+			MovementInput = movementInput;
+			if (trackedPosition.HasValue) {
+				_systems.TrackedPosition = trackedPosition.Value;
+			}
 		}
 
 		/// <summary>
@@ -173,17 +177,10 @@ namespace Structures {
 		/// Should only be called by the server.
 		/// </summary>
 		public void SerializeState(BitBuffer buffer) {
-			BotState.SerializeState(buffer, Id, Input, transform, _body);
+			BotState.SerializeState(buffer, Id, MovementInput, _systems.TrackedPosition, transform, _body);
 		}
 
 
-
-		/// <summary>
-		/// Rotates the weapons.
-		/// </summary>
-		public void TrackTarget(Vector3 target) {
-			_systems.TrackTarget(target);
-		}
 
 		/// <summary>
 		/// Executes the weapon systems.

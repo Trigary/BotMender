@@ -8,7 +8,7 @@ namespace Playing {
 	public class LocalBotController : MonoBehaviour {
 		private Camera _camera;
 		private CompleteStructure _structure;
-		private byte _lastInput;
+		private Vector3 _lastTrackedPosition;
 
 		private void Awake() {
 			_camera = Camera.main;
@@ -28,17 +28,13 @@ namespace Playing {
 			if (!Input.GetButton("FreeLook")) {
 				Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
 				if (Physics.Raycast(ray, out RaycastHit hit)) {
-					_structure.TrackTarget(hit.point);
+					_lastTrackedPosition = hit.point;
 				} else {
-					_structure.TrackTarget(ray.origin + ray.direction * 500);
+					_lastTrackedPosition = ray.origin + ray.direction * 500;
 				}
 			}
 
-			byte newInput = PlayerInput.Serialize();
-			if (newInput != _lastInput) {
-				_lastInput = newInput;
-				NetworkedPhyiscs.LocalInputChanged(_lastInput);
-			}
+			NetworkedPhyiscs.UpdateLocalInput(_lastTrackedPosition);
 		}
 	}
 }

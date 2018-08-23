@@ -14,6 +14,9 @@ namespace Playing {
 	/// All of them need to be registeres in this class.
 	/// </summary>
 	public class NetworkedPhyiscs : MonoBehaviour {
+		public const int TimestepMillis = 20;
+		public const float TimestepSeconds = 0.02f;
+
 		/// <summary>
 		/// Creates (and returns) a new GameObject containing this component and also initializes the componenet.
 		/// </summary>
@@ -53,18 +56,24 @@ namespace Playing {
 		}
 
 		/// <summary>
-		/// Called whenever the input of the local bot changes.
+		/// Handles the input change of the local player.
+		/// Not all input is specified in the parameters.
 		/// </summary>
-		public static void LocalInputChanged(byte newInput) {
+		public static void UpdateLocalInput(Vector3 trackedPosition) {
+			Vector3 movementInput = PlayerInput.ReadMovementInput();
+			byte[] payload = new byte[(PlayerInput.SerializedBitsSize + 7) / 8];
+			_instance._sharedBuffer.ClearContents(payload);
+			PlayerInput.Serialize(_instance._sharedBuffer, movementInput, trackedPosition);
+
 			if (NetworkUtils.IsServer) {
-				_instance._lastServerUdpPackets.Remove(NetworkClient.LocalId);
-				_instance._lastServerUdpPackets.Add(NetworkClient.LocalId, new[] {newInput});
+				_instance._lastServerUdpPackets.Remove(NetworkUtils.LocalId);
+				_instance._lastServerUdpPackets.Add(NetworkUtils.LocalId, payload);
 			} else {
-				NetworkClient.UdpPayload = new[] {newInput};
+				NetworkClient.UdpPayload = payload;
 				int latency = NetworkClient.UdpTotalLatency;
 				long key = DoubleProtocol.TimeMillis + latency;
 				_instance._guessedInputs.Remove(key);
-				_instance._guessedInputs.Add(key, new GuessedInput(newInput, latency * 5 / 4));
+				_instance._guessedInputs.Add(key, new GuessedInput(movementInput, latency * 5 / 4));
 			}
 		}
 
@@ -101,21 +110,26 @@ namespace Playing {
 			foreach (KeyValuePair<byte, byte[]> packet in _lastServerUdpPackets) {
 				_sharedBuffer.SetContents(packet.Value);
 				if (_sharedBuffer.TotalBitsLeft >= PlayerInput.SerializedBitsSize) {
-					RetrievePlayer(packet.Key)?.UpdateInputOnly(PlayerInput.Deserialize(_sharedBuffer));
+					PlayerInput.Deserialize(_sharedBuffer, out Vector3 movementInput, out Vector3 trackedPosition);
+					RetrievePlayer(packet.Key)?.UpdateInputOnly(movementInput, trackedPosition);
 				}
 			}
 			_lastServerUdpPackets.Clear();
-			Simulate(20);
+			Simulate(TimestepMillis);
 
-			int bitSize = 48 + BotState.SerializedBitsSize * NetworkServer.ClientCount;
-			_sharedBuffer.ClearContents(new byte[(bitSize + 7) / 8]);
-			_sharedBuffer.WriteBits((ulong)DoubleProtocol.TimeMillis, 48);
-			NetworkServer.ForEachClient(client => RetrievePlayer(client.Id).SerializeState(_sharedBuffer));
-			NetworkServer.UdpPayload = _sharedBuffer.Array;
+			if (NetworkServer.HasClients) {
+				int bitSize = 48 + BotState.SerializedBitsSize * NetworkServer.ClientCount;
+				_sharedBuffer.ClearContents(new byte[(bitSize + 7) / 8]);
+				_sharedBuffer.WriteBits((ulong)DoubleProtocol.TimeMillis, 48);
+				NetworkServer.ForEachClient(client => RetrievePlayer(client.Id).SerializeState(_sharedBuffer));
+				NetworkServer.UdpPayload = _sharedBuffer.Array;
+			} else {
+				NetworkServer.UdpPayload = null;
+			}
 		}
 
 		private void ClientOnlyFixedUpdate() {
-			CompleteStructure localStructure = RetrievePlayer(NetworkClient.LocalId);
+			CompleteStructure localStructure = RetrievePlayer(NetworkUtils.LocalId);
 			int toSimulate;
 			long lastMillis;
 			if (_lastClientUdpPacket != null) {
@@ -128,8 +142,8 @@ namespace Playing {
 			} else if (_silentSkipFastForwardUntil != 0) {
 				return; //don't simulate normal steps if skipped the last state update simulation
 			} else {
-				toSimulate = 20;
-				lastMillis = DoubleProtocol.TimeMillis - 20;
+				toSimulate = TimestepMillis;
+				lastMillis = DoubleProtocol.TimeMillis - TimestepMillis;
 			}
 
 			while (_guessedInputs.Count > 0) {
@@ -151,10 +165,10 @@ namespace Playing {
 				if (delta > toSimulate) {
 					break;
 				} else if (delta == 0) {
-					localStructure.UpdateInputOnly(guessed.Value.Input);
+					localStructure.UpdateInputOnly(guessed.Value.MovementInput, null);
 				} else {
 					Simulate(delta);
-					localStructure.UpdateInputOnly(guessed.Value.Input);
+					localStructure.UpdateInputOnly(guessed.Value.MovementInput, null);
 					toSimulate -= delta;
 					lastMillis = guessed.Key;
 				}
@@ -190,7 +204,7 @@ namespace Playing {
 
 			while (_guessedInputs.Count > 0) {
 				KeyValuePair<long, GuessedInput> guessed = _guessedInputs.First();
-				if (guessed.Value.Input.Equals(localStructure.Input)) {
+				if (guessed.Value.MovementInput.Equals(localStructure.MovementInput)) {
 					_guessedInputs.Remove(guessed.Key);
 				} else {
 					break;
@@ -199,17 +213,17 @@ namespace Playing {
 		}
 
 		private void Simulate(int millis) {
-			int fullSteps = millis / 20;
+			int fullSteps = millis / TimestepMillis;
 			while (fullSteps-- > 0) {
 				foreach (CompleteStructure structure in _playerStructures.Values) {
 					structure.SimulatedPhysicsUpdate(1f);
 				}
-				Physics.Simulate(0.02f);
+				Physics.Simulate(TimestepSeconds);
 			}
 
-			int mod = millis % 20;
+			int mod = millis % TimestepMillis;
 			if (mod != 0) {
-				float timestepMultiplier = mod / 20f;
+				float timestepMultiplier = (float)mod / TimestepMillis;
 				foreach (CompleteStructure structure in _playerStructures.Values) {
 					structure.SimulatedPhysicsUpdate(timestepMultiplier);
 				}
@@ -220,11 +234,11 @@ namespace Playing {
 
 
 		private class GuessedInput {
-			public readonly Vector3 Input;
+			public readonly Vector3 MovementInput;
 			public int RemainingDelay;
 
-			public GuessedInput(byte input, int maxDelay) {
-				Input = PlayerInput.Deserialize(input);
+			public GuessedInput(Vector3 movementMovementInput, int maxDelay) {
+				MovementInput = movementMovementInput;
 				RemainingDelay = maxDelay;
 			}
 		}

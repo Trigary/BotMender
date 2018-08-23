@@ -1,6 +1,10 @@
 ﻿using UnityEngine;
 
 namespace Networking {
+	/// <summary>
+	/// General utilities regarding networking, most notably about the NetworkServer and NetworkClient classes.
+	/// It is encouraged to use this class instead of those two whenever possible.
+	/// </summary>
 	public static class NetworkUtils {
 		public const int Port = 8888;
 		public const int UdpSendFrequency = 30;
@@ -23,5 +27,14 @@ namespace Networking {
 		public static bool IsHost => IsClient && IsServer;
 		public static bool IsDedicated => !IsClient && IsServer;
 		public static bool IsClientOnly => IsClient && !IsServer;
+
+		public static byte LocalId => NetworkClient.LocalId;
+
+		/// <summary>
+		/// Returns whether the specified ID equals the local ID.
+		/// </summary>
+		public static bool IsLocal(byte id) {
+			return id == NetworkClient.LocalId;
+		}
 	}
 }

@@ -1,5 +1,8 @@
 ﻿using Blocks.Live;
 using JetBrains.Annotations;
+using Networking;
+using Playing;
+using Structures;
 using UnityEngine;
 
 namespace Systems {
@@ -11,11 +14,20 @@ namespace Systems {
 		protected Vector3 TurretHeading => Turret.forward;
 		protected Vector3 TurretEnd => Turret.position + Turret.rotation * Constants.TurretOffset;
 		protected readonly Transform Turret;
+		private readonly float _turretRotationMultiplier;
 		private float _cooldownEnds;
 
 		protected WeaponSystem(RealLiveBlock block, WeaponConstants constants) : base(block) {
 			Constants = constants;
 			Turret = block.transform.Find("Turret");
+
+			if (NetworkUtils.IsLocal(block.GetComponentInParent<CompleteStructure>().Id)) {
+				_turretRotationMultiplier = 1f;
+			} else if (NetworkUtils.IsServer) {
+				_turretRotationMultiplier = 1.15f;
+			} else {
+				_turretRotationMultiplier = 1.3f;
+			}
 		}
 
 
@@ -32,13 +44,14 @@ namespace Systems {
 		/// <summary>
 		/// Rotate the weapon's barrel so it faces the target coordinates.
 		/// </summary>
-		public void TrackTarget(Vector3 target) {
-			Vector3 direction = Quaternion.Inverse(Block.transform.rotation) * (target - Turret.position);
+		public void TrackPosition(Vector3 position) {
+			Vector3 direction = Quaternion.Inverse(Block.transform.rotation) * (position - Turret.position);
 			Vector3 euler = Quaternion.LookRotation(direction, Block.transform.up).eulerAngles;
 			euler.x = ClampRotation(euler.x, Constants.MinPitch, Constants.MaxPitch);
 			euler.y = ClampRotation(euler.y, Constants.YawLimit * -1, Constants.YawLimit);
+
 			Turret.localRotation = Quaternion.RotateTowards(Turret.localRotation,
-				Quaternion.Euler(euler), Constants.RotationSpeed * Time.fixedDeltaTime);
+				Quaternion.Euler(euler), Constants.RotationSpeed * _turretRotationMultiplier);
 		}
 
 		private static float ClampRotation(float value, float min, float max) {
@@ -107,7 +120,7 @@ namespace Systems {
 				YawLimit = yawLimit;
 				MinPitch = minPitch;
 				MaxPitch = maxPitch;
-				RotationSpeed = rotationSpeed;
+				RotationSpeed = rotationSpeed * NetworkedPhyiscs.TimestepSeconds;
 				Kickback = new Vector3(0, 0, kickback * -1);
 				Cooldown = cooldown;
 				Energy = energy;

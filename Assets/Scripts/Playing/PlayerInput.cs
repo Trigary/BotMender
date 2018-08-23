@@ -1,58 +1,41 @@
 ﻿using DoubleSocket.Utility.BitBuffer;
 using UnityEngine;
+using Utilities;
 
 namespace Playing {
 	/// <summary>
-	/// A utility class containing methods regarding the player's input.
+	/// A utility class containing methods regarding the player's movement input and tracked position.
 	/// </summary>
 	public static class PlayerInput {
-		public const int SerializedBitsSize = 6;
+		public const int SerializedBitsSize = 6 + 96;
+
+
 
 		/// <summary>
-		/// Reads the current player input and serializes it into a byte.
+		/// Reads the current movement input and returns it.
 		/// </summary>
-		public static byte Serialize() {
+		public static Vector3 ReadMovementInput() {
+			return new Vector3(Input.GetAxisRaw("Rightward"), Input.GetAxisRaw("Upward"), Input.GetAxisRaw("Forward"));
+		}
+
+
+
+		/// <summary>
+		/// Serializes only the movement direction into the buffer.
+		/// </summary>
+		public static void SerializeMovementInput(BitBuffer buffer, Vector3 movementInput) {
 			int serialized = 0;
-			SetInputAxis(ref serialized, Input.GetAxisRaw("Rightward"), 0);
-			SetInputAxis(ref serialized, Input.GetAxisRaw("Upward"), 2);
-			SetInputAxis(ref serialized, Input.GetAxisRaw("Forward"), 4);
-			return (byte)serialized;
+			SetInputAxis(ref serialized, movementInput.x, 0);
+			SetInputAxis(ref serialized, movementInput.y, 2);
+			SetInputAxis(ref serialized, movementInput.z, 4);
+			buffer.WriteBits((ulong)serialized, 6);
 		}
 
 		/// <summary>
-		/// Serializes the specified iput into the buffer.
+		/// Deserializes only the movement direction from the buffer.
 		/// </summary>
-		public static void Serialize(BitBuffer buffer, Vector3 input) {
-			int serialized = 0;
-			SetInputAxis(ref serialized, input.x, 0);
-			SetInputAxis(ref serialized, input.y, 2);
-			SetInputAxis(ref serialized, input.z, 4);
-			buffer.WriteBits((ulong)serialized, SerializedBitsSize);
-		}
-
-		private static void SetInputAxis(ref int serialized, float value, int offset) {
-			if (value > 0) {
-				serialized |= 1 << offset;
-			} else if (value < 0) {
-				serialized |= 1 << (offset + 1);
-			}
-		}
-
-
-
-		/// <summary>
-		/// Converts the serialized representation of the player input found in the buffer into a Vector3 representation.
-		/// </summary>
-		public static Vector3 Deserialize(BitBuffer buffer) {
-			int input = (int)buffer.ReadBits(SerializedBitsSize);
-			return new Vector3(GetInputAxis(input, 0), GetInputAxis(input, 2), GetInputAxis(input, 4));
-		}
-
-		/// <summary>
-		/// Converts the serialized representation of the player input found into a Vector3 representation.
-		/// </summary>
-		public static Vector3 Deserialize(byte serialized) {
-			int input = serialized;
+		public static Vector3 DeserializeMovementInput(BitBuffer buffer) {
+			int input = (int)buffer.ReadBits(6);
 			return new Vector3(GetInputAxis(input, 0), GetInputAxis(input, 2), GetInputAxis(input, 4));
 		}
 
@@ -64,6 +47,37 @@ namespace Playing {
 			} else {
 				return 0;
 			}
+		}
+
+
+
+		/// <summary>
+		/// Serializeses the specified parameters into the specified buffer.
+		/// </summary>
+		public static void Serialize(BitBuffer buffer, Vector3 movementInput, Vector3 trackedPosition) {
+			int serialized = 0;
+			SetInputAxis(ref serialized, movementInput.x, 0);
+			SetInputAxis(ref serialized, movementInput.y, 2);
+			SetInputAxis(ref serialized, movementInput.z, 4);
+			buffer.WriteBits((ulong)serialized, 6);
+			buffer.Write(trackedPosition);
+		}
+
+		private static void SetInputAxis(ref int serialized, float value, int offset) {
+			if (value > 0) {
+				serialized |= 1 << offset;
+			} else if (value < 0) {
+				serialized |= 1 << (offset + 1);
+			}
+		}
+
+		/// <summary>
+		/// Deserializeses to the out parameters from the specified buffer.
+		/// </summary>
+		public static void Deserialize(BitBuffer buffer, out Vector3 movementInput, out Vector3 trackedPosition) {
+			int input = (int)buffer.ReadBits(6);
+			movementInput = new Vector3(GetInputAxis(input, 0), GetInputAxis(input, 2), GetInputAxis(input, 4));
+			trackedPosition = buffer.ReadVector3();
 		}
 	}
 }

@@ -2,7 +2,6 @@
 using Blocks;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Networking;
 using Utilities;
 
 namespace Systems {
@@ -17,6 +16,7 @@ namespace Systems {
 		public const float FiringInaccuracyFading = 4; //in seconds
 		public const float MovingInaccuracyScale = 0.5f;
 
+		public Vector3 TrackedPosition { get; set; } = Vector3.zero;
 		private readonly IDictionary<BlockPosition, BotSystem> _systems = new Dictionary<BlockPosition, BotSystem>();
 		private readonly HashSet<PropulsionSystem> _propulsions = new HashSet<PropulsionSystem>();
 		private readonly CircularList<WeaponSystem> _weapons = new CircularList<WeaponSystem>();
@@ -74,7 +74,7 @@ namespace Systems {
 
 		/// <summary>
 		/// Informs the instance that a fixed amount of time has passed:
-		/// energy regeneration and accuracy restoration should be applied.
+		/// energy regeneration, accuracy restoration and weapon rotation should be applied.
 		/// </summary>
 		public void Tick(Rigidbody bot) {
 			_energy += EnergyFillRate * Time.fixedDeltaTime;
@@ -86,9 +86,14 @@ namespace Systems {
 			if (_firingInaccuracy < MinFiringInaccuracy) {
 				_firingInaccuracy = MinFiringInaccuracy;
 			}
+
 			_realInaccuracy = _firingInaccuracy + bot.velocity.sqrMagnitude * MovingInaccuracyScale;
 			if (_realInaccuracy > MaxInaccuracy) {
 				_realInaccuracy = MaxInaccuracy;
+			}
+
+			foreach (WeaponSystem system in _weapons) {
+				system.TrackPosition(TrackedPosition);
 			}
 		}
 
@@ -98,15 +103,6 @@ namespace Systems {
 		public void MoveRotate(Rigidbody bot, Vector3 direction, float timestepMultiplier) {
 			foreach (PropulsionSystem system in _propulsions) {
 				system.MoveRotate(bot, direction, timestepMultiplier);
-			}
-		}
-
-		/// <summary>
-		/// Rotates the weapons.
-		/// </summary>
-		public void TrackTarget(Vector3 target) {
-			foreach (WeaponSystem system in _weapons) {
-				system.TrackTarget(target);
 			}
 		}
 
@@ -136,25 +132,7 @@ namespace Systems {
 		/// Executes the active system.
 		/// </summary>
 		public void UseActive(Rigidbody bot) {
-			if (_active == null) {
-				return;
-			}
-
-			if (NetworkServer.active) {
-				//tell all clients to do this, but also do this myself
-				//Maybe not? Only the local client - the one who controls the bot and the server has to know about the cooldown
-				// -> create LocalOrServer variant of classes?
-				// -> validation and execution have to be separated:
-				//			anything which isn't needed to create the end result is validation
-
-				if (!NetworkClient.active) {
-
-				}
-			} else {
-				//tell the server to try to do this
-			}
-
-			_active.Activate(bot);
+			_active?.Activate(bot);
 		}
 	}
 }
