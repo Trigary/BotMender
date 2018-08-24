@@ -19,6 +19,7 @@ namespace Structures {
 
 		private readonly IDictionary<BlockPosition, IPlacedBlock> _blocks = new Dictionary<BlockPosition, IPlacedBlock>();
 		[CanBeNull] private BlockPosition _mainframePosition;
+		private byte _systemCount;
 		private bool _activeSystemPresent;
 		private WeaponSystem.Type _weaponType = WeaponSystem.Type.None;
 		private int _weaponCount;
@@ -43,14 +44,20 @@ namespace Structures {
 				if (_mainframePosition != null) {
 					return false;
 				}
-			} else if (SystemFactory.IsActiveSystem(info.Type)) {
-				if (_activeSystemPresent) {
+			} else if (SystemFactory.IsAnySystem(info.Type)) {
+				if (_systemCount == byte.MaxValue) {
 					return false;
 				}
-			} else {
-				WeaponSystem.Type weaponType = SystemFactory.GetWeaponType(info.Type);
-				if (weaponType != WeaponSystem.Type.None && weaponType != _weaponType && _weaponType != WeaponSystem.Type.None) {
-					return false;
+
+				if (SystemFactory.IsActiveSystem(info.Type)) {
+					if (_activeSystemPresent) {
+						return false;
+					}
+				} else {
+					WeaponSystem.Type weaponType = SystemFactory.GetWeaponType(info.Type);
+					if (weaponType != WeaponSystem.Type.None && weaponType != _weaponType && _weaponType != WeaponSystem.Type.None) {
+						return false;
+					}
 				}
 			}
 
@@ -103,13 +110,17 @@ namespace Structures {
 			RealBlockCount++;
 			if (info.Type == BlockType.Mainframe) {
 				_mainframePosition = position;
-			} else if (SystemFactory.IsActiveSystem(info.Type)) {
-				_activeSystemPresent = true;
-			} else {
-				WeaponSystem.Type weaponType = SystemFactory.GetWeaponType(info.Type);
-				if (weaponType != WeaponSystem.Type.None) {
-					_weaponType = weaponType; //may or may not be first time set
-					_weaponCount++;
+			} else if (SystemFactory.IsAnySystem(info.Type)) {
+				_systemCount++;
+
+				if (SystemFactory.IsActiveSystem(info.Type)) {
+					_activeSystemPresent = true;
+				} else {
+					WeaponSystem.Type weaponType = SystemFactory.GetWeaponType(info.Type);
+					if (weaponType != WeaponSystem.Type.None) {
+						_weaponType = weaponType; //may or may not be first time set
+						_weaponCount++;
+					}
 				}
 			}
 			return true;
@@ -197,15 +208,12 @@ namespace Structures {
 		/// Each block takes up RealPlacedBlock.SerializedBitsSize bits.
 		/// </summary>
 		public void Serialize(BitBuffer buffer) {
-			foreach (IPlacedBlock block in _blocks.Values) {
-				RealPlacedBlock real = block as RealPlacedBlock;
-				if (real != null) {
-					buffer.WriteBits((ushort)block.Type, 14);
-					buffer.WriteBits(real.Position.X, 7);
-					buffer.WriteBits(real.Position.Y, 7);
-					buffer.WriteBits(real.Position.Z, 7);
-					Rotation.Serialize(buffer, real.Rotation);
-				}
+			foreach (RealPlacedBlock block in _blocks.Values.OfType<RealPlacedBlock>().OrderBy(block => block.Position, BlockPosition.AscendingComparer)) {
+				buffer.WriteBits((ushort)block.Type, 14);
+				buffer.WriteBits(block.Position.X, 7);
+				buffer.WriteBits(block.Position.Y, 7);
+				buffer.WriteBits(block.Position.Z, 7);
+				Rotation.Serialize(buffer, block.Rotation);
 			}
 		}
 
@@ -215,11 +223,8 @@ namespace Structures {
 		/// No checks are not made, #GetNotConnectedBlocks should be called after this method.
 		/// </summary>
 		public bool Deserialize(BitBuffer buffer) {
-			foreach (IPlacedBlock block in _blocks.Values.ToList()) {
-				RealPlacedBlock real = block as RealPlacedBlock;
-				if (real != null) {
-					RemoveBlock(real);
-				}
+			foreach (RealPlacedBlock block in _blocks.Values.OfType<RealPlacedBlock>().ToList()) {
+				RemoveBlock(block);
 			}
 
 			try {

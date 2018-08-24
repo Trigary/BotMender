@@ -1,4 +1,5 @@
 ﻿using Blocks.Live;
+using Structures;
 using UnityEngine;
 
 namespace Systems {
@@ -7,7 +8,7 @@ namespace Systems {
 	/// Only one system of this type can exists in a bot.
 	/// </summary>
 	public abstract class ActiveSystem : BotSystem {
-		protected ActiveSystem(RealLiveBlock block) : base(block) { }
+		protected ActiveSystem(byte id, CompleteStructure structure, RealLiveBlock block) : base(id, structure, block) { }
 
 
 

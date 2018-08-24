@@ -79,7 +79,7 @@ namespace Structures {
 				Health += info.Health;
 				Mass += info.Mass;
 				_blocks.Add(position, block);
-				if (SystemFactory.Create(block, out BotSystem system)) {
+				if (SystemFactory.Create(_systems.NextId, this, block, out BotSystem system)) {
 					_systems.Add(position, system);
 				}
 			}

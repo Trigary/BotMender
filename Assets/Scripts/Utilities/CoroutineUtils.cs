@@ -24,7 +24,7 @@ namespace Utilities {
 		public static IEnumerator Repeat(Action action, float delay, int times) {
 			for (int i = 0; i < times; i++) {
 				yield return new WaitForSeconds(delay);
-				action.Invoke();
+				action();
 			}
 		}
 	}

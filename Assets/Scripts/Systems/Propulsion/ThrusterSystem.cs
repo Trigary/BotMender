@@ -1,5 +1,6 @@
 ﻿using Blocks;
 using Blocks.Live;
+using Structures;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -11,7 +12,7 @@ namespace Systems.Propulsion {
 		protected readonly ThrusterConstants Constants;
 		private readonly BlockSides _facing;
 
-		public ThrusterSystem(RealLiveBlock block, ThrusterConstants constants) : base(block) {
+		public ThrusterSystem(byte id, CompleteStructure structure, RealLiveBlock block, ThrusterConstants constants) : base(id, structure, block) {
 			Constants = constants;
 			_facing = Rotation.RotateSides(constants.Facing, block.Rotation);
 		}

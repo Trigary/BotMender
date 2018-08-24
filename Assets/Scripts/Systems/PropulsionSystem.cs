@@ -1,4 +1,5 @@
 ﻿using Blocks.Live;
+using Structures;
 using UnityEngine;
 
 namespace Systems {
@@ -6,7 +7,7 @@ namespace Systems {
 	/// A system which affects the bot's movement and/or rotation.
 	/// </summary>
 	public abstract class PropulsionSystem : BotSystem {
-		protected PropulsionSystem(RealLiveBlock block) : base(block) { }
+		protected PropulsionSystem(byte id, CompleteStructure structure, RealLiveBlock block) : base(id, structure, block) { }
 
 
 

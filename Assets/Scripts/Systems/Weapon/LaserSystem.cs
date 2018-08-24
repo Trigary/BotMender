@@ -1,4 +1,5 @@
 ﻿using Blocks.Live;
+using Structures;
 using UnityEngine;
 
 namespace Systems.Weapon {
@@ -9,7 +10,7 @@ namespace Systems.Weapon {
 		public const float MaxParticleLifeTime = 5f;
 		private readonly ParticleSystem _particles;
 
-		public LaserSystem(RealLiveBlock block, WeaponConstants constants) : base(block, constants) {
+		public LaserSystem(byte id, CompleteStructure structure, RealLiveBlock block, WeaponConstants constants) : base(id, structure, block, constants) {
 			_particles = Turret.GetComponent<ParticleSystem>();
 			ParticleSystem.ShapeModule shape = _particles.shape;
 			shape.position = Constants.TurretOffset;

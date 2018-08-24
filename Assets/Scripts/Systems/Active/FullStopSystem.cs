@@ -1,4 +1,5 @@
 ﻿using Blocks.Live;
+using Structures;
 using UnityEngine;
 
 namespace Systems.Active {
@@ -6,7 +7,7 @@ namespace Systems.Active {
 	/// Sets the bot's velocity to zero upon activation.
 	/// </summary>
 	public class FullStopSystem : ActiveSystem {
-		public FullStopSystem(RealLiveBlock block) : base(block) { }
+		public FullStopSystem(byte id, CompleteStructure structure, RealLiveBlock block) : base(id, structure, block) { }
 
 
 

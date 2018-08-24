@@ -17,11 +17,12 @@ namespace Systems {
 		private readonly float _turretRotationMultiplier;
 		private float _cooldownEnds;
 
-		protected WeaponSystem(RealLiveBlock block, WeaponConstants constants) : base(block) {
+		protected WeaponSystem(byte id, CompleteStructure structure, RealLiveBlock block, WeaponConstants constants)
+			: base(id, structure, block) {
 			Constants = constants;
 			Turret = block.transform.Find("Turret");
 
-			if (NetworkUtils.IsLocal(block.GetComponentInParent<CompleteStructure>().Id)) {
+			if (NetworkUtils.IsLocal(Structure.Id)) {
 				_turretRotationMultiplier = 1f;
 			} else if (NetworkUtils.IsServer) {
 				_turretRotationMultiplier = 1.15f;

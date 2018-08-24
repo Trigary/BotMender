@@ -16,8 +16,10 @@ namespace Systems {
 		public const float FiringInaccuracyFading = 4; //in seconds
 		public const float MovingInaccuracyScale = 0.5f;
 
+		public byte NextId => (byte)_systemIds.Count;
 		public Vector3 TrackedPosition { get; set; } = Vector3.zero;
 		private readonly IDictionary<BlockPosition, BotSystem> _systems = new Dictionary<BlockPosition, BotSystem>();
+		private readonly List<BotSystem> _systemIds = new List<BotSystem>();
 		private readonly HashSet<PropulsionSystem> _propulsions = new HashSet<PropulsionSystem>();
 		private readonly CircularList<WeaponSystem> _weapons = new CircularList<WeaponSystem>();
 		private ActiveSystem _active;
@@ -33,6 +35,7 @@ namespace Systems {
 		/// </summary>
 		public void Add(BlockPosition position, BotSystem system) {
 			_systems.Add(position, system);
+			_systemIds.Add(system);
 			if (system is PropulsionSystem propulsion) {
 				_propulsions.Add(propulsion);
 			} else if (system is WeaponSystem weapon) {
@@ -47,8 +50,19 @@ namespace Systems {
 		/// Make sure that no excess memory is allocated.
 		/// </summary>
 		public void Finished() {
+			_systemIds.TrimExcess();
 			_propulsions.TrimExcess();
 			_weapons.TrimExcess();
+		}
+
+
+
+		/// <summary>
+		/// If a system with the specified ID is present return it, otherwise return null.
+		/// </summary>
+		// ReSharper disable once AnnotateCanBeNullTypeMember
+		public BotSystem TryGet(byte id) {
+			return _systemIds.Count > id ? _systemIds[id] : null;
 		}
 
 		/// <summary>
@@ -60,6 +74,7 @@ namespace Systems {
 			}
 
 			_systems.Remove(position);
+			_systemIds.RemoveAt(system.Id);
 			if (system is PropulsionSystem propulsion) {
 				_propulsions.Remove(propulsion);
 			} else if (system is WeaponSystem weapon) {
@@ -97,6 +112,8 @@ namespace Systems {
 			}
 		}
 
+
+
 		/// <summary>
 		/// Executes the propulsion systems.
 		/// </summary>
@@ -115,16 +132,18 @@ namespace Systems {
 			}
 
 			foreach (WeaponSystem system in _weapons) {
-				if (!system.IsOnCooldown() && system.Constants.Energy <= _energy && system.TryFireWeapon(bot, _realInaccuracy)) {
-					_firingPauseEnds = Time.time + FiringPause;
-					_energy -= system.Constants.Energy;
-
-					_firingInaccuracy += system.Constants.Inaccuracy;
-					if (_firingInaccuracy > MaxInaccuracy) {
-						_firingInaccuracy = MaxInaccuracy;
-					}
-					break;
+				if (system.IsOnCooldown() || !(system.Constants.Energy <= _energy) || !system.TryFireWeapon(bot, _realInaccuracy)) {
+					continue;
 				}
+
+				_firingPauseEnds = Time.time + FiringPause;
+				_energy -= system.Constants.Energy;
+
+				_firingInaccuracy += system.Constants.Inaccuracy;
+				if (_firingInaccuracy > MaxInaccuracy) {
+					_firingInaccuracy = MaxInaccuracy;
+				}
+				break;
 			}
 		}
 

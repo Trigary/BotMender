@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -9,6 +11,7 @@ namespace Blocks {
 	public class BlockPosition : IEquatable<BlockPosition> {
 		public const byte Min = 0; //Inclusive
 		public const byte Max = 127; //Inclusive
+		public static readonly IComparer<BlockPosition> AscendingComparer = new BlockPositionComparer();
 
 		public readonly byte X;
 		public readonly byte Y;
@@ -116,6 +119,18 @@ namespace Blocks {
 
 		private static bool IsValid(int x, int y, int z) {
 			return x >= Min && y >= Min && z >= Min && x <= Max && y <= Max && z <= Max;
+		}
+
+
+
+		private class BlockPositionComparer : IComparer<BlockPosition> {
+			[SuppressMessage("ReSharper", "PossibleNullReferenceException")]
+			public int Compare(BlockPosition left, BlockPosition right) {
+				int result;
+				return (result = left.X.CompareTo(right.X)) != 0 ? result
+					: (result = left.Y.CompareTo(right.Y)) != 0 ? result
+					: left.Z.CompareTo(right.Z);
+			}
 		}
 	}
 }

@@ -155,13 +155,13 @@ namespace Blocks {
 											Function<KeyValuePair<BlockPosition, BlockSides>, IMultiBlockPart> partConstructor,
 											out IMultiBlockPart[] parts) {
 			BlockSides parentSides = BlockSides.None;
-			parts = partsArrayConstructor.Invoke(partPositions.Length - 1);
+			parts = partsArrayConstructor(partPositions.Length - 1);
 			int partsIndex = 0;
 			foreach (KeyValuePair<BlockPosition, BlockSides> pair in partPositions) {
 				if (pair.Key.Equals(position)) {
 					parentSides = pair.Value;
 				} else {
-					parts[partsIndex++] = partConstructor.Invoke(pair);
+					parts[partsIndex++] = partConstructor(pair);
 				}
 			}
 

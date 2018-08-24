@@ -22,6 +22,7 @@ Constants which are specific to a block type can be registered in the
 A bot can be serialized by serializing its blocks, but other pieces of information
 (eg. max health) may also get saved in the future for caching reasons.
 A placed block can be serialized by serializing its position, rotation and type.
+The blocks are serialized in the order of their X,Y,Z coordinates in ascending order.
 The following table describes how many bits each serialized piece of data takes and also their order:
 
 Data | Size

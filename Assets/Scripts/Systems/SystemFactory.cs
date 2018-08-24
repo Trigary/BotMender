@@ -4,23 +4,23 @@ using Systems.Propulsion;
 using Systems.Weapon;
 using Blocks;
 using Blocks.Live;
-using Boo.Lang;
+using Structures;
 
 namespace Systems {
 	/// <summary>
 	/// Creates new system instances.
 	/// </summary>
 	public static class SystemFactory {
-		private static readonly IDictionary<BlockType, Function<RealLiveBlock, BotSystem>> Constructors =
-			new Dictionary<BlockType, Function<RealLiveBlock, BotSystem>>();
+		private delegate BotSystem SystemConstructor(byte id, CompleteStructure structure, RealLiveBlock block);
+		private static readonly IDictionary<BlockType, SystemConstructor> Constructors = new Dictionary<BlockType, SystemConstructor>();
 
 		static SystemFactory() {
-			Add(BlockType.LaserWeapon1, block => new LaserSystem(block, SystemConstantsContainer.WeaponConstants[block.Info.Type]));
+			Add(BlockType.LaserWeapon1, (id, structure, block) => new LaserSystem(id, structure, block, SystemConstantsContainer.WeaponConstants[block.Info.Type]));
 
-			Add(BlockType.ThrusterSmall, block => new ThrusterSystem(block, SystemConstantsContainer.ThrusterConstants[block.Info.Type]));
-			Add(BlockType.UnrealAccelerator, block => new UnrealAcceleratorSystem(block));
+			Add(BlockType.ThrusterSmall, (id, structure, block) => new ThrusterSystem(id, structure, block, SystemConstantsContainer.ThrusterConstants[block.Info.Type]));
+			Add(BlockType.UnrealAccelerator, (id, structure, block) => new UnrealAcceleratorSystem(id, structure, block));
 
-			Add(BlockType.FullStopSystem, block => new FullStopSystem(block));
+			Add(BlockType.FullStopSystem, (id, structure, block) => new FullStopSystem(id, structure, block));
 		}
 
 
@@ -28,14 +28,23 @@ namespace Systems {
 		/// <summary>
 		/// Create a new system instance from the block if the block comes with a system.
 		/// </summary>
-		public static bool Create(RealLiveBlock block, out BotSystem system) {
-			if (!Constructors.TryGetValue(block.Info.Type, out Function<RealLiveBlock, BotSystem> function)) {
+		public static bool Create(byte id, CompleteStructure structure, RealLiveBlock block, out BotSystem system) {
+			if (!Constructors.TryGetValue(block.Info.Type, out SystemConstructor constructor)) {
 				system = null;
 				return false;
 			}
 
-			system = function.Invoke(block);
+			system = constructor(id, structure, block);
 			return true;
+		}
+
+
+
+		/// <summary>
+		/// Returns whether the specified block type installs any system.
+		/// </summary>
+		public static bool IsAnySystem(BlockType block) {
+			return Constructors.ContainsKey(block);
 		}
 
 		/// <summary>
@@ -64,8 +73,8 @@ namespace Systems {
 
 
 
-		private static void Add(BlockType type, Function<RealLiveBlock, BotSystem> function) {
-			Constructors.Add(type, function);
+		private static void Add(BlockType type, SystemConstructor constructor) {
+			Constructors.Add(type, constructor);
 		}
 	}
 }
