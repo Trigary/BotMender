@@ -16,8 +16,8 @@ Each of the first 6 bits represents whether the specified movement direction axi
 The following vector specifies the position towards which the weapons are rotating.
 
 **Server_StateUpdate**  
-X * (53 bytes + size of "Client_InputUpdate"): Byte-BotId, Client_InputDate, Vector3-Position, Quaternion-Rotation, Vector3-Velocity, Vector3-AngularVelocity  
-The server informs the client of X many bots' states.
+6Bytes-Timestamp, Byte-BotId, Client_InputUpdate, Vector3-Position, Quaternion-Rotation, Vector3-Velocity, Vector3-AngularVelocity  
+The server informs the client of X many bots' states at the timestamp.
 
 # TCP
 

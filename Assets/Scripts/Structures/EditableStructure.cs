@@ -28,8 +28,8 @@ namespace Structures {
 			if (_blocks.Count == 0) {
 				Assert.IsTrue(BlockPosition.FromVector(transform.position, out BlockPosition position),
 					"Failed to get a BlockPosition from the EditableStructure position.");
-				Assert.IsTrue(AddBlock(position, (MultiBlockInfo)BlockFactory.GetInfo(BlockType.Mainframe), 0),
-					"Failed to place the Mainframe.");
+				Assert.IsTrue(AddBlock(position, (MultiBlockInfo)BlockFactory.GetInfo(BlockType.Mainframe),
+						Rotation.GetByte(BlockSides.Top, 0)), "Failed to place the Mainframe.");
 			}
 		}
 
@@ -209,10 +209,8 @@ namespace Structures {
 		/// </summary>
 		public void Serialize(BitBuffer buffer) {
 			foreach (RealPlacedBlock block in _blocks.Values.OfType<RealPlacedBlock>().OrderBy(block => block.Position, BlockPosition.AscendingComparer)) {
-				buffer.WriteBits((ushort)block.Type, 14);
-				buffer.WriteBits(block.Position.X, 7);
-				buffer.WriteBits(block.Position.Y, 7);
-				buffer.WriteBits(block.Position.Z, 7);
+				buffer.WriteBits((ushort)block.Type, 12);
+				block.Position.Serialize(buffer);
 				Rotation.Serialize(buffer, block.Rotation);
 			}
 		}
@@ -229,20 +227,17 @@ namespace Structures {
 
 			try {
 				while (buffer.TotalBitsLeft >= RealPlacedBlock.SerializedBitsSize) {
-					ushort type = (ushort)buffer.ReadBits(14);
+					ushort type = (ushort)buffer.ReadBits(12);
 					if (type >= BlockFactory.TypeCount) {
 						return false;
 					}
 
-					if (!BlockPosition.FromComponents((int)buffer.ReadBits(7), (int)buffer.ReadBits(7),
-						(int)buffer.ReadBits(7), out BlockPosition position)) {
-						return false;
-					}
-
+					BlockPosition position = BlockPosition.Deserialize(buffer);
+					byte rotation = Rotation.Deserialize(buffer);
 					BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType(type));
 					bool result = info is SingleBlockInfo single
-						? AddBlock(position, single, Rotation.Deserialize(buffer))
-						: AddBlock(position, (MultiBlockInfo)info, Rotation.Deserialize(buffer));
+						? AddBlock(position, single, rotation)
+						: AddBlock(position, (MultiBlockInfo)info, rotation);
 
 					if (!result) {
 						return false;

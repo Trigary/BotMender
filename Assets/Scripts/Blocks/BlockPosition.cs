@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using DoubleSocket.Utility.BitBuffer;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -9,9 +10,10 @@ namespace Blocks {
 	/// Specifies a block coordinate in the building mode.
 	/// </summary>
 	public class BlockPosition : IEquatable<BlockPosition> {
-		public const byte Min = 0; //Inclusive
-		public const byte Max = 127; //Inclusive
 		public static readonly IComparer<BlockPosition> AscendingComparer = new BlockPositionComparer();
+		public const int SerializedBitsSize = AxisValueBitSize * 3;
+		private const int AxisValueBitSize = 6;
+		private const int MaxAxisValue = (1 << AxisValueBitSize) - 1; //Inclusive
 
 		public readonly byte X;
 		public readonly byte Y;
@@ -26,17 +28,20 @@ namespace Blocks {
 
 
 		/// <summary>
-		/// Returns false if the position is out of bounds.
+		/// Serializes the current BlockPosition into the specified buffer.
 		/// </summary>
-		// ReSharper disable once AnnotateCanBeNullParameter
-		public static bool FromComponents(int x, int y, int z, out BlockPosition output) {
-			if (IsValid(x, y, z)) {
-				output = new BlockPosition(x, y, z);
-				return true;
-			}
+		public void Serialize(BitBuffer buffer) {
+			buffer.WriteBits(X, AxisValueBitSize);
+			buffer.WriteBits(Y, AxisValueBitSize);
+			buffer.WriteBits(Z, AxisValueBitSize);
+		}
 
-			output = null;
-			return false;
+		/// <summary>
+		/// Deserializes a BlockPosition from the specified buffer.
+		/// </summary>
+		public static BlockPosition Deserialize(BitBuffer buffer) {
+			return new BlockPosition((int)buffer.ReadBits(AxisValueBitSize),
+				(int)buffer.ReadBits(AxisValueBitSize), (int)buffer.ReadBits(AxisValueBitSize));
 		}
 
 
@@ -71,22 +76,22 @@ namespace Blocks {
 		public bool GetOffseted(BlockSides side, out BlockPosition output) {
 			switch (side) {
 				case BlockSides.Right:
-					output = X == Max ? null : new BlockPosition(X + 1, Y, Z);
+					output = X == MaxAxisValue ? null : new BlockPosition(X + 1, Y, Z);
 					break;
 				case BlockSides.Left:
-					output = X == Min ? null : new BlockPosition(X - 1, Y, Z);
+					output = X == 0 ? null : new BlockPosition(X - 1, Y, Z);
 					break;
 				case BlockSides.Top:
-					output = Y == Max ? null : new BlockPosition(X, Y + 1, Z);
+					output = Y == MaxAxisValue ? null : new BlockPosition(X, Y + 1, Z);
 					break;
 				case BlockSides.Bottom:
-					output = Y == Min ? null : new BlockPosition(X, Y - 1, Z);
+					output = Y == 0 ? null : new BlockPosition(X, Y - 1, Z);
 					break;
 				case BlockSides.Front:
-					output = Z == Max ? null : new BlockPosition(X, Y, Z + 1);
+					output = Z == MaxAxisValue ? null : new BlockPosition(X, Y, Z + 1);
 					break;
 				case BlockSides.Back:
-					output = Z == Min ? null : new BlockPosition(X, Y, Z - 1);
+					output = Z == 0 ? null : new BlockPosition(X, Y, Z - 1);
 					break;
 				default:
 					throw new AssertionException("Invalid side: " + side, null);
@@ -117,11 +122,12 @@ namespace Blocks {
 
 
 
-		private static bool IsValid(int x, int y, int z) {
-			return x >= Min && y >= Min && z >= Min && x <= Max && y <= Max && z <= Max;
+		// ReSharper disable once AnnotateCanBeNullParameter
+		private static bool FromComponents(int x, int y, int z, out BlockPosition output) {
+			output = x >= 0 && y >= 0 && z >= 0 && x <= MaxAxisValue && y <= MaxAxisValue && z <= MaxAxisValue
+				? new BlockPosition(x, y, z) : null;
+			return output != null;
 		}
-
-
 
 		private class BlockPositionComparer : IComparer<BlockPosition> {
 			[SuppressMessage("ReSharper", "PossibleNullReferenceException")]

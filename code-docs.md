@@ -27,12 +27,12 @@ The following table describes how many bits each serialized piece of data takes 
 
 Data | Size
 ---: | :---:
-Type | 14
-X | 7
-Y | 7
-Z | 7
+Type | 12
+X | 6
+Y | 6
+Z | 6
 Rotation | 5
-*Total* | 40
+*Total* | 35
 
 ## Networking
 

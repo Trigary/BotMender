@@ -14,7 +14,7 @@ namespace Systems {
 		protected Vector3 TurretHeading => Turret.forward;
 		protected Vector3 TurretEnd => Turret.position + Turret.rotation * Constants.TurretOffset;
 		protected readonly Transform Turret;
-		private readonly float _turretRotationMultiplier;
+		private readonly float _turretRotationMultiplier = 1;
 		private float _cooldownEnds;
 
 		protected WeaponSystem(byte id, CompleteStructure structure, RealLiveBlock block, WeaponConstants constants)
@@ -22,12 +22,8 @@ namespace Systems {
 			Constants = constants;
 			Turret = block.transform.Find("Turret");
 
-			if (NetworkUtils.IsLocal(Structure.Id)) {
-				_turretRotationMultiplier = 1f;
-			} else if (NetworkUtils.IsServer) {
-				_turretRotationMultiplier = 1.15f;
-			} else {
-				_turretRotationMultiplier = 1.3f;
+			if (!NetworkUtils.IsServer && !NetworkUtils.IsLocal(Structure.Id)) {
+				_turretRotationMultiplier *= 1.25f;
 			}
 		}
 
@@ -67,7 +63,12 @@ namespace Systems {
 		/// <summary>
 		/// Fire the weapon towards their current heading. Returns false if the shot would hit the bot itself.
 		/// </summary>
-		public bool TryFireWeapon(Rigidbody bot, float inaccuracy) {
+		public bool TryFireWeapon(Rigidbody bot, float inaccuracy) { //TODO pass the target position parameter
+			//TODO also return false if not ~facing the target position
+
+			//TODO this method is also called by the server -> the firing should be cancellable
+			//(undo inaccuracy change, energy, etc.)
+
 			Vector3 point;
 			RealLiveBlock block;
 			Vector3 direction = Quaternion.Euler(inaccuracy * Random.Range(-1f, 1f),
@@ -91,6 +92,10 @@ namespace Systems {
 		}
 
 		protected abstract void FireWeapon(Rigidbody bot, Vector3 point, [CanBeNull] RealLiveBlock block);
+		//TODO method 1: do fire weapon visuals (which may have to be deleted later),
+		//inform the server of the target position and the system ID (the server should rotate 1 extra tick towards it)
+
+		//TODO method 2: apply the response received from the server: expose a BitBuffer
 
 
 
@@ -99,7 +104,10 @@ namespace Systems {
 		/// </summary>
 		public enum Type {
 			None,
-			Laser
+			Laser,
+			Plasma,
+			Beam,
+			Artillery
 		}
 
 		/// <summary>

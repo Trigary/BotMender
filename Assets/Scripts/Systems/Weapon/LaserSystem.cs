@@ -4,9 +4,10 @@ using UnityEngine;
 
 namespace Systems.Weapon {
 	/// <summary>
-	/// Fires a laser beam.
+	/// A hitscan weapon which fires a laser pulse which only damages the block it hits.
+	/// It has a visualized travel time.
 	/// </summary>
-	public class LaserSystem : WeaponSystem {
+	public class LaserSystem : HitscanWeapon {
 		public const float MaxParticleLifeTime = 5f;
 		private readonly ParticleSystem _particles;
 

@@ -9,11 +9,15 @@ namespace Blocks {
 	/// FF specifies the axis the rotation is facing (0-2, both inclusive).
 	/// </summary>
 	public static class Rotation {
+		public const int SerializedBitsSize = 5;
+
 		private static readonly BlockSides[][] Sides = {
 			new[] {BlockSides.Top, BlockSides.Front, BlockSides.Bottom, BlockSides.Back}, //X
 			new[] {BlockSides.Front, BlockSides.Right, BlockSides.Back, BlockSides.Left}, //Y
 			new[] {BlockSides.Right, BlockSides.Top, BlockSides.Left, BlockSides.Bottom} //Z
 		};
+
+
 
 		/// <summary>
 		/// The Y axis will face towards the specified facing.
@@ -44,15 +48,20 @@ namespace Blocks {
 		/// </summary>
 		public static void Serialize(BitBuffer buffer, byte rotation) {
 			BlockSides facing = GetFacing(rotation);
-			buffer.WriteBits(BlockSide.ToOrdinal(facing), 3);
-			buffer.WriteBits((ulong)GetAmount(rotation, (facing & BlockSides.Y) != BlockSides.None ? 1 : 0), 2);
+			byte first = BlockSide.ToOrdinal(facing); //TODO
+			int second = GetAmount(rotation, (facing & BlockSides.Y) != BlockSides.None ? 1 : 0);
+			buffer.WriteBits(first, 3);
+			buffer.WriteBits((ulong)second, 2);
 		}
 
 		/// <summary>
 		/// Deserializes a rotation from a buffer's first 5 bits.
 		/// </summary>
 		public static byte Deserialize(BitBuffer buffer) {
-			return GetByte(BlockSide.FromOrdinal((byte)buffer.ReadBits(3)), (byte)buffer.ReadBits(2));
+			byte first = (byte)buffer.ReadBits(3); //TODO
+			byte second = (byte)buffer.ReadBits(2);
+			byte result = GetByte(BlockSide.FromOrdinal(first), second);
+			return result;
 		}
 
 		/// <summary>

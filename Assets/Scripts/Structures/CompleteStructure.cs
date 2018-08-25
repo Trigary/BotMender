@@ -56,20 +56,20 @@ namespace Structures {
 
 		private void Deserialize(BitBuffer buffer) {
 			while (buffer.TotalBitsLeft >= RealPlacedBlock.SerializedBitsSize) {
-				ushort type = (ushort)buffer.ReadBits(14);
-				BlockPosition.FromComponents((int)buffer.ReadBits(7), (int)buffer.ReadBits(7),
-					(int)buffer.ReadBits(7), out BlockPosition position);
+				ushort type = (ushort)buffer.ReadBits(12);
+				BlockPosition position = BlockPosition.Deserialize(buffer);
 
 				BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType(type));
 				if (info.Type == BlockType.Mainframe) {
 					_mainframePosition = position;
 				}
 
+				byte rotation = Rotation.Deserialize(buffer);
 				RealLiveBlock block;
 				if (info is SingleBlockInfo single) {
-					block = BlockFactory.MakeSingleLive(transform, single, Rotation.Deserialize(buffer), position);
+					block = BlockFactory.MakeSingleLive(transform, single, rotation, position);
 				} else {
-					block = BlockFactory.MakeMultiLive(transform, (MultiBlockInfo)info, Rotation.Deserialize(buffer),
+					block = BlockFactory.MakeMultiLive(transform, (MultiBlockInfo)info, rotation,
 						position, out LiveMultiBlockPart[] parts);
 					foreach (LiveMultiBlockPart part in parts) {
 						_blocks.Add(part.Position, part);
