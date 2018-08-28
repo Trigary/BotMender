@@ -100,8 +100,8 @@ namespace Networking {
 			_resettingByteBuffer = new ResettingBitBuffer(DoubleProtocol.TcpBufferArraySize);
 			_clients = new HashSet<NetworkServerClient>();
 			_handler = new DoubleServerHandler();
-			_server = new DoubleServer(_handler, NetworkUtils.ServerMaxConnectionCount,
-				NetworkUtils.ServerMaxPendingConnections, NetworkUtils.Port);
+			_server = new DoubleServer(_handler, NetworkUtils.MaxBotCount,
+				(NetworkUtils.MaxBotCount * 3 + 1) / 2, NetworkUtils.Port);
 
 			_tickingThread = new TickingThread(NetworkUtils.UdpSendFrequency, () => {
 				lock (UdpPayloadLock) {
@@ -142,7 +142,7 @@ namespace Networking {
 		/// <summary>
 		/// Sets the handler for a specific (TCP) packet type.
 		/// </summary>
-		public static void SetTcpHandler(TcpPacketType type, OnPacketReceived handler) {
+		public static void SetTcpHandler(TcpPacketType type, [CanBeNull] OnPacketReceived handler) {
 			TcpHandlers[(byte)type] = handler;
 		}
 
@@ -242,7 +242,7 @@ namespace Networking {
 			public Action<BitBuffer> OnFullAuthentication(IDoubleServerClient client) {
 				NetworkServerClient serverClient = (NetworkServerClient)client.ExtraData;
 				serverClient.Initialize();
-				UnityDispatcher.InvokeNoDelay(() => {
+				UnityFixedDispatcher.InvokeNoDelay(() => {
 					if (_server != null) {
 						lock (UdpPayloadLock) { //Don't let the TickingThread send before the client is initialized
 							_clients.Add(serverClient);
@@ -264,7 +264,8 @@ namespace Networking {
 				}
 
 				byte[] bytes = buffer.ReadBytes();
-				UnityDispatcher.InvokePacketHandling(false, () => {
+				NetworkServerClient serverClient = (NetworkServerClient)client.ExtraData;
+				UnityFixedDispatcher.InvokePacketHandling(false, serverClient.Id, () => {
 					if (_server != null) {
 						OnPacketReceived action = TcpHandlers[packet];
 						if (action != null) {
@@ -284,7 +285,7 @@ namespace Networking {
 				}
 
 				byte[] bytes = buffer.ReadBytes();
-				UnityDispatcher.InvokePacketHandling(true, () => {
+				UnityFixedDispatcher.InvokePacketHandling(true, serverClient.Id, () => {
 					if (_server != null) {
 						_handlerBuffer.SetContents(bytes);
 						UdpHandler(serverClient, _handlerBuffer);
@@ -294,7 +295,7 @@ namespace Networking {
 
 			public void OnLostConnection(IDoubleServerClient client, DoubleServer.ClientState state) {
 				if (state == DoubleServer.ClientState.Authenticated) {
-					UnityDispatcher.InvokeNoDelay(() => {
+					UnityFixedDispatcher.InvokeNoDelay(() => {
 						if (_server != null) {
 							NetworkServerClient serverClient = (NetworkServerClient)client.ExtraData;
 							lock (UdpPayloadLock) { //Don't let the TickingThread send before the client is initialized
@@ -335,7 +336,7 @@ namespace Networking {
 				lock (SmallLock) {
 					Id = newid;
 				}
-				UnityDispatcher.InvokeNoDelay(() => {
+				UnityFixedDispatcher.InvokeNoDelay(() => {
 					lock (SmallLock) {
 					}
 				});

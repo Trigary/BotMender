@@ -87,7 +87,7 @@ namespace Building {
 						* _structure.RealBlockCount + 7) / 8);
 					_structure.Serialize(someBuffer);
 					Debug.Log("Structure: " + string.Join(", ", someBuffer.Array));
-					CompleteStructure complete = CompleteStructure.Create(someBuffer, 1, "BuiltStructure");
+					CompleteStructure complete = CompleteStructure.Create(someBuffer, 1);
 					Assert.IsNotNull(complete, "Own CompleteStructure creation mustn't fail.");
 
 					complete.transform.position = new Vector3(0, 10, 0);
@@ -98,7 +98,7 @@ namespace Building {
 					Destroy(_camera.gameObject.GetComponent<BuildingCameraController>());
 					Destroy(gameObject);
 
-					CompleteStructure otherStructure = CompleteStructure.Create(ExampleStructure, 2, "OtherStructure");
+					CompleteStructure otherStructure = CompleteStructure.Create(ExampleStructure, 2);
 					Assert.IsNotNull(otherStructure, "Other CompleteStructure creation mustn't fail.");
 					otherStructure.transform.position = new Vector3(150, 5, 150);
 				}).Invoke();

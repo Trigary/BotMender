@@ -11,13 +11,14 @@ namespace Systems.Propulsion {
 
 
 
-		public override void MoveRotate(Rigidbody bot, Vector3 direction, float timestepMultiplier) {
-			bot.AddForce(bot.transform.rotation * new Vector3(0, direction.y, direction.z) * timestepMultiplier,
+		public override void MoveRotate(Vector3 direction, float timestepMultiplier) {
+			Rigidbody body = Structure.Body;
+			body.AddForce(body.transform.rotation * new Vector3(0, direction.y, direction.z) * timestepMultiplier,
 				ForceMode.VelocityChange);
 
-			Vector3 angularVelocity = bot.angularVelocity;
+			Vector3 angularVelocity = body.angularVelocity;
 			angularVelocity.y = Mathf.Clamp(angularVelocity.y + direction.x * 0.35f * timestepMultiplier, -1.5f, 1.5f);
-			bot.angularVelocity = angularVelocity;
+			body.angularVelocity = angularVelocity;
 		}
 	}
 }

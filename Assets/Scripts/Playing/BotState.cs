@@ -18,7 +18,7 @@ namespace Playing {
 			PlayerInput.SerializeMovementInput(buffer, movementInput);
 			buffer.Write(trackedPosition);
 			buffer.Write(transform.position);
-			buffer.Write(transform.rotation);
+			buffer.WriteCompressed(transform.rotation);
 			buffer.Write(body.velocity);
 			buffer.Write(body.angularVelocity);
 		}
@@ -42,7 +42,7 @@ namespace Playing {
 			MovementInput = PlayerInput.DeserializeMovementInput(buffer);
 			TrackedPosition = buffer.ReadVector3();
 			Position = buffer.ReadVector3();
-			Rotation = buffer.ReadQuaternion();
+			Rotation = buffer.ReadCompressedQuaternion();
 			Velocity = buffer.ReadVector3();
 			AngularVelocity = buffer.ReadVector3();
 		}

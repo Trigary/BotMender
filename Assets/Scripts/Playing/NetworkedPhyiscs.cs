@@ -2,7 +2,6 @@
 using System.Linq;
 using DoubleSocket.Protocol;
 using DoubleSocket.Utility.BitBuffer;
-using JetBrains.Annotations;
 using Networking;
 using Structures;
 using UnityEngine;
@@ -18,80 +17,57 @@ namespace Playing {
 		public const float TimestepSeconds = 0.02f;
 
 		/// <summary>
-		/// Creates (and returns) a new GameObject containing this component and also initializes the componenet.
+		/// Creates a new GameObject containing this component and also initializes, returns itself.
 		/// </summary>
-		public static GameObject Create() {
-			GameObject gameObject = new GameObject("NetworkedPhysics");
-			_instance = gameObject.AddComponent<NetworkedPhyiscs>();
+		public static NetworkedPhyiscs Create() {
+			NetworkedPhyiscs instance = new GameObject("NetworkedPhysics").AddComponent<NetworkedPhyiscs>();
 			if (NetworkUtils.IsServer) {
 				NetworkClient.UdpHandler = buffer => { };
-				NetworkServer.UdpHandler = (sender, buffer) => {
-					_instance._lastServerUdpPackets.Remove(sender.Id);
-					_instance._lastServerUdpPackets.Add(sender.Id, buffer.Array);
-				};
+				NetworkServer.UdpHandler = (sender, buffer) => BotCache.SetExtra(sender.Id,
+					BotCache.Extra.NetworkedPhysics, buffer.Array);
 			} else {
-				NetworkClient.UdpHandler = buffer => _instance._lastClientUdpPacket = buffer.Array;
+				NetworkClient.UdpHandler = buffer => instance._lastClientUdpPacket = buffer.Array;
 			}
-			return gameObject;
-		}
-
-		/// <summary>
-		/// Maps the specified player ID to the specified structure for later retrieval.
-		/// Also used to remove a structure from the storage, in this case the structure must be null.
-		/// </summary>
-		public static void RegisterPlayer(byte id, [CanBeNull] CompleteStructure structure) {
-			if (structure != null) {
-				_instance._playerStructures.Add(id, structure);
-			} else {
-				_instance._playerStructures.Remove(id);
-			}
-		}
-
-		/// <summary>
-		/// Returns the structure mapped to the specified player ID or null, if none has been registered.
-		/// </summary>
-		// ReSharper disable once AnnotateCanBeNullTypeMember
-		public static CompleteStructure RetrievePlayer(byte id) {
-			return _instance._playerStructures.TryGetValue(id, out CompleteStructure structure) ? structure : null;
-		}
-
-		/// <summary>
-		/// Handles the input change of the local player.
-		/// Not all input is specified in the parameters.
-		/// </summary>
-		public static void UpdateLocalInput(Vector3 trackedPosition) {
-			Vector3 movementInput = PlayerInput.ReadMovementInput();
-			byte[] payload = new byte[(PlayerInput.SerializedBitsSize + 7) / 8];
-			_instance._sharedBuffer.ClearContents(payload);
-			PlayerInput.Serialize(_instance._sharedBuffer, movementInput, trackedPosition);
-
-			if (NetworkUtils.IsServer) {
-				_instance._lastServerUdpPackets.Remove(NetworkUtils.LocalId);
-				_instance._lastServerUdpPackets.Add(NetworkUtils.LocalId, payload);
-			} else {
-				NetworkClient.UdpPayload = payload;
-				int latency = NetworkClient.UdpTotalLatency;
-				long key = DoubleProtocol.TimeMillis + latency;
-				_instance._guessedInputs.Remove(key);
-				_instance._guessedInputs.Add(key, new GuessedInput(movementInput, latency * 5 / 4));
-			}
+			return instance;
 		}
 
 
 
-		private static NetworkedPhyiscs _instance;
-		private readonly IDictionary<byte, CompleteStructure> _playerStructures = new Dictionary<byte, CompleteStructure>();
 		private readonly MutableBitBuffer _sharedBuffer = new MutableBitBuffer();
-		private readonly IDictionary<byte, byte[]> _lastServerUdpPackets = new Dictionary<byte, byte[]>();
 		private readonly IDictionary<long, GuessedInput> _guessedInputs = new SortedDictionary<long, GuessedInput>();
 		private readonly BotState _tempBotState = new BotState();
 		private long _silentSkipFastForwardUntil;
 		private byte[] _lastClientUdpPacket;
 
 		private void OnDestroy() {
+			NetworkClient.UdpHandler = buffer => { };
+			NetworkServer.UdpHandler = (sender, buffer) => { };
 			NetworkClient.UdpPayload = null;
 			NetworkServer.UdpPayload = null;
-			_instance = null;
+			BotCache.ClearExtra(BotCache.Extra.NetworkedPhysics);
+		}
+
+
+
+		/// <summary>
+		/// Handles the input change of the local player.
+		/// Not all input is specified in the parameters.
+		/// </summary>
+		public void UpdateLocalInput(Vector3 trackedPosition) {
+			Vector3 movementInput = PlayerInput.ReadMovementInput();
+			byte[] payload = new byte[(PlayerInput.SerializedBitsSize + 7) / 8];
+			_sharedBuffer.ClearContents(payload);
+			PlayerInput.Serialize(_sharedBuffer, movementInput, trackedPosition);
+
+			if (NetworkUtils.IsServer) {
+				BotCache.SetExtra(NetworkUtils.LocalId, BotCache.Extra.NetworkedPhysics, payload);
+			} else {
+				NetworkClient.UdpPayload = payload;
+				int latency = NetworkClient.UdpTotalLatency;
+				long key = DoubleProtocol.TimeMillis + latency;
+				_guessedInputs.Remove(key);
+				_guessedInputs.Add(key, new GuessedInput(movementInput, latency * 5 / 4));
+			}
 		}
 
 
@@ -107,21 +83,26 @@ namespace Playing {
 		}
 
 		private void ServerFixedUpdate() {
-			foreach (KeyValuePair<byte, byte[]> packet in _lastServerUdpPackets) {
-				_sharedBuffer.SetContents(packet.Value);
+			BotCache.ForEachId(id => {
+				byte[] packet = (byte[])BotCache.TakeExtra(id, BotCache.Extra.NetworkedPhysics);
+				if (packet == null) {
+					return;
+				}
+
+				_sharedBuffer.SetContents(packet);
 				if (_sharedBuffer.TotalBitsLeft >= PlayerInput.SerializedBitsSize) {
 					PlayerInput.Deserialize(_sharedBuffer, out Vector3 movementInput, out Vector3 trackedPosition);
-					RetrievePlayer(packet.Key)?.UpdateInputOnly(movementInput, trackedPosition);
+					BotCache.Get(id).UpdateInputOnly(movementInput, trackedPosition);
 				}
-			}
-			_lastServerUdpPackets.Clear();
+			});
 			Simulate(TimestepMillis);
 
 			if (NetworkServer.HasClients) {
-				int bitSize = 48 + BotState.SerializedBitsSize * NetworkServer.ClientCount;
+				int bitSize = 48 + BotState.SerializedBitsSize * BotCache.Count;
 				_sharedBuffer.ClearContents(new byte[(bitSize + 7) / 8]);
 				_sharedBuffer.WriteBits((ulong)DoubleProtocol.TimeMillis, 48);
-				NetworkServer.ForEachClient(client => RetrievePlayer(client.Id).SerializeState(_sharedBuffer));
+				//TODO set timestamp in TCP packet -> relative timestamps -> ~22 bits are enough
+				BotCache.ForEach(structure => structure.SerializeState(_sharedBuffer));
 				NetworkServer.UdpPayload = _sharedBuffer.Array;
 			} else {
 				NetworkServer.UdpPayload = null;
@@ -129,7 +110,7 @@ namespace Playing {
 		}
 
 		private void ClientOnlyFixedUpdate() {
-			CompleteStructure localStructure = RetrievePlayer(NetworkUtils.LocalId);
+			CompleteStructure localStructure = BotCache.Get(NetworkUtils.LocalId);
 			int toSimulate;
 			long lastMillis;
 			if (_lastClientUdpPacket != null) {
@@ -185,7 +166,7 @@ namespace Playing {
 			toSimulate = (int)(currentMillis - lastMillis);
 			while (_sharedBuffer.TotalBitsLeft >= BotState.SerializedBitsSize) {
 				_tempBotState.Update(_sharedBuffer);
-				RetrievePlayer(_tempBotState.Id)?.UpdateWholeState(_tempBotState);
+				BotCache.Get(_tempBotState.Id).UpdateWholeState(_tempBotState);
 			}
 
 			if (toSimulate <= 0) {
@@ -212,21 +193,17 @@ namespace Playing {
 			}
 		}
 
-		private void Simulate(int millis) {
+		private static void Simulate(int millis) {
 			int fullSteps = millis / TimestepMillis;
 			while (fullSteps-- > 0) {
-				foreach (CompleteStructure structure in _playerStructures.Values) {
-					structure.SimulatedPhysicsUpdate(1f);
-				}
+				BotCache.ForEach(structure => structure.SimulatedPhysicsUpdate(1f));
 				Physics.Simulate(TimestepSeconds);
 			}
 
 			int mod = millis % TimestepMillis;
 			if (mod != 0) {
 				float timestepMultiplier = (float)mod / TimestepMillis;
-				foreach (CompleteStructure structure in _playerStructures.Values) {
-					structure.SimulatedPhysicsUpdate(timestepMultiplier);
-				}
+				BotCache.ForEach(structure => structure.SimulatedPhysicsUpdate(timestepMultiplier));
 				Physics.Simulate(mod / 1000f);
 			}
 		}

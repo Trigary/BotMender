@@ -5,8 +5,10 @@ namespace Utilities {
 	/// <summary>
 	/// Extension methods for the ByteBuffer class, making it easy-to-use with Unity's data types.
 	/// </summary>
-	public static class BitBufferExtensions { //TODO compression: less precision
-		private const float QuaternionPrecision = short.MaxValue;
+	public static class BitBufferExtensions {
+		//TODO compression: specify min value, max value and precision (as bit count or float or 1/x)
+		//utility methods for min value = 0
+		//should the min, max be inclusive or exclusive? maybe both variants
 
 
 
@@ -23,7 +25,7 @@ namespace Utilities {
 		/// <summary>
 		/// Writes the specified Quaternion into using smallest-three encoding and 16 bit precision.
 		/// </summary>
-		public static void Write(this BitBuffer buffer, Quaternion value) {
+		public static void WriteCompressed(this BitBuffer buffer, Quaternion value) {
 			float largestValue = float.MinValue;
 			int largestIndex = -1;
 			for (int i = 0; i < 4; i++) {
@@ -38,7 +40,7 @@ namespace Utilities {
 
 			for (int i = 0; i < 4; i++) {
 				if (i != largestIndex) {
-					buffer.Write((short)(value[i] * sign * QuaternionPrecision));
+					buffer.Write((short)(value[i] * sign * short.MaxValue));
 				}
 			}
 		}
@@ -55,11 +57,11 @@ namespace Utilities {
 		/// <summary>
 		/// Reads a smallest-three encoded, 16 bit precise Quaternion from the buffer.
 		/// </summary>
-		public static Quaternion ReadQuaternion(this BitBuffer buffer) {
+		public static Quaternion ReadCompressedQuaternion(this BitBuffer buffer) {
 			int largestIndex = (int)buffer.ReadBits(2);
-			float a = buffer.ReadShort() / QuaternionPrecision;
-			float b = buffer.ReadShort() / QuaternionPrecision;
-			float c = buffer.ReadShort() / QuaternionPrecision;
+			float a = buffer.ReadShort() / (float)short.MaxValue;
+			float b = buffer.ReadShort() / (float)short.MaxValue;
+			float c = buffer.ReadShort() / (float)short.MaxValue;
 			float largestValue = Mathf.Sqrt(1 - (a * a + b * b + c * c));
 
 			if (largestIndex == 0) {

@@ -1,19 +1,22 @@
 ﻿using Blocks.Live;
-using JetBrains.Annotations;
+using DoubleSocket.Utility.BitBuffer;
 using Networking;
 using Playing;
 using Structures;
 using UnityEngine;
 
-namespace Systems {
+namespace Systems.Weapon {
 	/// <summary>
 	/// A system which controls a weapon.
 	/// </summary>
 	public abstract class WeaponSystem : BotSystem {
+		protected const float MaxTurretHeadingAngleDifference = 5;
+
 		public readonly WeaponConstants Constants;
 		protected Vector3 TurretHeading => Turret.forward;
 		protected Vector3 TurretEnd => Turret.position + Turret.rotation * Constants.TurretOffset;
 		protected readonly Transform Turret;
+		protected float TurretHeadingAngleDifference { get; private set; }
 		private readonly float _turretRotationMultiplier = 1;
 		private float _cooldownEnds;
 
@@ -36,10 +39,18 @@ namespace Systems {
 			return _cooldownEnds > Time.time;
 		}
 
+		/// <summary>
+		/// Called whenver the weapon was fired. Internally calculates sets the cooldonw end timestamp.
+		/// </summary>
+		public void UpdateCooldown() {
+			_cooldownEnds = Time.time + Constants.Cooldown;
+		}
+
 
 
 		/// <summary>
-		/// Rotate the weapon's barrel so it faces the target coordinates.
+		/// Rotate the weapon's barrel towards the target coordinates.
+		/// Also sets the amount of angles which were left out due to the rotation speed limit
 		/// </summary>
 		public void TrackPosition(Vector3 position) {
 			Vector3 direction = Quaternion.Inverse(Block.transform.rotation) * (position - Turret.position);
@@ -47,8 +58,10 @@ namespace Systems {
 			euler.x = ClampRotation(euler.x, Constants.MinPitch, Constants.MaxPitch);
 			euler.y = ClampRotation(euler.y, Constants.YawLimit * -1, Constants.YawLimit);
 
-			Turret.localRotation = Quaternion.RotateTowards(Turret.localRotation,
-				Quaternion.Euler(euler), Constants.RotationSpeed * _turretRotationMultiplier);
+			Quaternion target = Quaternion.Euler(euler);
+			Turret.localRotation = Quaternion.RotateTowards(Turret.localRotation, target,
+				Constants.RotationSpeed * _turretRotationMultiplier);
+			TurretHeadingAngleDifference = Quaternion.Angle(Turret.localRotation, target);
 		}
 
 		private static float ClampRotation(float value, float min, float max) {
@@ -61,41 +74,19 @@ namespace Systems {
 
 
 		/// <summary>
-		/// Fire the weapon towards their current heading. Returns false if the shot would hit the bot itself.
+		/// Returns whether the weapon can be fired towards the specfied position in its current state.
+		/// If it can, the weapon is fired and the client gets notified with all necessary information.
+		/// A weapon can't be fired it it would hit the bot itself or if the angle between
+		/// the desired and the actual facing is too great.
 		/// </summary>
-		public bool TryFireWeapon(Rigidbody bot, float inaccuracy) { //TODO pass the target position parameter
-			//TODO also return false if not ~facing the target position
+		public abstract bool ServerTryExecuteWeaponFiring(float inaccuracy);
 
-			//TODO this method is also called by the server -> the firing should be cancellable
-			//(undo inaccuracy change, energy, etc.)
-
-			Vector3 point;
-			RealLiveBlock block;
-			Vector3 direction = Quaternion.Euler(inaccuracy * Random.Range(-1f, 1f),
-				inaccuracy * Random.Range(-1f, 1f), 0) * TurretHeading;
-
-			if (Physics.Raycast(TurretEnd, direction, out RaycastHit hit)) {
-				if (hit.transform == bot.transform) {
-					return false;
-				}
-				point = hit.point;
-				block = hit.collider.gameObject.GetComponent<RealLiveBlock>();
-			} else {
-				point = TurretEnd + direction * 500;
-				block = null;
-			}
-
-			FireWeapon(bot, point, block);
-			_cooldownEnds = Time.time + Constants.Cooldown;
-			bot.AddForceAtPosition(Turret.rotation * Constants.Kickback, TurretEnd, ForceMode.Impulse);
-			return true;
-		}
-
-		protected abstract void FireWeapon(Rigidbody bot, Vector3 point, [CanBeNull] RealLiveBlock block);
-		//TODO method 1: do fire weapon visuals (which may have to be deleted later),
-		//inform the server of the target position and the system ID (the server should rotate 1 extra tick towards it)
-
-		//TODO method 2: apply the response received from the server: expose a BitBuffer
+		/// <summary>
+		/// The server instructs the client to fire this weapon.
+		/// All relevant information is specified in the buffer.
+		/// Kickback shouldn't be applied client-side: the UDP packets take care of that - don't apply it twice.
+		/// </summary>
+		public abstract void ClientExecuteWeaponFiring(BitBuffer buffer);
 
 
 
@@ -110,6 +101,10 @@ namespace Systems {
 			Artillery
 		}
 
+		public static bool IsSingleFiringType(Type type) {
+			return type == Type.Plasma || type == Type.Beam;
+		}
+
 		/// <summary>
 		/// Constants regarding a specific weapon.
 		/// The turret offset's and the kickback's value is in world space units.
@@ -120,11 +115,13 @@ namespace Systems {
 		/// The inaccuracy is specified in angles.
 		/// </summary>
 		public class WeaponConstants {
+			public readonly Type Type;
 			public readonly Vector3 TurretOffset, Kickback;
 			public readonly float YawLimit, MinPitch, MaxPitch, RotationSpeed, Cooldown, Inaccuracy, Energy;
 
-			public WeaponConstants(Vector3 turretOffset, float yawLimit, float minPitch, float maxPitch, float rotationSpeed,
-									float kickback, float cooldown, float energy, float inaccuracy) {
+			public WeaponConstants(Type type, Vector3 turretOffset, float yawLimit, float minPitch, float maxPitch,
+									float rotationSpeed, float kickback, float cooldown, float energy, float inaccuracy) {
+				Type = type;
 				TurretOffset = turretOffset;
 				YawLimit = yawLimit;
 				MinPitch = minPitch;

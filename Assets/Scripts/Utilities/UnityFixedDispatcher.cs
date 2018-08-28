@@ -5,10 +5,10 @@ using UnityEngine;
 
 namespace Utilities {
 	/// <summary>
-	/// A utility class used to queue actions to be invoked on the main Unity thread.
+	/// A utility class used to queue actions to be invoked on the main Unity thread's during the fixed update.
 	/// </summary>
-	public class UnityDispatcher : MonoBehaviour {
-		private static UnityDispatcher _instance;
+	public class UnityFixedDispatcher : MonoBehaviour {
+		private static UnityFixedDispatcher _instance;
 		private readonly Queue<Action> _actions = new Queue<Action>();
 
 		private void Awake() {
@@ -31,12 +31,12 @@ namespace Utilities {
 		/// Depending on current (hardcoded) settings, delay may be applied
 		/// when using this method in order to simulate latency.
 		/// </summary>
-		public static void InvokePacketHandling(bool udp, Action action) {
+		public static void InvokePacketHandling(bool udp, byte sender, Action action) {
 			lock (_instance._actions) {
-				if (NetworkUtils.SimulateUdpNetworkConditions) {
+				if (NetworkUtils.SimulateUdpNetworkConditions && !NetworkUtils.IsLocal(sender)) {
 					_instance._actions.Enqueue(() => {
 						if (!udp || !NetworkUtils.ShouldLoseUdpPacket) {
-							_instance.StartCoroutine(CoroutineUtils.Delay(action, NetworkUtils.SimulatedLatency));
+							_instance.StartCoroutine(CoroutineUtils.Delay(action, NetworkUtils.SimulatedOneWayTripTime));
 						}
 					});
 				} else {
@@ -47,7 +47,7 @@ namespace Utilities {
 
 		/// <summary>
 		/// Queues the specfied action to be invoked on the main Unity thread.
-		/// Tries to add no additional delay.
+		/// Whatever the current (hardcoded) settings may be, this method doesn't add any artifical latency.
 		/// </summary>
 		public static void InvokeNoDelay(Action action) {
 			lock (_instance._actions) {
@@ -57,15 +57,8 @@ namespace Utilities {
 
 
 
-		private void Update() {
-			CheckInvokables();
-		}
 
 		private void FixedUpdate() {
-			CheckInvokables();
-		}
-
-		private void CheckInvokables() {
 			while (true) {
 				Action action;
 				lock (_actions) {

@@ -11,7 +11,13 @@ namespace Systems.Weapon {
 		public PlasmaWeapon(byte id, CompleteStructure structure, RealLiveBlock block, WeaponConstants constants) : base(id, structure, block, constants) {
 		}
 
-		protected override void FireWeapon(Rigidbody bot, Vector3 point, RealLiveBlock block) {
+
+
+		protected override void ServerFireWeapon(Vector3 point, RealLiveBlock block) {
+			throw new System.NotImplementedException();
+		}
+
+		protected override void ClientFireWeapon(Vector3 point) {
 			throw new System.NotImplementedException();
 		}
 	}

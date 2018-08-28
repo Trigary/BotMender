@@ -1,5 +1,9 @@
 ﻿using System.Collections.Generic;
+using Systems.Active;
+using Systems.Propulsion;
+using Systems.Weapon;
 using Blocks;
+using Structures;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utilities;
@@ -17,16 +21,22 @@ namespace Systems {
 		public const float MovingInaccuracyScale = 0.5f;
 
 		public byte NextId => (byte)_systemIds.Count;
+		public WeaponSystem.Type WeaponType { get; private set; } = WeaponSystem.Type.None;
 		public Vector3 TrackedPosition { get; set; } = Vector3.zero;
 		private readonly IDictionary<BlockPosition, BotSystem> _systems = new Dictionary<BlockPosition, BotSystem>();
 		private readonly List<BotSystem> _systemIds = new List<BotSystem>();
 		private readonly HashSet<PropulsionSystem> _propulsions = new HashSet<PropulsionSystem>();
 		private readonly CircularList<WeaponSystem> _weapons = new CircularList<WeaponSystem>();
+		private readonly CompleteStructure _structure;
 		private ActiveSystem _active;
 		private float _firingPauseEnds;
 		private float _energy = 1;
 		private float _firingInaccuracy = MinFiringInaccuracy;
 		private float _realInaccuracy;
+
+		public SystemManager(CompleteStructure structure) {
+			_structure = structure;
+		}
 
 
 
@@ -39,6 +49,9 @@ namespace Systems {
 			if (system is PropulsionSystem propulsion) {
 				_propulsions.Add(propulsion);
 			} else if (system is WeaponSystem weapon) {
+				if (WeaponType == WeaponSystem.Type.None) {
+					WeaponType = weapon.Constants.Type;
+				}
 				_weapons.Add(weapon);
 			} else {
 				Assert.IsNull(_active, "The active system can only be set once.");
@@ -91,7 +104,7 @@ namespace Systems {
 		/// Informs the instance that a fixed amount of time has passed:
 		/// energy regeneration, accuracy restoration and weapon rotation should be applied.
 		/// </summary>
-		public void Tick(Rigidbody bot) {
+		public void Tick() {
 			_energy += EnergyFillRate * Time.fixedDeltaTime;
 			if (_energy > 1) {
 				_energy = 1;
@@ -102,7 +115,7 @@ namespace Systems {
 				_firingInaccuracy = MinFiringInaccuracy;
 			}
 
-			_realInaccuracy = _firingInaccuracy + bot.velocity.sqrMagnitude * MovingInaccuracyScale;
+			_realInaccuracy = _firingInaccuracy + _structure.Body.velocity.sqrMagnitude * MovingInaccuracyScale;
 			if (_realInaccuracy > MaxInaccuracy) {
 				_realInaccuracy = MaxInaccuracy;
 			}
@@ -117,25 +130,31 @@ namespace Systems {
 		/// <summary>
 		/// Executes the propulsion systems.
 		/// </summary>
-		public void MoveRotate(Rigidbody bot, Vector3 direction, float timestepMultiplier) {
+		public void MoveRotate(Vector3 direction, float timestepMultiplier) {
 			foreach (PropulsionSystem system in _propulsions) {
-				system.MoveRotate(bot, direction, timestepMultiplier);
+				system.MoveRotate(direction, timestepMultiplier);
 			}
 		}
 
+
+
 		/// <summary>
-		/// Executes the weapon systems.
+		/// The client currently wishes to fire weapons.
+		/// The server determines whether a weapon can be fired towards the specfied position in its current state.
+		/// If it can, the weapon is fired and the client gets notified with all necessary information.
 		/// </summary>
-		public void FireWeapons(Rigidbody bot) {
+		public void ServerTryWeaponFiring() {
 			if (_firingPauseEnds > Time.time) {
 				return;
 			}
 
 			foreach (WeaponSystem system in _weapons) {
-				if (system.IsOnCooldown() || !(system.Constants.Energy <= _energy) || !system.TryFireWeapon(bot, _realInaccuracy)) {
+				if (system.IsOnCooldown() || !(system.Constants.Energy <= _energy)
+					|| !system.ServerTryExecuteWeaponFiring(_realInaccuracy)) {
 					continue;
 				}
 
+				system.UpdateCooldown();
 				_firingPauseEnds = Time.time + FiringPause;
 				_energy -= system.Constants.Energy;
 
@@ -145,13 +164,6 @@ namespace Systems {
 				}
 				break;
 			}
-		}
-
-		/// <summary>
-		/// Executes the active system.
-		/// </summary>
-		public void UseActive(Rigidbody bot) {
-			_active?.Activate(bot);
 		}
 	}
 }

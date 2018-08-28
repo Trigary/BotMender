@@ -56,6 +56,8 @@ namespace Networking {
 		/// </summary>
 		public static byte LocalId { get; private set; }
 
+		private static byte FakeDispatcherSender => NetworkUtils.IsServer ? LocalId : (byte)0;
+
 		/// <summary>
 		/// The UDP latency from the server to this client. The delay the dispatching gives is not included.
 		/// Its initial value is -1.
@@ -147,7 +149,7 @@ namespace Networking {
 		/// <summary>
 		/// Sets the handler for a specific (TCP) packet type.
 		/// </summary>
-		public static void SetTcpHandler(TcpPacketType type, Action<BitBuffer> handler) {
+		public static void SetTcpHandler(TcpPacketType type, [CanBeNull] Action<BitBuffer> handler) {
 			TcpHandlers[(byte)type] = handler;
 		}
 
@@ -185,7 +187,7 @@ namespace Networking {
 
 
 			public void OnConnectionFailure(SocketError error) {
-				UnityDispatcher.InvokeNoDelay(() => {
+				UnityFixedDispatcher.InvokeNoDelay(() => {
 					if (_client != null) {
 						Stop();
 						_onConnected(false, error, 0, false, false);
@@ -194,7 +196,7 @@ namespace Networking {
 			}
 
 			public void OnTcpAuthenticationFailure(byte errorCode) {
-				UnityDispatcher.InvokeNoDelay(() => {
+				UnityFixedDispatcher.InvokeNoDelay(() => {
 					if (_client != null) {
 						Stop();
 						_onConnected(false, SocketError.Success, errorCode, false, false);
@@ -203,7 +205,7 @@ namespace Networking {
 			}
 
 			public void OnAuthenticationTimeout(DoubleClient.State state) {
-				UnityDispatcher.InvokeNoDelay(() => {
+				UnityFixedDispatcher.InvokeNoDelay(() => {
 					if (_client != null) {
 						Stop();
 						_onConnected(false, SocketError.Success, 0, true, false);
@@ -213,7 +215,7 @@ namespace Networking {
 
 			public void OnFullAuthentication(BitBuffer buffer) {
 				byte localId = buffer.ReadByte();
-				UnityDispatcher.InvokeNoDelay(() => {
+				UnityFixedDispatcher.InvokeNoDelay(() => {
 					if (_client != null) {
 						LocalId = localId;
 						_onConnected(true, SocketError.Success, 0, false, false);
@@ -240,7 +242,7 @@ namespace Networking {
 				}
 
 				byte[] bytes = buffer.ReadBytes();
-				UnityDispatcher.InvokePacketHandling(false, () => {
+				UnityFixedDispatcher.InvokePacketHandling(false, FakeDispatcherSender, () => {
 					Action<BitBuffer> action = TcpHandlers[packet];
 					if (action != null) {
 						_handlerBuffer.SetContents(bytes);
@@ -264,7 +266,7 @@ namespace Networking {
 
 				UpdateLatency(ref _udpPreDispatchLatency, packetTimestamp);
 				byte[] bytes = buffer.ReadBytes();
-				UnityDispatcher.InvokePacketHandling(true, () => {
+				UnityFixedDispatcher.InvokePacketHandling(true, FakeDispatcherSender, () => {
 					if (_client != null) {
 						UpdateLatency(ref _udpTotalLatency, packetTimestamp);
 						DebugHud.SetLatency(UdpPreDispatchLatency, UdpTotalLatency);
@@ -276,12 +278,12 @@ namespace Networking {
 
 			private static void UpdateLatency(ref float latency, ushort packetTimestamp) {
 				// ReSharper disable once PossibleNullReferenceException
-				latency += (DoubleProtocol.TripTime(_client.ConnectionStartTimestamp, packetTimestamp) - latency) * 0.1f;
+				latency += (DoubleProtocol.TripTime(_client.ConnectionStartTimestamp, packetTimestamp) - latency) * 0.05f;
 			}
 
 			public void OnConnectionLost(DoubleClient.State state) {
 				if (state == DoubleClient.State.Authenticated) {
-					UnityDispatcher.InvokeNoDelay(() => {
+					UnityFixedDispatcher.InvokeNoDelay(() => {
 						if (_client != null) {
 							OnDisconnected handler = DisconnectHandler;
 							Stop();
@@ -289,7 +291,7 @@ namespace Networking {
 						}
 					});
 				} else {
-					UnityDispatcher.InvokeNoDelay(() => {
+					UnityFixedDispatcher.InvokeNoDelay(() => {
 						if (_client != null) {
 							Stop();
 							_onConnected(false, SocketError.Success, 0, false, true);

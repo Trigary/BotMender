@@ -44,7 +44,12 @@ namespace Playing {
 		}
 
 		private static void OnSuccess() {
-			NetworkedPhyiscs.Create();
+			NetworkedPhyiscs networkedPhyiscs = NetworkedPhyiscs.Create();
+			networkedPhyiscs.gameObject.AddComponent<ClientBotsController>();
+			if (NetworkUtils.IsServer) {
+				networkedPhyiscs.gameObject.AddComponent<ServerBotsController>();
+			}
+
 			NetworkClient.DisconnectHandler = () => { };
 			if (NetworkUtils.IsServer) {
 				NetworkServer.ConnectHandler = ServerOnClientConnected;
@@ -60,7 +65,7 @@ namespace Playing {
 			}
 
 			GameObject structureObject = OnClientConnected(NetworkUtils.LocalId);
-			structureObject.gameObject.AddComponent<LocalBotController>();
+			structureObject.gameObject.AddComponent<LocalBotController>().Initialize(networkedPhyiscs);
 			Camera.main.gameObject.AddComponent<PlayingCameraController>()
 				.Initialize(structureObject.GetComponent<Rigidbody>());
 		}
@@ -68,16 +73,14 @@ namespace Playing {
 
 
 		private static GameObject OnClientConnected(byte clientId) {
-			CompleteStructure structure = CompleteStructure.Create(BuildingController.ExampleStructure,
-				clientId, "Player#" + clientId);
+			CompleteStructure structure = CompleteStructure.Create(BuildingController.ExampleStructure, clientId);
 			Assert.IsNotNull(structure, "The example structure creation must be successful.");
-			NetworkedPhyiscs.RegisterPlayer(clientId, structure);
+			BotCache.Add(structure);
 			return structure.gameObject;
 		}
 
 		private static void OnClientDisconnected(byte clientId) {
-			Destroy(NetworkedPhyiscs.RetrievePlayer(clientId).gameObject);
-			NetworkedPhyiscs.RegisterPlayer(clientId, null);
+			Destroy(BotCache.Remove(clientId).gameObject);
 		}
 
 

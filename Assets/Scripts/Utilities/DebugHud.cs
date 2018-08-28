@@ -11,8 +11,8 @@ namespace Utilities {
 		private static DebugHud _instance;
 		private int _udpLoss;
 		private float _fpsDeltaTime;
-		private float _latencyNet;
-		private float _latencyTotal;
+		private float _rttNet;
+		private float _rttTotal;
 
 		private void Awake() {
 			for (int i = 0; i < 100000; i++) {
@@ -32,8 +32,13 @@ namespace Utilities {
 		}
 
 		private void OnGUI() {
-			_hud.text = $@"Latency: {_latencyNet} / {_latencyTotal}
-UDP loss: {_udpLoss}%
+			if (!NetworkUtils.IsAny) {
+				_hud.text = "";
+				return;
+			}
+
+			_hud.text = $@"UDP RTT: {_rttNet} / {_rttTotal}
+UDP loss: {(NetworkUtils.IsServer ? 0 : _udpLoss)}%
 FPS: {(int)(1 / _fpsDeltaTime)}";
 		}
 
@@ -48,8 +53,8 @@ FPS: {(int)(1 / _fpsDeltaTime)}";
 		/// </summary>
 		public static void SetLatency(int net, int total) {
 			if (_instance != null) {
-				_instance._latencyNet = net;
-				_instance._latencyTotal = total;
+				_instance._rttNet = 2 * net;
+				_instance._rttTotal = 2 * total;
 			}
 		}
 	}

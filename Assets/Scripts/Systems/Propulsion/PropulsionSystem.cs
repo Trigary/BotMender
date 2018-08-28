@@ -2,7 +2,7 @@
 using Structures;
 using UnityEngine;
 
-namespace Systems {
+namespace Systems.Propulsion {
 	/// <summary>
 	/// A system which affects the bot's movement and/or rotation.
 	/// </summary>
@@ -14,6 +14,6 @@ namespace Systems {
 		/// <summary>
 		/// Handle the movement input.
 		/// </summary>
-		public abstract void MoveRotate(Rigidbody bot, Vector3 direction, float timestepMultiplier);
+		public abstract void MoveRotate(Vector3 direction, float timestepMultiplier);
 	}
 }

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Systems;
+using Systems.Weapon;
 using Blocks;
 using Blocks.Info;
 using Blocks.Live;
@@ -25,15 +26,17 @@ namespace Structures {
 		public uint MaxHealth { get; private set; }
 		public uint Health { get; private set; }
 		public uint Mass { get; private set; }
+		public Rigidbody Body { get; private set; }
 		public Vector3 MovementInput { get; private set; } = Vector3.zero;
+		public WeaponSystem.Type WeaponType => _systems.WeaponType;
 		private readonly IDictionary<BlockPosition, ILiveBlock> _blocks = new Dictionary<BlockPosition, ILiveBlock>();
-		private readonly SystemManager _systems = new SystemManager();
+		private SystemManager _systems;
 		private BlockPosition _mainframePosition;
-		private Rigidbody _body;
 
 		private void Awake() {
-			_body = gameObject.AddComponent<Rigidbody>();
-			_body.angularDrag = RigidbodyAngularDrag;
+			Body = gameObject.AddComponent<Rigidbody>();
+			Body.angularDrag = RigidbodyAngularDrag;
+			_systems = new SystemManager(this);
 		}
 
 
@@ -44,8 +47,8 @@ namespace Structures {
 		/// No validation is done, the EditableStructure should be used for that.
 		/// </summary>
 		[CanBeNull]
-		public static CompleteStructure Create(BitBuffer buffer, byte id, string gameObjectName) {
-			CompleteStructure structure = new GameObject(gameObjectName).AddComponent<CompleteStructure>();
+		public static CompleteStructure Create(BitBuffer buffer, byte id) {
+			CompleteStructure structure = new GameObject("CompleteStructure#" + id).AddComponent<CompleteStructure>();
 			structure.Id = id;
 			structure.Deserialize(buffer);
 			structure.MaxHealth = structure.Health;
@@ -93,12 +96,12 @@ namespace Structures {
 		/// Does not replace the FixedUpdate call, this method relies on it being called before the next normal physics step.
 		/// </summary>
 		public void SimulatedPhysicsUpdate(float timestepMultiplier) {
-			_systems.MoveRotate(_body, MovementInput, timestepMultiplier);
+			_systems.MoveRotate(MovementInput, timestepMultiplier);
 		}
 
 		private void FixedUpdate() {
-			_systems.Tick(_body);
-			_body.drag = _body.velocity.sqrMagnitude * RigidbodyDragMultiplier + RigidbodyDragOffset;
+			_systems.Tick();
+			Body.drag = Body.velocity.sqrMagnitude * RigidbodyDragMultiplier + RigidbodyDragOffset;
 		}
 
 
@@ -157,8 +160,8 @@ namespace Structures {
 			_systems.TrackedPosition = state.TrackedPosition;
 			transform.position = state.Position;
 			transform.rotation = state.Rotation;
-			_body.velocity = state.Velocity;
-			_body.angularVelocity = state.AngularVelocity;
+			Body.velocity = state.Velocity;
+			Body.angularVelocity = state.AngularVelocity;
 		}
 
 		/// <summary>
@@ -177,23 +180,23 @@ namespace Structures {
 		/// Should only be called by the server.
 		/// </summary>
 		public void SerializeState(BitBuffer buffer) {
-			BotState.SerializeState(buffer, Id, MovementInput, _systems.TrackedPosition, transform, _body);
+			BotState.SerializeState(buffer, Id, MovementInput, _systems.TrackedPosition, transform, Body);
 		}
 
 
 
 		/// <summary>
-		/// Executes the weapon systems.
+		/// If a system with the specified ID is present return it, otherwise return null.
 		/// </summary>
-		public void FireWeapons() {
-			_systems.FireWeapons(_body);
+		public BotSystem TryGetSystem(byte id) {
+			return _systems.TryGet(id);
 		}
 
 		/// <summary>
-		/// Executes the active system.
+		/// Attempts to fire any weapon and informs the client if it was successful.
 		/// </summary>
-		public void UseActive() {
-			_systems.UseActive(_body);
+		public void ServerTryWeaponFiring() {
+			_systems.ServerTryWeaponFiring();
 		}
 
 
@@ -214,7 +217,7 @@ namespace Structures {
 			foreach (RealLiveBlock real in _blocks.Values.OfType<RealLiveBlock>()) {
 				real.transform.position -= center;
 			}
-			_body.mass = (float)Mass / 1000;
+			Body.mass = (float)Mass / 1000;
 		}
 	}
 }

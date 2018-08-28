@@ -48,20 +48,15 @@ namespace Blocks {
 		/// </summary>
 		public static void Serialize(BitBuffer buffer, byte rotation) {
 			BlockSides facing = GetFacing(rotation);
-			byte first = BlockSide.ToOrdinal(facing); //TODO
-			int second = GetAmount(rotation, (facing & BlockSides.Y) != BlockSides.None ? 1 : 0);
-			buffer.WriteBits(first, 3);
-			buffer.WriteBits((ulong)second, 2);
+			buffer.WriteBits(BlockSide.ToOrdinal(facing), 3);
+			buffer.WriteBits((ulong)GetAmount(rotation, (facing & BlockSides.Y) != BlockSides.None ? 1 : 0), 2);
 		}
 
 		/// <summary>
 		/// Deserializes a rotation from a buffer's first 5 bits.
 		/// </summary>
 		public static byte Deserialize(BitBuffer buffer) {
-			byte first = (byte)buffer.ReadBits(3); //TODO
-			byte second = (byte)buffer.ReadBits(2);
-			byte result = GetByte(BlockSide.FromOrdinal(first), second);
-			return result;
+			return GetByte(BlockSide.FromOrdinal((byte)buffer.ReadBits(3)), (byte)buffer.ReadBits(2));
 		}
 
 		/// <summary>

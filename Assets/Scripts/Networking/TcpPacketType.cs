@@ -8,6 +8,10 @@ namespace Networking {
 	[SuppressMessage("ReSharper", "InconsistentNaming")]
 	public enum TcpPacketType : byte {
 		Server_State_Joined,
-		Server_State_Left
+		Server_State_Left,
+
+		Client_System_StartFiring,
+		Client_System_StopFiring,
+		Server_System_FireWeapon
 	}
 }

@@ -9,15 +9,12 @@ namespace Networking {
 		public const int Port = 8888;
 		public const int UdpSendFrequency = 30;
 
-		public const int ServerMaxConnectionCount = 10; //TODO is this the right place for this?
-		public const int ServerMaxPendingConnections = 15;
-
 
 
 		// ReSharper disable once ConvertToConstant.Global
 		public static readonly bool SimulateUdpNetworkConditions = true;
 		public static bool ShouldLoseUdpPacket => Random.Range(0, 100) < 10;
-		public static float SimulatedLatency => Random.Range(50f, 75f) / 1000;
+		public static float SimulatedOneWayTripTime => Random.Range(20f, 30f) / 1000;
 
 
 
@@ -28,6 +25,9 @@ namespace Networking {
 		public static bool IsDedicated => !IsClient && IsServer;
 		public static bool IsClientOnly => IsClient && !IsServer;
 
+
+
+		public const int MaxBotCount = 16;
 		public static byte LocalId => NetworkClient.LocalId;
 
 		/// <summary>

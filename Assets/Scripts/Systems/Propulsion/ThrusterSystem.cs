@@ -19,14 +19,15 @@ namespace Systems.Propulsion {
 
 
 
-		public override void MoveRotate(Rigidbody bot, Vector3 direction, float timestepMultiplier) {
-			float multiplier = ForceData(bot.transform, _facing, direction.x, direction.y, direction.z, out direction);
+		public override void MoveRotate(Vector3 direction, float timestepMultiplier) {
+			Rigidbody body = Structure.Body;
+			float multiplier = ForceData(body.transform, _facing, direction.x, direction.y, direction.z, out direction);
 			if (multiplier == 0) {
 				return;
 			}
 
-			bot.AddForceAtPosition(direction * multiplier * Constants.Force * timestepMultiplier,
-				bot.position + bot.rotation * (Block.transform.localPosition + Constants.Offset),
+			body.AddForceAtPosition(direction * multiplier * Constants.Force * timestepMultiplier,
+				body.position + body.rotation * (Block.transform.localPosition + Constants.Offset),
 				ForceMode.Impulse);
 		}
 

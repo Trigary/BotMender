@@ -11,9 +11,9 @@ namespace Systems.Active {
 
 
 
-		public override void Activate(Rigidbody bot) {
-			bot.velocity = Vector3.zero;
-			bot.angularVelocity = Vector3.zero;
+		public override void Activate() {
+			Structure.Body.velocity = Vector3.zero;
+			Structure.Body.angularVelocity = Vector3.zero;
 		}
 	}
 }

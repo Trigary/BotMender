@@ -19,11 +19,14 @@ namespace Systems.Weapon {
 
 
 
-		protected override void FireWeapon(Rigidbody bot, Vector3 point, RealLiveBlock block) {
+
+		protected override void ServerFireWeapon(Vector3 point, RealLiveBlock block) {
 			if (block != null) {
 				block.Damage(400);
 			}
+		}
 
+		protected override void ClientFireWeapon(Vector3 point) {
 			ParticleSystem.ShapeModule shape = _particles.shape;
 			Vector3 path = point - TurretEnd;
 			shape.rotation = (Quaternion.Inverse(_particles.transform.rotation) * Quaternion.LookRotation(path)).eulerAngles;
