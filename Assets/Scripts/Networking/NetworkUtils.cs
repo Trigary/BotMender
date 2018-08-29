@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿using System;
 
 namespace Networking {
 	/// <summary>
@@ -13,8 +13,8 @@ namespace Networking {
 
 		// ReSharper disable once ConvertToConstant.Global
 		public static readonly bool SimulateUdpNetworkConditions = true;
-		public static bool ShouldLoseUdpPacket => Random.Range(0, 100) < 10;
-		public static float SimulatedOneWayTripTime => Random.Range(20f, 30f) / 1000;
+		public static bool SimulateLosingPacket => NextThreadSafeRandom(0, 100) < 10;
+		public static int SimulatedNetDelay => NextThreadSafeRandom(23, 28);
 
 
 
@@ -35,6 +35,16 @@ namespace Networking {
 		/// </summary>
 		public static bool IsLocal(byte id) {
 			return id == NetworkClient.LocalId;
+		}
+
+
+
+		private static readonly Random Random = new Random();
+
+		private static int NextThreadSafeRandom(int inclusiveMin, int exclusiveMax) {
+			lock (Random) {
+				return Random.Next(inclusiveMin, exclusiveMax);
+			}
 		}
 	}
 }

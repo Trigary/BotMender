@@ -5,7 +5,6 @@ using DoubleSocket.Client;
 using DoubleSocket.Protocol;
 using DoubleSocket.Utility.BitBuffer;
 using JetBrains.Annotations;
-using UnityEngine;
 using UnityEngine.Assertions;
 using Utilities;
 
@@ -56,21 +55,12 @@ namespace Networking {
 		/// </summary>
 		public static byte LocalId { get; private set; }
 
-		private static byte FakeDispatcherSender => NetworkUtils.IsServer ? LocalId : (byte)0;
-
 		/// <summary>
-		/// The UDP latency from the server to this client. The delay the dispatching gives is not included.
-		/// Its initial value is -1.
+		/// The network (one-way) UDP latency from the server to this client.
+		/// This means this value equals the sum of the network delay and the simulated network delay.
+		/// Its initial value is 0.
 		/// </summary>
-		public static int UdpPreDispatchLatency => Mathf.RoundToInt(_udpPreDispatchLatency);
-		private static float _udpPreDispatchLatency = -1;
-
-		/// <summary>
-		/// The UDP latency from the server to this client. The delay the dispatching gives is included.
-		/// Its initial value is -1.
-		/// </summary>
-		public static int UdpTotalLatency => Mathf.RoundToInt(_udpTotalLatency);
-		private static float _udpTotalLatency = -1;
+		public static float UdpNetDelay { get; private set; }
 
 		/// <summary>
 		/// The payload to repeatedly send over UDP or null if there is no such payload.
@@ -133,8 +123,7 @@ namespace Networking {
 			UdpPayload = null;
 			_tickingThread?.Stop();
 			_tickingThread = null;
-			_udpPreDispatchLatency = -1;
-			_udpTotalLatency = -1;
+			UdpNetDelay = 0;
 			_resetPacketTimestamp = false;
 			DisconnectHandler = null;
 			UdpHandler = null;
@@ -242,13 +231,20 @@ namespace Networking {
 				}
 
 				byte[] bytes = buffer.ReadBytes();
-				UnityFixedDispatcher.InvokePacketHandling(false, FakeDispatcherSender, () => {
+				// ReSharper disable once ConvertToLocalFunction
+				Action handler = () => {
 					Action<BitBuffer> action = TcpHandlers[packet];
 					if (action != null) {
 						_handlerBuffer.SetContents(bytes);
 						action(_handlerBuffer);
 					}
-				});
+				};
+
+				if (!NetworkUtils.SimulateUdpNetworkConditions || NetworkUtils.IsServer) {
+					UnityFixedDispatcher.InvokeNoDelay(handler);
+				} else {
+					UnityFixedDispatcher.InvokeDelayed(handler, NetworkUtils.SimulatedNetDelay);
+				}
 			}
 
 			public void OnUdpReceived(BitBuffer buffer, ushort packetTimestamp) {
@@ -264,21 +260,29 @@ namespace Networking {
 					return;
 				}
 
-				UpdateLatency(ref _udpPreDispatchLatency, packetTimestamp);
 				byte[] bytes = buffer.ReadBytes();
-				UnityFixedDispatcher.InvokePacketHandling(true, FakeDispatcherSender, () => {
+				// ReSharper disable once ConvertToLocalFunction
+				Action handler = () => {
 					if (_client != null) {
-						UpdateLatency(ref _udpTotalLatency, packetTimestamp);
-						DebugHud.SetLatency(UdpPreDispatchLatency, UdpTotalLatency);
 						_handlerBuffer.SetContents(bytes);
 						UdpHandler(_handlerBuffer);
 					}
-				});
-			}
+				};
 
-			private static void UpdateLatency(ref float latency, ushort packetTimestamp) {
 				// ReSharper disable once PossibleNullReferenceException
-				latency += (DoubleProtocol.TripTime(_client.ConnectionStartTimestamp, packetTimestamp) - latency) * 0.05f;
+				int netDelayIncrease = DoubleProtocol.TripTime(_client.ConnectionStartTimestamp, packetTimestamp);
+
+				if (!NetworkUtils.SimulateUdpNetworkConditions || NetworkUtils.IsServer) {
+					UnityFixedDispatcher.InvokeNoDelay(handler);
+				} else if (!NetworkUtils.SimulateLosingPacket) {
+					int delay = NetworkUtils.SimulatedNetDelay;
+					netDelayIncrease += delay;
+					UnityFixedDispatcher.InvokeDelayed(handler, delay);
+				} else {
+					return;
+				}
+
+				UdpNetDelay += (netDelayIncrease - UdpNetDelay) * 0.1f;
 			}
 
 			public void OnConnectionLost(DoubleClient.State state) {

@@ -265,7 +265,8 @@ namespace Networking {
 
 				byte[] bytes = buffer.ReadBytes();
 				NetworkServerClient serverClient = (NetworkServerClient)client.ExtraData;
-				UnityFixedDispatcher.InvokePacketHandling(false, serverClient.Id, () => {
+				// ReSharper disable once ConvertToLocalFunction
+				Action handler = () => {
 					if (_server != null) {
 						OnPacketReceived action = TcpHandlers[packet];
 						if (action != null) {
@@ -273,7 +274,13 @@ namespace Networking {
 							action((NetworkServerClient)client.ExtraData, _handlerBuffer);
 						}
 					}
-				});
+				};
+
+				if (!NetworkUtils.SimulateUdpNetworkConditions || NetworkUtils.IsLocal(serverClient.Id)) {
+					UnityFixedDispatcher.InvokeNoDelay(handler);
+				} else {
+					UnityFixedDispatcher.InvokeDelayed(handler, NetworkUtils.SimulatedNetDelay);
+				}
 			}
 
 			public void OnUdpReceived(IDoubleServerClient client, BitBuffer buffer, ushort packetTimestamp) {
@@ -285,12 +292,19 @@ namespace Networking {
 				}
 
 				byte[] bytes = buffer.ReadBytes();
-				UnityFixedDispatcher.InvokePacketHandling(true, serverClient.Id, () => {
+				// ReSharper disable once ConvertToLocalFunction
+				Action handler = () => {
 					if (_server != null) {
 						_handlerBuffer.SetContents(bytes);
 						UdpHandler(serverClient, _handlerBuffer);
 					}
-				});
+				};
+
+				if (!NetworkUtils.SimulateUdpNetworkConditions || NetworkUtils.IsLocal(serverClient.Id)) {
+					UnityFixedDispatcher.InvokeNoDelay(handler);
+				} else {
+					UnityFixedDispatcher.InvokeDelayed(handler, NetworkUtils.SimulatedNetDelay);
+				}
 			}
 
 			public void OnLostConnection(IDoubleServerClient client, DoubleServer.ClientState state) {

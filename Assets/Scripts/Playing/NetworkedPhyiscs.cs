@@ -15,6 +15,7 @@ namespace Playing {
 	public class NetworkedPhyiscs : MonoBehaviour {
 		public const int TimestepMillis = 20;
 		public const float TimestepSeconds = 0.02f;
+		private const float AverageNonNetDelayMillis = TimestepMillis + 1000f / NetworkUtils.UdpSendFrequency;
 
 		/// <summary>
 		/// Creates a new GameObject containing this component and also initializes, returns itself.
@@ -63,10 +64,10 @@ namespace Playing {
 				BotCache.SetExtra(NetworkUtils.LocalId, BotCache.Extra.NetworkedPhysics, payload);
 			} else {
 				NetworkClient.UdpPayload = payload;
-				int latency = NetworkClient.UdpTotalLatency;
-				long key = DoubleProtocol.TimeMillis + latency;
+				int delay = Mathf.RoundToInt(NetworkClient.UdpNetDelay + AverageNonNetDelayMillis);
+				long key = DoubleProtocol.TimeMillis + delay;
 				_guessedInputs.Remove(key);
-				_guessedInputs.Add(key, new GuessedInput(movementInput, latency * 5 / 4));
+				_guessedInputs.Add(key, new GuessedInput(movementInput, delay * 5 / 4));
 			}
 		}
 

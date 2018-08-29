@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Networking;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Utilities {
@@ -28,26 +28,7 @@ namespace Utilities {
 
 		/// <summary>
 		/// Queues the specfied action to be invoked on the main Unity thread.
-		/// Depending on current (hardcoded) settings, delay may be applied
-		/// when using this method in order to simulate latency.
-		/// </summary>
-		public static void InvokePacketHandling(bool udp, byte sender, Action action) {
-			lock (_instance._actions) {
-				if (NetworkUtils.SimulateUdpNetworkConditions && !NetworkUtils.IsLocal(sender)) {
-					_instance._actions.Enqueue(() => {
-						if (!udp || !NetworkUtils.ShouldLoseUdpPacket) {
-							_instance.StartCoroutine(CoroutineUtils.Delay(action, NetworkUtils.SimulatedOneWayTripTime));
-						}
-					});
-				} else {
-					_instance._actions.Enqueue(action);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Queues the specfied action to be invoked on the main Unity thread.
-		/// Whatever the current (hardcoded) settings may be, this method doesn't add any artifical latency.
+		/// This method doesn't add any artifical latency.
 		/// </summary>
 		public static void InvokeNoDelay(Action action) {
 			lock (_instance._actions) {
@@ -55,6 +36,17 @@ namespace Utilities {
 			}
 		}
 
+		/// <summary>
+		/// Queues the specfied action to be invoked on the main Unity thread.
+		/// This method delayed the execution by the specified amount of milliseconds.
+		/// </summary>
+		public static void InvokeDelayed(Action action, int delay) {
+			Task.Delay(delay).ContinueWith(task => {
+				lock (_instance._actions) {
+					_instance._actions.Enqueue(action);
+				}
+			});
+		}
 
 
 
