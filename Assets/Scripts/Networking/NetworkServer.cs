@@ -97,6 +97,7 @@ namespace Networking {
 		public static void Start() {
 			Assert.IsNull(_server, "The NetworkServer is already initialized.");
 
+			NetworkUtils.GlobalBaseTimestamp = DoubleProtocol.TimeMillis;
 			_resettingByteBuffer = new ResettingBitBuffer(DoubleProtocol.TcpBufferArraySize);
 			_clients = new HashSet<NetworkServerClient>();
 			_handler = new DoubleServerHandler();
@@ -122,6 +123,7 @@ namespace Networking {
 			UdpPayload = null;
 			_tickingThread?.Stop();
 			_tickingThread = null;
+			NetworkUtils.GlobalBaseTimestamp = -1;
 			Array.Clear(TcpHandlers, 0, TcpHandlers.Length);
 			_resettingByteBuffer = null;
 			_clients = null;
@@ -250,7 +252,10 @@ namespace Networking {
 						}
 					}
 				});
-				return buffer => buffer.Write(serverClient.Id);
+				return buffer => {
+					buffer.Write(serverClient.Id);
+					buffer.Write(NetworkUtils.GlobalBaseTimestamp);
+				};
 			}
 
 			public void OnTcpReceived(IDoubleServerClient client, BitBuffer buffer) {

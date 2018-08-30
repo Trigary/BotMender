@@ -27,6 +27,14 @@ namespace Networking {
 
 
 
+		/// <summary>
+		/// A timestamp which acts as the "relative-to" when sending relative timestamp.
+		/// This timestamp is the same for all clients, therefore the same packet can safely be used.
+		/// The setter should only be used from inside the NetworkClient and NetworkServer classes.
+		/// Its initial value is -1.
+		/// </summary>
+		public static long GlobalBaseTimestamp { get; set; } = -1;
+
 		public const int MaxBotCount = 16;
 		public static byte LocalId => NetworkClient.LocalId;
 

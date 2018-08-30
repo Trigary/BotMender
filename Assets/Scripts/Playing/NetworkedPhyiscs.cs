@@ -5,6 +5,7 @@ using DoubleSocket.Utility.BitBuffer;
 using Networking;
 using Structures;
 using UnityEngine;
+using Utilities;
 
 namespace Playing {
 	/// <summary>
@@ -101,8 +102,7 @@ namespace Playing {
 			if (NetworkServer.HasClients) {
 				int bitSize = 48 + BotState.SerializedBitsSize * BotCache.Count;
 				_sharedBuffer.ClearContents(new byte[(bitSize + 7) / 8]);
-				_sharedBuffer.WriteBits((ulong)DoubleProtocol.TimeMillis, 48);
-				//TODO set timestamp in TCP packet -> relative timestamps -> ~22 bits are enough
+				_sharedBuffer.WriteTimestamp(DoubleProtocol.TimeMillis);
 				BotCache.ForEach(structure => structure.SerializeState(_sharedBuffer));
 				NetworkServer.UdpPayload = _sharedBuffer.Array;
 			} else {
@@ -163,7 +163,7 @@ namespace Playing {
 
 		private void ClientOnlyPacketReceived(CompleteStructure localStructure, out int toSimulate, out long lastMillis) {
 			long currentMillis = DoubleProtocol.TimeMillis;
-			lastMillis = (long)_sharedBuffer.ReadBits(48);
+			lastMillis = _sharedBuffer.ReadTimestamp();
 			toSimulate = (int)(currentMillis - lastMillis);
 			while (_sharedBuffer.TotalBitsLeft >= BotState.SerializedBitsSize) {
 				_tempBotState.Update(_sharedBuffer);

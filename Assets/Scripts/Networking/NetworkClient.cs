@@ -123,6 +123,7 @@ namespace Networking {
 			UdpPayload = null;
 			_tickingThread?.Stop();
 			_tickingThread = null;
+			NetworkUtils.GlobalBaseTimestamp = -1;
 			UdpNetDelay = 0;
 			_resetPacketTimestamp = false;
 			DisconnectHandler = null;
@@ -204,9 +205,11 @@ namespace Networking {
 
 			public void OnFullAuthentication(BitBuffer buffer) {
 				byte localId = buffer.ReadByte();
+				long globalBaseTimestamp = buffer.ReadLong();
 				UnityFixedDispatcher.InvokeNoDelay(() => {
 					if (_client != null) {
 						LocalId = localId;
+						NetworkUtils.GlobalBaseTimestamp = globalBaseTimestamp;
 						_onConnected(true, SocketError.Success, 0, false, false);
 
 						_tickingThread = new TickingThread(NetworkUtils.UdpSendFrequency, () => {

@@ -1,4 +1,5 @@
 ﻿using DoubleSocket.Utility.BitBuffer;
+using Networking;
 using UnityEngine;
 
 namespace Utilities {
@@ -23,6 +24,15 @@ namespace Utilities {
 		}
 
 		/// <summary>
+		/// Reads a Vector3 from the buffer from 3 floats.
+		/// </summary>
+		public static Vector3 ReadVector3(this BitBuffer buffer) {
+			return new Vector3(buffer.ReadFloat(), buffer.ReadFloat(), buffer.ReadFloat());
+		}
+
+
+
+		/// <summary>
 		/// Writes the specified Quaternion into using smallest-three encoding and 16 bit precision.
 		/// </summary>
 		public static void WriteCompressed(this BitBuffer buffer, Quaternion value) {
@@ -45,15 +55,6 @@ namespace Utilities {
 			}
 		}
 
-
-
-		/// <summary>
-		/// Reads a Vector3 from the buffer from 3 floats.
-		/// </summary>
-		public static Vector3 ReadVector3(this BitBuffer buffer) {
-			return new Vector3(buffer.ReadFloat(), buffer.ReadFloat(), buffer.ReadFloat());
-		}
-
 		/// <summary>
 		/// Reads a smallest-three encoded, 16 bit precise Quaternion from the buffer.
 		/// </summary>
@@ -73,6 +74,22 @@ namespace Utilities {
 			} else {
 				return new Quaternion(a, b, c, largestValue);
 			}
+		}
+
+
+
+		/// <summary>
+		/// Writes the timestamp as a 24-bit long value encoded using the GlobalBaseTimestamp.
+		/// </summary>
+		public static void WriteTimestamp(this BitBuffer buffer, long timestamp) {
+			buffer.WriteBits((ulong)(timestamp - NetworkUtils.GlobalBaseTimestamp), 24);
+		}
+
+		/// <summary>
+		/// Reads a 24-bit long value, decodes it into a timestamp using the GlobalBaseTimestamp and returns it.
+		/// </summary>
+		public static long ReadTimestamp(this BitBuffer buffer) {
+			return (long)buffer.ReadBits(24) + NetworkUtils.GlobalBaseTimestamp;
 		}
 	}
 }
