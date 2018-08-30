@@ -16,7 +16,8 @@ namespace Playing {
 	public class NetworkedPhyiscs : MonoBehaviour {
 		public const int TimestepMillis = 20;
 		public const float TimestepSeconds = 0.02f;
-		private const float AverageNonNetDelayMillis = TimestepMillis + 1000f / NetworkUtils.UdpSendFrequency;
+		private const float MaxNonNetDelayMillis = TimestepMillis + 1000f / NetworkUtils.UdpSendFrequency;
+		private const float AverageNonNetDelayMillis = MaxNonNetDelayMillis / 2;
 
 		/// <summary>
 		/// Creates a new GameObject containing this component and also initializes, returns itself.
@@ -65,10 +66,9 @@ namespace Playing {
 				BotCache.SetExtra(NetworkUtils.LocalId, BotCache.Extra.NetworkedPhysics, payload);
 			} else {
 				NetworkClient.UdpPayload = payload;
-				int delay = Mathf.RoundToInt(NetworkClient.UdpNetDelay + AverageNonNetDelayMillis);
-				long key = DoubleProtocol.TimeMillis + delay;
+				long key = DoubleProtocol.TimeMillis + Mathf.RoundToInt(NetworkClient.UdpNetDelay + AverageNonNetDelayMillis);
 				_guessedInputs.Remove(key);
-				_guessedInputs.Add(key, new GuessedInput(movementInput, delay * 5 / 4));
+				_guessedInputs.Add(key, new GuessedInput(movementInput));
 			}
 		}
 
@@ -213,11 +213,10 @@ namespace Playing {
 
 		private class GuessedInput {
 			public readonly Vector3 MovementInput;
-			public int RemainingDelay;
+			public int RemainingDelay = Mathf.RoundToInt(NetworkClient.UdpNetDelay + MaxNonNetDelayMillis) * 11 / 10;
 
-			public GuessedInput(Vector3 movementMovementInput, int maxDelay) {
+			public GuessedInput(Vector3 movementMovementInput) {
 				MovementInput = movementMovementInput;
-				RemainingDelay = maxDelay;
 			}
 		}
 	}
