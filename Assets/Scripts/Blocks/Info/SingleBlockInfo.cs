@@ -2,7 +2,7 @@
 
 namespace Blocks.Info {
 	/// <summary>
-	/// Information about a specific single block type.
+	/// Information about a specific block type.
 	/// </summary>
 	public class SingleBlockInfo : BlockInfo {
 		public readonly BlockSides ConnectSides;

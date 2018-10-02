@@ -2,7 +2,7 @@
 
 namespace Blocks.Placed {
 	/// <summary>
-	/// A real placed block which is not a multiblock.
+	/// A real placed block which is not a multi block.
 	/// </summary>
 	public class PlacedSingleBlock : RealPlacedBlock {
 		public void Initialize(SingleBlockInfo info, BlockPosition position, byte rotation) {

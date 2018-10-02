@@ -3,15 +3,42 @@
 namespace Networking {
 	/// <summary>
 	/// A list of all TCP packet types.
-	/// See the 'packets.md' file for the naming convention used in this enum.
+	/// 
+	/// Enum names follow the following format: Sender_Category_[Subcategory_..._SubCategory]_Name
+	/// The sender can be "Client", "Server" or "Both" depending on which parties are allowed to send the packet.
+	/// The enum constants should be sorted based on their categories and subcategories.
 	/// </summary>
 	[SuppressMessage("ReSharper", "InconsistentNaming")]
 	public enum TcpPacketType : byte {
+		/// <summary>
+		/// Contains the ID of the player who joined if it is sent to an already connected player,
+		/// otherwise it contains the IDs of the players who have connected before the recipient.
+		/// </summary>
 		Server_State_Joined,
+
+		/// <summary>
+		/// Contains the ID of the player who left.
+		/// </summary>
 		Server_State_Left,
 
+
+
+		/// <summary>
+		/// Informs the server that the client would like to fire its weapons.
+		/// Depending on the weapon type, this firing may not stop until otherwise specified.
+		/// </summary>
 		Client_System_StartFiring,
+
+		/// <summary>
+		/// Informs the server that the client would like to stop firing its weapons.
+		/// </summary>
 		Client_System_StopFiring,
-		Server_System_FireWeapon
+
+		/// <summary>
+		/// Informs the clients that a bot executed its specified (non-movement) system.
+		/// The packet starts with the bot's and the system's ID.
+		/// The rest of the data is only specified by the exact system implementation.
+		/// </summary>
+		Server_System_Execute
 	}
 }

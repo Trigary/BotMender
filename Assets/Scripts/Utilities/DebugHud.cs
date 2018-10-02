@@ -12,12 +12,13 @@ namespace Utilities {
 		private float _fpsDeltaTime;
 
 		private void Awake() {
-			for (int i = 0; i < 100000; i++) {
+			const int packetLossSimulationCount = 100000;
+			for (int i = 0; i < packetLossSimulationCount; i++) {
 				if (NetworkUtils.SimulateLosingPacket) {
 					_udpLoss++;
 				}
 			}
-			_udpLoss = Mathf.RoundToInt(_udpLoss / 1000f);
+			_udpLoss = Mathf.RoundToInt(_udpLoss * 100f / packetLossSimulationCount);
 
 			_hud = GetComponent<Text>();
 			OnGUI();
@@ -30,8 +31,13 @@ namespace Utilities {
 				return;
 			}
 
-			_hud.text = $@"UDP RTT: {Mathf.RoundToInt(2 * NetworkClient.UdpNetDelay)}
-UDP loss: {(NetworkUtils.IsServer ? 0 : _udpLoss)}%
+			string status = NetworkUtils.IsHost ? "Server+Client"
+				: NetworkUtils.IsServer ? "Server-Only"
+				: NetworkUtils.IsClient ? "Client-Only" : "Disconnected";
+
+			_hud.text = $@"Status: {status}
+UDP RTT: {Mathf.RoundToInt(2 * NetworkClient.UdpNetDelay)}
+UDP loss: {_udpLoss}%
 FPS: {(int)(1 / _fpsDeltaTime)}";
 		}
 

@@ -7,6 +7,9 @@ using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Playing {
+	/// <summary>
+	/// A temporary class (read: should get deleted later) which sets the server/local client up.
+	/// </summary>
 	public class LocalPlayingPlayerInitializer : MonoBehaviour {
 		private void Start() {
 			Debug.Log("Initializating networking...");

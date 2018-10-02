@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Utilities {
 	/// <summary>
-	/// Extension methods for the ByteBuffer class, making it easy-to-use with Unity's data types.
+	/// Extension methods for the BitBuffer class, making it easy to use with Unity's data types.
 	/// </summary>
 	public static class BitBufferExtensions {
 		//TODO compression: specify min value, max value and precision (as bit count or float or 1/x)

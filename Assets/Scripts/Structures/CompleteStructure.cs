@@ -15,12 +15,13 @@ using UnityEngine.Assertions;
 namespace Structures {
 	/// <summary>
 	/// A structure which is no longer editable, but is damagable and destructable.
-	/// Internally creates a Rigidbody which is destroyed when the script is destroyed.
+	/// Internally creates a Rigidbody which is not destroyed when the script is destroyed.
 	/// </summary>
 	public class CompleteStructure : MonoBehaviour {
 		public const float RigidbodyDragMultiplier = 0.0025f;
 		public const float RigidbodyDragOffset = 0.0025f;
 		public const float RigidbodyAngularDrag = 3f;
+		public const uint MinHealthPercentage = 5;
 
 		public byte Id { get; private set; }
 		public uint MaxHealth { get; private set; }
@@ -59,7 +60,7 @@ namespace Structures {
 
 		private void Deserialize(BitBuffer buffer) {
 			while (buffer.TotalBitsLeft >= RealPlacedBlock.SerializedBitsSize) {
-				ushort type = (ushort)buffer.ReadBits(12);
+				ushort type = (ushort)buffer.ReadBits(BlockFactory.BlockTypeSerializedBitsSize);
 				BlockPosition position = BlockPosition.Deserialize(buffer);
 
 				BlockInfo info = BlockFactory.GetInfo(BlockFactory.GetType(type));
@@ -115,7 +116,7 @@ namespace Structures {
 				return;
 			}
 
-			if (block.Info.Type == BlockType.Mainframe) {
+			if (block.Info.Type == BlockType.Mainframe || Health * 100 < MaxHealth * MinHealthPercentage) {
 				Destroy(gameObject);
 				return;
 			}
@@ -153,7 +154,7 @@ namespace Structures {
 
 
 		/// <summary>
-		/// Applies the state given as the parameter. Should only be called by a client.
+		/// Applies the state given as the parameter. Should only be called by a client-only instance.
 		/// </summary>
 		public void UpdateWholeState(BotState state) {
 			MovementInput = state.MovementInput;

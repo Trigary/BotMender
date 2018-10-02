@@ -19,7 +19,7 @@ namespace Networking {
 		public delegate void OnConnected(INetworkServerClient client);
 
 		/// <summary>
-		/// Fired when a connected client loses connection.
+		/// Fired when a fully connected client loses connection.
 		/// </summary>
 		public delegate void OnDisconnected(INetworkServerClient client);
 
@@ -48,19 +48,8 @@ namespace Networking {
 
 
 
-		/// <summary>
-		/// The handler of the incoming UDP packets.
-		/// </summary>
 		public static OnPacketReceived UdpHandler { get; set; }
-
-		/// <summary>
-		/// The handler of the connect event.
-		/// </summary>
 		public static OnConnected ConnectHandler { get; set; }
-
-		/// <summary>
-		/// The handler of the disconnect event.
-		/// </summary>
 		public static OnDisconnected DisconnectHandler { get; set; }
 
 		/// <summary>
@@ -281,7 +270,7 @@ namespace Networking {
 					}
 				};
 
-				if (!NetworkUtils.SimulateUdpNetworkConditions || NetworkUtils.IsLocal(serverClient.Id)) {
+				if (!NetworkUtils.SimulateNetworkConditions || NetworkUtils.IsLocal(serverClient.Id)) {
 					UnityFixedDispatcher.InvokeNoDelay(handler);
 				} else {
 					UnityFixedDispatcher.InvokeDelayed(handler, NetworkUtils.SimulatedNetDelay);
@@ -305,7 +294,7 @@ namespace Networking {
 					}
 				};
 
-				if (!NetworkUtils.SimulateUdpNetworkConditions || NetworkUtils.IsLocal(serverClient.Id)) {
+				if (!NetworkUtils.SimulateNetworkConditions || NetworkUtils.IsLocal(serverClient.Id)) {
 					UnityFixedDispatcher.InvokeNoDelay(handler);
 				} else {
 					UnityFixedDispatcher.InvokeDelayed(handler, NetworkUtils.SimulatedNetDelay);
@@ -317,7 +306,7 @@ namespace Networking {
 					UnityFixedDispatcher.InvokeNoDelay(() => {
 						if (_server != null) {
 							NetworkServerClient serverClient = (NetworkServerClient)client.ExtraData;
-							lock (UdpPayloadLock) { //Don't let the TickingThread send before the client is initialized
+							lock (UdpPayloadLock) { //Don't let the TickingThread send before the client is deinitialized
 								_clients.Remove(serverClient);
 								DisconnectHandler(serverClient);
 							}
@@ -352,13 +341,7 @@ namespace Networking {
 					throw new AssertionException("The server ran out of INetworkServerClient IDs.", null);
 				}
 
-				lock (SmallLock) {
-					Id = newid;
-				}
-				UnityFixedDispatcher.InvokeNoDelay(() => {
-					lock (SmallLock) {
-					}
-				});
+				Id = newid; //This instance is exposed through UnityFixedDispatcher: guaranteed memory barrier
 			}
 
 			public void SetResetPacketTimestamp() {

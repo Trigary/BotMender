@@ -81,14 +81,7 @@ namespace Networking {
 		[CanBeNull] private static byte[] _udpPayload;
 		private static readonly object UdpPayloadLock = new object();
 
-		/// <summary>
-		/// The handler of incoming UDP packets.
-		/// </summary>
 		public static Action<BitBuffer> UdpHandler { get; set; }
-
-		/// <summary>
-		/// The handler of the disconnect event.
-		/// </summary>
 		public static OnDisconnected DisconnectHandler { get; set; }
 
 		private static readonly Action<BitBuffer>[] TcpHandlers = new Action<BitBuffer>[Enum.GetNames(typeof(TcpPacketType)).Length];
@@ -243,7 +236,7 @@ namespace Networking {
 					}
 				};
 
-				if (!NetworkUtils.SimulateUdpNetworkConditions || NetworkUtils.IsServer) {
+				if (!NetworkUtils.SimulateNetworkConditions || NetworkUtils.IsServer) {
 					UnityFixedDispatcher.InvokeNoDelay(handler);
 				} else {
 					UnityFixedDispatcher.InvokeDelayed(handler, NetworkUtils.SimulatedNetDelay);
@@ -275,7 +268,7 @@ namespace Networking {
 				// ReSharper disable once PossibleNullReferenceException
 				int netDelayIncrease = DoubleProtocol.TripTime(_client.ConnectionStartTimestamp, packetTimestamp);
 
-				if (!NetworkUtils.SimulateUdpNetworkConditions || NetworkUtils.IsServer) {
+				if (!NetworkUtils.SimulateNetworkConditions || NetworkUtils.IsServer) {
 					UnityFixedDispatcher.InvokeNoDelay(handler);
 				} else if (!NetworkUtils.SimulateLosingPacket) {
 					int delay = NetworkUtils.SimulatedNetDelay;

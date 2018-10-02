@@ -3,7 +3,7 @@ using Blocks.Shared;
 
 namespace Blocks.Placed {
 	/// <summary>
-	/// A real placed multi block which is the parent of the multi block parts.
+	/// A real placed block which is a part of a multi block and is the parent of the multi block parts.
 	/// </summary>
 	public class PlacedMultiBlockParent : RealPlacedBlock, IMultiBlockParent {
 		public PlacedMultiBlockPart[] Parts { get; private set; }

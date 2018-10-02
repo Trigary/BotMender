@@ -449,7 +449,9 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: 'UDP RTT: 00
+  m_Text: 'Status: Disconnected
+
+    UDP RTT: 00
 
     UDP loss: 00%
 

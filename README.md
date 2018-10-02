@@ -13,7 +13,6 @@ Each blocks has mass, health and "connect-sides": sides on which it can connect 
 The block placement system is expected to get reworked a bit due to only allowing
 blocks which take a whole block unit of space.
 
-
 All blocks may also define a system: if the block is placed, the system gets installed onto the bot.
 There are 3 kinds of system: propulsion, weapon and active.
 An active system usually gives some sort of special ability which has a cooldown.
@@ -45,3 +44,22 @@ If you would like to ask for guidelines as to how you could contribute,
 you should contact [Trigary](https://github.com/Trigary).
 The [codebase documentation](code-docs.md) contains a collection of information useful
 when interacting with the programming-related side of this project.
+
+# Codebase
+
+Verbose naming and lots of documentation should make the codebase easy to read.
+Unfortunately it's not always enough and that's what this section hopes to aid.
+
+## Networking
+
+An open-source library made by [Trigary](https://github.com/Trigary) named
+[DoubleSocket](https://github.com/Trigary/DoubleSocket) is used to handle the networking.
+This allows the bypassing of Unity's limited and poorly documented HLAPI and LLAPI.
+The library uses a synchronized TCP and UDP socket for each party,
+therefore taking advantage of TCP's flow and congestion control while also allowing
+UDP packets to be used when reliability and ordered packets are not required.
+
+## Adding new blocks, systems
+
+All instructions about how to register blocks, systems can be
+found in the `BlockFactory` and `SystemFactory` classes.

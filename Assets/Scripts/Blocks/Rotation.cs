@@ -5,8 +5,8 @@ using UnityEngine.Assertions;
 namespace Blocks {
 	/// <summary>
 	/// Byte structure: FFZZYYXX.
-	/// X, Y and Z specify the rotation amount (0-3, both inclusive) around that axis.
-	/// FF specifies the axis the rotation is facing (0-2, both inclusive).
+	/// X, Y and Z specify the rotation amount (range: [0; 3]) around that axis.
+	/// FF specifies the axis the rotation is facing (range: [0; 2]).
 	/// </summary>
 	public static class Rotation {
 		public const int SerializedBitsSize = 5;

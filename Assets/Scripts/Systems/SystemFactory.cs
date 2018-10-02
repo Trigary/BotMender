@@ -9,6 +9,9 @@ using Structures;
 namespace Systems {
 	/// <summary>
 	/// Creates new system instances.
+	/// All systems have to be specified in this class, possibly in multiple places.
+	/// If the system has different parameters based on the block's exact type,
+	/// the SystemConstantsContainer class should be used for storing block-specific system constants.
 	/// </summary>
 	public static class SystemFactory {
 		private delegate BotSystem SystemConstructor(byte id, CompleteStructure structure, RealLiveBlock block);

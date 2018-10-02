@@ -2,7 +2,7 @@
 
 namespace Blocks.Placed {
 	/// <summary>
-	/// A non-real placed block which is a part of a multi block.
+	/// A non-real placed block which is a part of a multi block and is not the parent.
 	/// </summary>
 	public class PlacedMultiBlockPart : IPlacedBlock, IMultiBlockPart {
 		public BlockSides ConnectSides { get; }

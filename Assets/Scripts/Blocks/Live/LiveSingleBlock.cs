@@ -2,7 +2,7 @@
 
 namespace Blocks.Live {
 	/// <summary>
-	/// A real live block which is not a multiblock.
+	/// A real live block which is not a multi block.
 	/// </summary>
 	public class LiveSingleBlock : RealLiveBlock {
 		public void Initialize(SingleBlockInfo info, BlockPosition position, byte rotation) {

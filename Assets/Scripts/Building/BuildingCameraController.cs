@@ -2,7 +2,7 @@
 
 namespace Building {
 	/// <summary>
-	/// Controls the camera it is attached to during the building/edit mode.
+	/// Controls the camera it is attached to, should be used in the build mode.
 	/// </summary>
 	public class BuildingCameraController : MonoBehaviour {
 		public const float PitchFactor = 1.3f;

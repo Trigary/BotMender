@@ -12,9 +12,9 @@ namespace Networking {
 
 
 		// ReSharper disable once ConvertToConstant.Global
-		public static readonly bool SimulateUdpNetworkConditions = true;
+		public static readonly bool SimulateNetworkConditions = true;
 		public static bool SimulateLosingPacket => NextThreadSafeRandom(0, 100) < 10;
-		public static int SimulatedNetDelay => NextThreadSafeRandom(23, 28);
+		public static int SimulatedNetDelay => NextThreadSafeRandom(28, 33);
 
 
 

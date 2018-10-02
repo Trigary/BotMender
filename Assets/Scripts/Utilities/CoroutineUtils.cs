@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Utilities {
 	/// <summary>
-	/// A class which aims to make the coroutines easier use.
+	/// A class which aims to make the coroutines easier to use.
 	/// The methods return IEnumerators which should then be passed into the MonoBehaviour#StartCoroutine method.
 	/// All time parameters are in seconds unless otherwise specified.
 	/// </summary>

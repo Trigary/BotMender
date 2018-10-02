@@ -61,6 +61,7 @@ namespace Systems {
 
 		/// <summary>
 		/// Make sure that no excess memory is allocated.
+		/// Should only be called after all systems have been added.
 		/// </summary>
 		public void Finished() {
 			_systemIds.TrimExcess();
@@ -87,7 +88,7 @@ namespace Systems {
 			}
 
 			_systems.Remove(position);
-			_systemIds.RemoveAt(system.Id);
+			_systemIds[system.Id] = null;
 			if (system is PropulsionSystem propulsion) {
 				_propulsions.Remove(propulsion);
 			} else if (system is WeaponSystem weapon) {
@@ -139,7 +140,7 @@ namespace Systems {
 
 
 		/// <summary>
-		/// The client currently wishes to fire weapons.
+		/// This method informs the server that the client currently wishes to fire weapons.
 		/// The server determines whether a weapon can be fired towards the specfied position in its current state.
 		/// If it can, the weapon is fired and the client gets notified with all necessary information.
 		/// </summary>
@@ -149,7 +150,7 @@ namespace Systems {
 			}
 
 			foreach (WeaponSystem system in _weapons) {
-				if (system.IsOnCooldown() || !(system.Constants.Energy <= _energy)
+				if (system.IsOnCooldown() || system.Constants.Energy > _energy
 					|| !system.ServerTryExecuteWeaponFiring(_realInaccuracy)) {
 					continue;
 				}

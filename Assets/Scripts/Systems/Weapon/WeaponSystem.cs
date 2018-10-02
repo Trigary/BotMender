@@ -8,6 +8,7 @@ using UnityEngine;
 namespace Systems.Weapon {
 	/// <summary>
 	/// A system which controls a weapon.
+	/// All weapon systems must have a colliderless child GameObject named "Turret".
 	/// </summary>
 	public abstract class WeaponSystem : BotSystem {
 		protected const float MaxTurretHeadingAngleDifference = 5;
@@ -90,6 +91,12 @@ namespace Systems.Weapon {
 
 
 
+		protected Vector3 GetInaccurateHeading(float inaccuracy) {
+			return Quaternion.Euler(inaccuracy * Random.Range(-1f, 1f), inaccuracy * Random.Range(-1f, 1f), 0) * TurretHeading;
+		}
+
+
+
 		/// <summary>
 		/// Types of weapons.
 		/// </summary>
@@ -101,6 +108,10 @@ namespace Systems.Weapon {
 			Artillery
 		}
 
+		/// <summary>
+		/// A single firing weapon type only fires when the fire button is clicked.
+		/// Other weapon types firing continiously until the fire button is released.
+		/// </summary>
 		public static bool IsSingleFiringType(Type type) {
 			return type == Type.Plasma || type == Type.Beam;
 		}
@@ -112,7 +123,7 @@ namespace Systems.Weapon {
 		/// The rotation speed is specified in 'degrees / second'.
 		/// The cooldown is in seconds.
 		/// The energy is a value between 0 and 1.
-		/// The inaccuracy is specified in angles.
+		/// The inaccuracy is specified in degrees.
 		/// </summary>
 		public class WeaponConstants {
 			public readonly Type Type;

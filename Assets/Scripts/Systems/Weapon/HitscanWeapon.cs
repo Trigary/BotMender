@@ -9,8 +9,9 @@ using Utilities;
 namespace Systems.Weapon {
 	/// <summary>
 	/// A weapon system which fires projectiles which travel at an infinite speed:
-	/// the impact point is known the instant the weapon was fired.
+	/// the impact point is known the instant the weapon is fired.
 	/// The shots are not influenced by physics (eg. gravity).
+	/// This is the alternative to the ProjectileWeapon system base.
 	/// </summary>
 	public abstract class HitscanWeapon : WeaponSystem {
 		protected HitscanWeapon(byte id, CompleteStructure structure, RealLiveBlock block, WeaponConstants constants)
@@ -26,8 +27,7 @@ namespace Systems.Weapon {
 
 			Vector3 point;
 			RealLiveBlock block;
-			Vector3 direction = Quaternion.Euler(inaccuracy * Random.Range(-1f, 1f),
-				inaccuracy * Random.Range(-1f, 1f), 0) * TurretHeading;
+			Vector3 direction = GetInaccurateHeading(inaccuracy);
 
 			if (Physics.Raycast(TurretEnd, direction, out RaycastHit hit)) {
 				if (hit.transform == Structure.transform) {
@@ -42,12 +42,10 @@ namespace Systems.Weapon {
 
 			ServerFireWeapon(point, block);
 			Structure.Body.AddForceAtPosition(Turret.rotation * Constants.Kickback, TurretEnd, ForceMode.Impulse);
-			NetworkServer.SendTcpToAll(TcpPacketType.Server_System_FireWeapon, buffer => {
+			NetworkServer.SendTcpToAll(TcpPacketType.Server_System_Execute, buffer => {
 				buffer.Write(Structure.Id);
 				buffer.Write(Id);
 				buffer.Write(point);
-				//TODO can play around with passing relative (to the bot which was hit)
-				//position of the block which was hit instead
 			});
 			return true;
 		}

@@ -12,6 +12,12 @@ namespace Playing {
 	/// A class which handles the phyiscs in a networked situation.
 	/// Since there is no demand for a change, currently only CompleteStructures can be networked.
 	/// All of them need to be registeres in this class.
+	/// 
+	/// This class takes over the UDP packet creation and handling of the client and/or the server.
+	/// This control is released when the behaviour is destroyed.
+	/// 
+	/// Client-to-server UDP packet contents: PlayerInput
+	/// Server-to-client UDP packet contents: compressed timestamp + player count * BotState
 	/// </summary>
 	public class NetworkedPhyiscs : MonoBehaviour {
 		public const int TimestepMillis = 20;
@@ -73,8 +79,6 @@ namespace Playing {
 		}
 
 
-
-		//TODO interpolation to make it smoother when I apply state updates
 
 		private void FixedUpdate() {
 			if (NetworkUtils.IsServer) {

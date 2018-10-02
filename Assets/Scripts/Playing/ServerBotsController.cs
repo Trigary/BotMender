@@ -4,6 +4,7 @@ using UnityEngine;
 namespace Playing {
 	/// <summary>
 	/// Handles all networked bots on the server-side.
+	/// Only a single instance of this behaviour should be present at once.
 	/// </summary>
 	public class ServerBotsController : MonoBehaviour {
 		private void Start() {
@@ -50,28 +51,11 @@ namespace Playing {
 			public BotFiring Firing = BotFiring.NotFiring;
 		}
 
-
-
 		private enum BotFiring : byte {
-			/// <summary>
-			/// The bot shouldn't be firing.
-			/// </summary>
-			NotFiring,
-
-			/// <summary>
-			/// The bot didn't yet fire, but it should when it gets the chance.
-			/// </summary>
-			ToFireFirst,
-
-			/// <summary>
-			/// The bot already got the chance to fire, but it should continue firing.
-			/// </summary>
-			ToFireMore,
-
-			/// <summary>
-			/// The bot didn't yet fire, but it should when it gets the chance, but only once.
-			/// </summary>
-			ToFireOnce
+			NotFiring, //The bot shouldn't be firing.
+			ToFireFirst, //The bot didn't yet fire, but it should when it gets the chance.
+			ToFireMore, //The bot already got the chance to fire, but it should continue firing.
+			ToFireOnce //The bot didn't yet fire, but it should when it gets the chance, but only once.
 		}
 	}
 }

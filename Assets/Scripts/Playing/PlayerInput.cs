@@ -7,7 +7,7 @@ namespace Playing {
 	/// A utility class containing methods regarding the player's movement input and tracked position.
 	/// </summary>
 	public static class PlayerInput {
-		public const int SerializedBitsSize = 6 + 96;
+		public const int SerializedBitsSize = 6 + 3 * 32;
 
 
 

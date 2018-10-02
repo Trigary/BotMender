@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Utilities {
 	/// <summary>
-	/// A class used to configure the application and execute general actions on specific events, eg. application close.
+	/// A class used to configure the application and handle on specific events, eg. application close.
 	/// </summary>
 	public class GameConfigurator : MonoBehaviour {
 		private void Awake() {

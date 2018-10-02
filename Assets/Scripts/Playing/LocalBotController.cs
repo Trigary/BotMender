@@ -41,13 +41,11 @@ namespace Playing {
 				//TODO use ability
 			}
 
-			if (!Input.GetButton("FreeLook")) {
-				Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
-				if (Physics.Raycast(ray, out RaycastHit hit)) {
-					_lastTrackedPosition = hit.point;
-				} else {
-					_lastTrackedPosition = ray.origin + ray.direction * 500;
-				}
+			Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
+			if (Physics.Raycast(ray, out RaycastHit hit)) {
+				_lastTrackedPosition = hit.point;
+			} else {
+				_lastTrackedPosition = ray.origin + ray.direction * 500;
 			}
 
 			_networkedPhyiscs.UpdateLocalInput(_lastTrackedPosition);

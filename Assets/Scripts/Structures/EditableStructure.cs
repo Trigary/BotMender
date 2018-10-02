@@ -13,7 +13,7 @@ using UnityEngine.Assertions;
 
 namespace Structures {
 	/// <summary>
-	/// A structure which is editable. It doesn't have health and it may contain not connected blocks.
+	/// A structure which is editable. It can contain "errors", eg. not connected blocks.
 	/// </summary>
 	public class EditableStructure : MonoBehaviour {
 		public int RealBlockCount { get; private set; }
@@ -30,7 +30,7 @@ namespace Structures {
 				Assert.IsTrue(BlockPosition.FromVector(transform.position, out BlockPosition position),
 					"Failed to get a BlockPosition from the EditableStructure position.");
 				Assert.IsTrue(AddBlock(position, (MultiBlockInfo)BlockFactory.GetInfo(BlockType.Mainframe),
-						Rotation.GetByte(BlockSides.Top, 0)), "Failed to place the Mainframe.");
+					Rotation.GetByte(BlockSides.Top, 0)), "Failed to place the Mainframe.");
 			}
 		}
 
@@ -209,8 +209,9 @@ namespace Structures {
 		/// Each block takes up RealPlacedBlock.SerializedBitsSize bits.
 		/// </summary>
 		public void Serialize(BitBuffer buffer) {
-			foreach (RealPlacedBlock block in _blocks.Values.OfType<RealPlacedBlock>().OrderBy(block => block.Position, BlockPosition.AscendingComparer)) {
-				buffer.WriteBits((ushort)block.Type, 12);
+			foreach (RealPlacedBlock block in _blocks.Values.OfType<RealPlacedBlock>()
+				.OrderBy(block => block.Position, BlockPosition.AscendingComparer)) {
+				buffer.WriteBits((ushort)block.Type, BlockFactory.BlockTypeSerializedBitsSize);
 				block.Position.Serialize(buffer);
 				Rotation.Serialize(buffer, block.Rotation);
 			}
@@ -219,7 +220,7 @@ namespace Structures {
 		/// <summary>
 		/// Overrides the current structure (read: removes all previous blocks) with the serialized one in the buffer.
 		/// Lazely validates the data and returns false, if it is found invalid.
-		/// No checks are not made, #GetNotConnectedBlocks should be called after this method.
+		/// No checks are not made, #GetStructureErrors and #GetNotConnectedBlocks should be called after this method.
 		/// </summary>
 		public bool Deserialize(BitBuffer buffer) {
 			foreach (RealPlacedBlock block in _blocks.Values.OfType<RealPlacedBlock>().ToList()) {
@@ -228,7 +229,7 @@ namespace Structures {
 
 			try {
 				while (buffer.TotalBitsLeft >= RealPlacedBlock.SerializedBitsSize) {
-					ushort type = (ushort)buffer.ReadBits(12);
+					ushort type = (ushort)buffer.ReadBits(BlockFactory.BlockTypeSerializedBitsSize);
 					if (type >= BlockFactory.TypeCount) {
 						return false;
 					}
@@ -278,6 +279,7 @@ namespace Structures {
 
 		/// <summary>
 		/// Errors regarding the structure.
+		/// Not connected blocks are not included in this enum.
 		/// </summary>
 		[Flags]
 		public enum Errors {

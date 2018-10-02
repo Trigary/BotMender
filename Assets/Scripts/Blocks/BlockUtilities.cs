@@ -1,7 +1,13 @@
 ﻿using UnityEngine;
 
 namespace Blocks {
+	/// <summary>
+	/// General utilities regarding blocks.
+	/// </summary>
 	public static class BlockUtilities {
+		/// <summary>
+		/// Sets the color and the transparency of a real block.
+		/// </summary>
 		public static void SetColor(GameObject block, Color color, bool enableTransparency) {
 			Material material = block.GetComponent<Renderer>().material;
 			if (enableTransparency) {
@@ -17,6 +23,9 @@ namespace Blocks {
 			material.color = color;
 		}
 
+		/// <summary>
+		/// Removes the collider of a block.
+		/// </summary>
 		public static void RemoveCollider(GameObject block, bool immediate) {
 			Component collider = block.GetComponent<Collider>();
 			if (immediate) {

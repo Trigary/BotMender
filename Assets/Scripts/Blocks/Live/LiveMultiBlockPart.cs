@@ -2,7 +2,7 @@
 
 namespace Blocks.Live {
 	/// <summary>
-	/// A non-real live block which is a part of a multi block.
+	/// A non-real live block which is a part of a multi block and is not the parent.
 	/// </summary>
 	public class LiveMultiBlockPart : ILiveBlock, IMultiBlockPart {
 		public BlockSides ConnectSides { get; }

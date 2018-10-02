@@ -12,6 +12,11 @@ using Object = UnityEngine.Object;
 namespace Blocks {
 	/// <summary>
 	/// Creates new block GameObject instances.
+	/// All blocks have to be registered in this class as well as in the BlockType enum.
+	/// Prefabs are located at Resources/Blocks/{BlockType enum name}.
+	/// Multiblocks' connection-sides should be specified so that all connection sides which can be used to
+	/// connect to other blocks should be connected together (this way the 'flood fill' algorithm works).
+	/// If the block comes with a system, it also has to be registered in the SystemFactory class.
 	/// </summary>
 	public static class BlockFactory {
 		private static readonly BlockType[] BlockTypes = (BlockType[])Enum.GetValues(typeof(BlockType));
@@ -51,6 +56,11 @@ namespace Blocks {
 
 
 		/// <summary>
+		/// The amount of bits required to serialize a BlockType.
+		/// </summary>
+		public const int BlockTypeSerializedBitsSize = 12;
+
+		/// <summary>
 		/// Gets the count of the types. If the index specified in #GetType is greater than or equal to this an error happens.
 		/// </summary>
 		public static int TypeCount => BlockTypes.Length;
@@ -72,6 +82,9 @@ namespace Blocks {
 
 
 
+		/// <summary>
+		/// Creates a "placed" block.
+		/// </summary>
 		public static PlacedSingleBlock MakeSinglePlaced(Transform parent, SingleBlockInfo info, byte rotation, BlockPosition position) {
 			GameObject block = InstantiatePrefab(parent, info, rotation, position);
 			PlacedSingleBlock component = block.AddComponent<PlacedSingleBlock>();
@@ -80,7 +93,7 @@ namespace Blocks {
 		}
 
 		/// <summary>
-		/// Creates a multi-block. Returns null if it fails.
+		/// Creates a multi "placed" block. Returns null if it fails.
 		/// </summary>
 		[CanBeNull]
 		public static PlacedMultiBlockParent MakeMultiPlaced(Transform parent, MultiBlockInfo info, byte rotation, BlockPosition position,
@@ -102,6 +115,9 @@ namespace Blocks {
 
 
 
+		/// <summary>
+		/// Creates a normal "live" block.
+		/// </summary>
 		public static LiveSingleBlock MakeSingleLive(Transform parent, SingleBlockInfo info, byte rotation, BlockPosition position) {
 			GameObject block = InstantiatePrefab(parent, info, rotation, position);
 			LiveSingleBlock component = block.AddComponent<LiveSingleBlock>();
@@ -110,7 +126,7 @@ namespace Blocks {
 		}
 
 		/// <summary>
-		/// Creates a multi-block. Returns null if it fails.
+		/// Creates a multi "live" block. Returns null if it fails.
 		/// </summary>
 		[CanBeNull]
 		public static LiveMultiBlockParent MakeMultiLive(Transform parent, MultiBlockInfo info, byte rotation, BlockPosition position,
