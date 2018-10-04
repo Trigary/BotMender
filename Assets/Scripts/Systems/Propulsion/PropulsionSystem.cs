@@ -7,7 +7,7 @@ namespace Systems.Propulsion {
 	/// A system which affects the bot's movement and/or rotation.
 	/// </summary>
 	public abstract class PropulsionSystem : BotSystem {
-		protected PropulsionSystem(byte id, CompleteStructure structure, RealLiveBlock block) : base(id, structure, block) { }
+		protected PropulsionSystem(CompleteStructure structure, RealLiveBlock block) : base(structure, block) { }
 
 
 

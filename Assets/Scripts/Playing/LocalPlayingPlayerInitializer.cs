@@ -91,18 +91,18 @@ namespace Playing {
 		private static void ServerOnClientConnected(INetworkServerClient client) {
 			Debug.Log("Client connected: " + client.Id);
 			OnClientConnected(client.Id);
-			NetworkServer.SendTcpToAll(client, TcpPacketType.Server_State_Joined, buffer => buffer.Write(client.Id));
+			NetworkServer.SendTcpToAll(client.Id, TcpPacketType.Server_State_Joined, buffer => buffer.Write(client.Id));
 
 			if (NetworkServer.HasClients) {
 				NetworkServer.SendTcp(client, TcpPacketType.Server_State_Joined,
-					buffer => NetworkServer.ForEachClient(client, other => buffer.Write(other.Id)));
+					buffer => NetworkServer.ForEachClient(client.Id, other => buffer.Write(other.Id)));
 			}
 		}
 
 		private static void ServerOnClientDisconnected(INetworkServerClient client) {
 			Debug.Log("Client disconnected: " + client.Id);
 			OnClientDisconnected(client.Id);
-			NetworkServer.SendTcpToAll(TcpPacketType.Server_State_Left, buffer => buffer.Write(client.Id));
+			NetworkServer.SendTcpToClients(TcpPacketType.Server_State_Left, buffer => buffer.Write(client.Id));
 		}
 	}
 }

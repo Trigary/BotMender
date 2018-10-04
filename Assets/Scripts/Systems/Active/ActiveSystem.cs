@@ -7,7 +7,7 @@ namespace Systems.Active {
 	/// Only one system of this type can exists in a bot at once.
 	/// </summary>
 	public abstract class ActiveSystem : BotSystem {
-		protected ActiveSystem(byte id, CompleteStructure structure, RealLiveBlock block) : base(id, structure, block) { }
+		protected ActiveSystem(CompleteStructure structure, RealLiveBlock block) : base(structure, block) { }
 
 
 

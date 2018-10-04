@@ -12,7 +12,7 @@ using UnityEngine.Assertions;
 
 namespace Building {
 	/// <summary>
-	/// Allows the player to interact with the structure the script is attached to, should be used in build mode.
+	/// Allows the player to interact with the structure the behaviour is attached to, should be used in build mode.
 	/// </summary>
 	public class BuildingController : MonoBehaviour {
 		public static BitBuffer ExampleStructure {

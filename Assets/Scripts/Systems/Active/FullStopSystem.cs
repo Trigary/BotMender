@@ -7,7 +7,7 @@ namespace Systems.Active {
 	/// Sets the bot's velocity to zero upon activation.
 	/// </summary>
 	public class FullStopSystem : ActiveSystem {
-		public FullStopSystem(byte id, CompleteStructure structure, RealLiveBlock block) : base(id, structure, block) { }
+		public FullStopSystem(CompleteStructure structure, RealLiveBlock block) : base(structure, block) { }
 
 
 

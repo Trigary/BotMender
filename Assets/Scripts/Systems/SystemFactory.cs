@@ -14,16 +14,16 @@ namespace Systems {
 	/// the SystemConstantsContainer class should be used for storing block-specific system constants.
 	/// </summary>
 	public static class SystemFactory {
-		private delegate BotSystem SystemConstructor(byte id, CompleteStructure structure, RealLiveBlock block);
+		private delegate BotSystem SystemConstructor(CompleteStructure structure, RealLiveBlock block);
 		private static readonly IDictionary<BlockType, SystemConstructor> Constructors = new Dictionary<BlockType, SystemConstructor>();
 
 		static SystemFactory() {
-			Add(BlockType.LaserWeapon1, (id, structure, block) => new LaserSystem(id, structure, block, SystemConstantsContainer.WeaponConstants[block.Info.Type]));
+			Add(BlockType.LaserWeapon1, (structure, block) => new LaserWeapon(structure, block, SystemConstantsContainer.WeaponConstants[block.Info.Type]));
 
-			Add(BlockType.ThrusterSmall, (id, structure, block) => new ThrusterSystem(id, structure, block, SystemConstantsContainer.ThrusterConstants[block.Info.Type]));
-			Add(BlockType.UnrealAccelerator, (id, structure, block) => new UnrealAcceleratorSystem(id, structure, block));
+			Add(BlockType.ThrusterSmall, (structure, block) => new ThrusterSystem(structure, block, SystemConstantsContainer.ThrusterConstants[block.Info.Type]));
+			Add(BlockType.UnrealAccelerator, (structure, block) => new UnrealAcceleratorSystem(structure, block));
 
-			Add(BlockType.FullStopSystem, (id, structure, block) => new FullStopSystem(id, structure, block));
+			Add(BlockType.FullStopSystem, (structure, block) => new FullStopSystem(structure, block));
 		}
 
 
@@ -31,13 +31,13 @@ namespace Systems {
 		/// <summary>
 		/// Create a new system instance from the block if the block comes with a system.
 		/// </summary>
-		public static bool Create(byte id, CompleteStructure structure, RealLiveBlock block, out BotSystem system) {
+		public static bool Create(CompleteStructure structure, RealLiveBlock block, out BotSystem system) {
 			if (!Constructors.TryGetValue(block.Info.Type, out SystemConstructor constructor)) {
 				system = null;
 				return false;
 			}
 
-			system = constructor(id, structure, block);
+			system = constructor(structure, block);
 			return true;
 		}
 

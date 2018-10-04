@@ -165,8 +165,8 @@ namespace Blocks {
 			return Object.Instantiate(info.Prefab, position.ToVector(), Rotation.GetQuaternion(rotation), parent);
 		}
 
-		private static void InitializeMulti(IMultiBlockParent parent, MultiBlockInfo info, byte rotation, BlockPosition position,
-											KeyValuePair<BlockPosition, BlockSides>[] partPositions,
+		private static void InitializeMulti(IMultiBlockParent parent, MultiBlockInfo info, byte rotation,
+											BlockPosition position, KeyValuePair<BlockPosition, BlockSides>[] partPositions,
 											Function<int, IMultiBlockPart[]> partsArrayConstructor,
 											Function<KeyValuePair<BlockPosition, BlockSides>, IMultiBlockPart> partConstructor,
 											out IMultiBlockPart[] parts) {

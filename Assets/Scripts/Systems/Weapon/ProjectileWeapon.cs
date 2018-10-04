@@ -11,8 +11,8 @@ namespace Systems.Weapon {
 	/// This is the alternative to the HitscanWeapon system base.
 	/// </summary>
 	public abstract class ProjectileWeapon : WeaponSystem {
-		protected ProjectileWeapon(byte id, CompleteStructure structure, RealLiveBlock block, WeaponConstants constants)
-			: base(id, structure, block, constants) {
+		protected ProjectileWeapon(CompleteStructure structure, RealLiveBlock block, WeaponConstants constants)
+			: base(structure, block, constants) {
 		}
 
 

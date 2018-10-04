@@ -6,9 +6,11 @@ namespace Systems.Weapon {
 	/// <summary>
 	/// A hitscan weapon which fires a laser beam.
 	/// If a block was hit, all blocks behind it are also damaged until the shot has run out of damage to deal.
+	/// Damage can only be dealt to a single structure by each shot.
 	/// </summary>
 	public class BeamWeapon : HitscanWeapon {
-		public BeamWeapon(byte id, CompleteStructure structure, RealLiveBlock block, WeaponConstants constants) : base(id, structure, block, constants) {
+		public BeamWeapon(CompleteStructure structure, RealLiveBlock block, WeaponConstants constants)
+			: base(structure, block, constants) {
 		}
 
 

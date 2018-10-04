@@ -4,7 +4,7 @@ namespace Playing {
 	/// <summary>
 	/// Controls the camera it is attached to during the play mode.
 	/// Internally creates a rigidbody so that the camera can smoothly follow the object even at high speeds.
-	/// The rigidbody is destroyed when the script is destroyed.
+	/// The rigidbody is destroyed when the behaviour is destroyed.
 	/// </summary>
 	public class PlayingCameraController : MonoBehaviour {
 		public const float VerticalOffsetOffset = 0.0f;
@@ -30,6 +30,8 @@ namespace Playing {
 		private void Awake() {
 			_rigidbody = gameObject.AddComponent<Rigidbody>();
 			_rigidbody.isKinematic = false;
+			//TODO can I get rid of the rigidbody if I make it a child object?
+			//I will have to apply offsets whenever the center of mass of the structure changes no matter what
 		}
 
 		private void OnDestroy() {

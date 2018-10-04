@@ -20,11 +20,9 @@ namespace Systems {
 		public const float FiringInaccuracyFading = 4; //in seconds
 		public const float MovingInaccuracyScale = 0.5f;
 
-		public byte NextId => (byte)_systemIds.Count;
 		public WeaponSystem.Type WeaponType { get; private set; } = WeaponSystem.Type.None;
 		public Vector3 TrackedPosition { get; set; } = Vector3.zero;
 		private readonly IDictionary<BlockPosition, BotSystem> _systems = new Dictionary<BlockPosition, BotSystem>();
-		private readonly List<BotSystem> _systemIds = new List<BotSystem>();
 		private readonly HashSet<PropulsionSystem> _propulsions = new HashSet<PropulsionSystem>();
 		private readonly CircularList<WeaponSystem> _weapons = new CircularList<WeaponSystem>();
 		private readonly CompleteStructure _structure;
@@ -45,7 +43,6 @@ namespace Systems {
 		/// </summary>
 		public void Add(BlockPosition position, BotSystem system) {
 			_systems.Add(position, system);
-			_systemIds.Add(system);
 			if (system is PropulsionSystem propulsion) {
 				_propulsions.Add(propulsion);
 			} else if (system is WeaponSystem weapon) {
@@ -64,7 +61,6 @@ namespace Systems {
 		/// Should only be called after all systems have been added.
 		/// </summary>
 		public void Finished() {
-			_systemIds.TrimExcess();
 			_propulsions.TrimExcess();
 			_weapons.TrimExcess();
 		}
@@ -72,11 +68,11 @@ namespace Systems {
 
 
 		/// <summary>
-		/// If a system with the specified ID is present return it, otherwise return null.
+		/// If a system is present at a position return it, otherwise return null.
 		/// </summary>
 		// ReSharper disable once AnnotateCanBeNullTypeMember
-		public BotSystem TryGet(byte id) {
-			return _systemIds.Count > id ? _systemIds[id] : null;
+		public BotSystem TryGet(BlockPosition position) {
+			return _systems.TryGetValue(position, out BotSystem system) ? system : null;
 		}
 
 		/// <summary>
@@ -88,7 +84,6 @@ namespace Systems {
 			}
 
 			_systems.Remove(position);
-			_systemIds[system.Id] = null;
 			if (system is PropulsionSystem propulsion) {
 				_propulsions.Remove(propulsion);
 			} else if (system is WeaponSystem weapon) {

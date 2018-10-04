@@ -20,7 +20,6 @@ namespace Structures {
 
 		private readonly IDictionary<BlockPosition, IPlacedBlock> _blocks = new Dictionary<BlockPosition, IPlacedBlock>();
 		[CanBeNull] private BlockPosition _mainframePosition;
-		private byte _systemCount;
 		private bool _activeSystemPresent;
 		private WeaponSystem.Type _weaponType = WeaponSystem.Type.None;
 		private int _weaponCount;
@@ -46,10 +45,6 @@ namespace Structures {
 					return false;
 				}
 			} else if (SystemFactory.IsAnySystem(info.Type)) {
-				if (_systemCount == byte.MaxValue) {
-					return false;
-				}
-
 				if (SystemFactory.IsActiveSystem(info.Type)) {
 					if (_activeSystemPresent) {
 						return false;
@@ -112,8 +107,6 @@ namespace Structures {
 			if (info.Type == BlockType.Mainframe) {
 				_mainframePosition = position;
 			} else if (SystemFactory.IsAnySystem(info.Type)) {
-				_systemCount++;
-
 				if (SystemFactory.IsActiveSystem(info.Type)) {
 					_activeSystemPresent = true;
 				} else {

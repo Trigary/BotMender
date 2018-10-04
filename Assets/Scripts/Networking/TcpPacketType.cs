@@ -24,6 +24,15 @@ namespace Networking {
 
 
 		/// <summary>
+		/// Informs the client that the specified structure received damage(s).
+		/// The packet starts with the bot's ID and repeatedly contains
+		/// block positions and damage amounts until its end.
+		/// </summary>
+		Server_Structure_Damage,
+
+
+
+		/// <summary>
 		/// Informs the server that the client would like to fire its weapons.
 		/// Depending on the weapon type, this firing may not stop until otherwise specified.
 		/// </summary>
@@ -36,7 +45,7 @@ namespace Networking {
 
 		/// <summary>
 		/// Informs the clients that a bot executed its specified (non-movement) system.
-		/// The packet starts with the bot's and the system's ID.
+		/// The packet starts with the bot's ID and the system's position.
 		/// The rest of the data is only specified by the exact system implementation.
 		/// </summary>
 		Server_System_Execute

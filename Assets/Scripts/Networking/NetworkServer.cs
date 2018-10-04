@@ -150,45 +150,19 @@ namespace Networking {
 
 
 		/// <summary>
-		/// Executes the specified action for each connected client.
+		/// Sends the specified payload over TCP to all clients except (this) host client.
 		/// </summary>
-		public static void ForEachClient(Action<INetworkServerClient> action) {
-			ForEachClient(serverClient => true, action);
-		}
-
-		/// <summary>
-		/// Executes the specified action for each connected client except one.
-		/// </summary>
-		public static void ForEachClient(INetworkServerClient excluding, Action<INetworkServerClient> action) {
-			ForEachClient(serverClient => serverClient != excluding, action);
-		}
-
-		/// <summary>
-		/// Executes the specified action for each connected client which passes the specified filter.
-		/// </summary>
-		public static void ForEachClient(Predicate<INetworkServerClient> filter, Action<INetworkServerClient> action) {
-			if (_server != null) {
-				foreach (NetworkServerClient serverClient in _clients) {
-					if (filter(serverClient)) {
-						action(serverClient);
-					}
-				}
+		public static void SendTcpToClients(TcpPacketType type, Action<BitBuffer> payloadWriter) {
+			if (!NetworkUtils.IsClient || _clients.Count > 1) {
+				SendTcpToAll(serverClient => serverClient.Id != NetworkUtils.LocalId, type, payloadWriter);
 			}
-		}
-
-
-		/// <summary>
-		/// Sends the specified payload over TCP to all clients.
-		/// </summary>
-		public static void SendTcpToAll(TcpPacketType type, Action<BitBuffer> payloadWriter) {
-			SendTcpToAll(serverClient => true, type, payloadWriter);
 		}
 
 		/// <summary>
 		/// Sends the specified payload over TCP to all clients except one.
 		/// </summary>
-		public static void SendTcpToAll(INetworkServerClient excluding, TcpPacketType type, Action<BitBuffer> payloadWriter) {
-			SendTcpToAll(serverClient => serverClient != excluding, type, payloadWriter);
+		public static void SendTcpToAll(byte excludingId, TcpPacketType type, Action<BitBuffer> payloadWriter) {
+			SendTcpToAll(serverClient => serverClient.Id != excludingId, type, payloadWriter);
 		}
 
 		/// <summary>
@@ -210,6 +184,35 @@ namespace Networking {
 				foreach (NetworkServerClient serverClient in _clients) {
 					if (filter(serverClient)) {
 						_server.SendTcp(serverClient.DoubleClient, realWriter);
+					}
+				}
+			}
+		}
+
+
+
+		/// <summary>
+		/// Executes the specified action for each connected client.
+		/// </summary>
+		public static void ForEachClient(Action<INetworkServerClient> action) {
+			ForEachClient(serverClient => true, action);
+		}
+
+		/// <summary>
+		/// Executes the specified action for each connected client except one.
+		/// </summary>
+		public static void ForEachClient(byte excludingId, Action<INetworkServerClient> action) {
+			ForEachClient(serverClient => serverClient.Id != excludingId, action);
+		}
+
+		/// <summary>
+		/// Executes the specified action for each connected client which passes the specified filter.
+		/// </summary>
+		public static void ForEachClient(Predicate<INetworkServerClient> filter, Action<INetworkServerClient> action) {
+			if (_server != null) {
+				foreach (NetworkServerClient serverClient in _clients) {
+					if (filter(serverClient)) {
+						action(serverClient);
 					}
 				}
 			}

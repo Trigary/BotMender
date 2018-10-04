@@ -1,4 +1,5 @@
-﻿using Blocks.Live;
+﻿using System.Collections.Generic;
+using Blocks.Live;
 using Structures;
 using UnityEngine;
 
@@ -7,11 +8,12 @@ namespace Systems.Weapon {
 	/// A hitscan weapon which fires a laser pulse which only damages the block it hits.
 	/// It has a visualized travel time.
 	/// </summary>
-	public class LaserSystem : HitscanWeapon {
+	public class LaserWeapon : HitscanWeapon {
 		public const float MaxParticleLifeTime = 5f;
 		private readonly ParticleSystem _particles;
 
-		public LaserSystem(byte id, CompleteStructure structure, RealLiveBlock block, WeaponConstants constants) : base(id, structure, block, constants) {
+		public LaserWeapon(CompleteStructure structure, RealLiveBlock block, WeaponConstants constants)
+			: base(structure, block, constants) {
 			_particles = Turret.GetComponent<ParticleSystem>();
 			ParticleSystem.ShapeModule shape = _particles.shape;
 			shape.position = Constants.TurretOffset;
@@ -19,10 +21,10 @@ namespace Systems.Weapon {
 
 
 
-
 		protected override void ServerFireWeapon(Vector3 point, RealLiveBlock block) {
 			if (block != null) {
-				block.Damage(400);
+				block.GetComponentInParent<CompleteStructure>()
+					.DamagedServer(new[] {new KeyValuePair<RealLiveBlock, uint>(block, block.Damage(400))});
 			}
 		}
 

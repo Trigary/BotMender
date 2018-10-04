@@ -12,7 +12,8 @@ namespace Systems.Propulsion {
 		protected readonly ThrusterConstants Constants;
 		private readonly BlockSides _facing;
 
-		public ThrusterSystem(byte id, CompleteStructure structure, RealLiveBlock block, ThrusterConstants constants) : base(id, structure, block) {
+		public ThrusterSystem(CompleteStructure structure, RealLiveBlock block, ThrusterConstants constants)
+			: base(structure, block) {
 			Constants = constants;
 			_facing = Rotation.RotateSides(constants.Facing, block.Rotation);
 		}

@@ -7,7 +7,7 @@ namespace Systems.Propulsion {
 	/// Changes the bot's velocity directly: doesn't apply any forces.
 	/// </summary>
 	public class UnrealAcceleratorSystem : PropulsionSystem {
-		public UnrealAcceleratorSystem(byte id, CompleteStructure structure, RealLiveBlock block) : base(id, structure, block) { }
+		public UnrealAcceleratorSystem(CompleteStructure structure, RealLiveBlock block) : base(structure, block) { }
 
 
 

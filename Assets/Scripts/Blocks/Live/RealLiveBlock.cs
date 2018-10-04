@@ -1,5 +1,4 @@
 ﻿using Blocks.Info;
-using Structures;
 using UnityEngine;
 
 namespace Blocks.Live {
@@ -20,18 +19,19 @@ namespace Blocks.Live {
 
 
 		/// <summary>
-		/// Damage the block with the given damage. If the health reaches 0, also destroy the GameObject.
-		/// This method internally calls the CompleteStructure#Damaged method.
-		/// The damage is internally limited to the remaining health of the block.
+		/// Damage the block with the given damage.
+		/// The damage is internally limited to the remaining health and then returned.
+		/// This method only changes the Health property (it doesn't destroy the GameObject if the health reaches 0, etc).
+		/// CompleteStructure#Damaged should be called after this method is called.
 		/// </summary>
-		public void Damage(uint damage) {
+		public uint Damage(uint damage) {
 			if (Health > damage) {
 				Health -= damage;
 			} else {
 				damage = Health;
 				Health = 0;
 			}
-			transform.parent.GetComponent<CompleteStructure>().Damaged(this, damage);
+			return damage;
 		}
 	}
 }

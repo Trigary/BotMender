@@ -21,8 +21,8 @@ namespace Systems.Weapon {
 		private readonly float _turretRotationMultiplier = 1;
 		private float _cooldownEnds;
 
-		protected WeaponSystem(byte id, CompleteStructure structure, RealLiveBlock block, WeaponConstants constants)
-			: base(id, structure, block) {
+		protected WeaponSystem(CompleteStructure structure, RealLiveBlock block, WeaponConstants constants)
+			: base(structure, block) {
 			Constants = constants;
 			Turret = block.transform.Find("Turret");
 

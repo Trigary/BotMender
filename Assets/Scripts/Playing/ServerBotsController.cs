@@ -1,4 +1,5 @@
-﻿using Networking;
+﻿using Systems.Weapon;
+using Networking;
 using UnityEngine;
 
 namespace Playing {
@@ -30,10 +31,10 @@ namespace Playing {
 
 				if (input.Firing != BotFiring.NotFiring) {
 					structure.ServerTryWeaponFiring();
-					if (input.Firing == BotFiring.ToFireFirst) {
-						input.Firing = BotFiring.ToFireMore;
-					} else if (input.Firing == BotFiring.ToFireOnce) {
+					if (WeaponSystem.IsSingleFiringType(structure.WeaponType) || input.Firing == BotFiring.ToFireOnce) {
 						input.Firing = BotFiring.NotFiring;
+					} else if (input.Firing == BotFiring.ToFireFirst) {
+						input.Firing = BotFiring.ToFireMore;
 					}
 				}
 			});

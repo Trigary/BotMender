@@ -179,7 +179,7 @@ namespace Playing {
 				_silentSkipFastForwardUntil = 0;
 			} else if (toSimulate >= 500) {
 				if (currentMillis < _silentSkipFastForwardUntil) {
-					Debug.Log($"Skipping {toSimulate}ms of networking fast-forward simulation to avoid delays." +
+					Debug.LogWarning($"Skipping {toSimulate}ms of networking fast-forward simulation to avoid delays." +
 						"Hiding this error for at most 100ms.");
 					_silentSkipFastForwardUntil = currentMillis + 100;
 				}

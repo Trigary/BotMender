@@ -14,8 +14,8 @@ namespace Systems.Weapon {
 	/// This is the alternative to the ProjectileWeapon system base.
 	/// </summary>
 	public abstract class HitscanWeapon : WeaponSystem {
-		protected HitscanWeapon(byte id, CompleteStructure structure, RealLiveBlock block, WeaponConstants constants)
-			: base(id, structure, block, constants) {
+		protected HitscanWeapon(CompleteStructure structure, RealLiveBlock block, WeaponConstants constants)
+			: base(structure, block, constants) {
 		}
 
 
@@ -42,9 +42,10 @@ namespace Systems.Weapon {
 
 			ServerFireWeapon(point, block);
 			Structure.Body.AddForceAtPosition(Turret.rotation * Constants.Kickback, TurretEnd, ForceMode.Impulse);
-			NetworkServer.SendTcpToAll(TcpPacketType.Server_System_Execute, buffer => {
+			ClientFireWeapon(point);
+			NetworkServer.SendTcpToClients(TcpPacketType.Server_System_Execute, buffer => {
 				buffer.Write(Structure.Id);
-				buffer.Write(Id);
+				Block.Position.Serialize(buffer);
 				buffer.Write(point);
 			});
 			return true;

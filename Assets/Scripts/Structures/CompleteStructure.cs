@@ -8,6 +8,7 @@ using Blocks.Live;
 using Blocks.Placed;
 using DoubleSocket.Utility.BitBuffer;
 using JetBrains.Annotations;
+using Networking;
 using Playing;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -15,7 +16,7 @@ using UnityEngine.Assertions;
 namespace Structures {
 	/// <summary>
 	/// A structure which is no longer editable, but is damagable and destructable.
-	/// Internally creates a Rigidbody which is not destroyed when the script is destroyed.
+	/// Internally creates a Rigidbody which is destroyed when the behaviour is destroyed.
 	/// </summary>
 	public class CompleteStructure : MonoBehaviour {
 		public const float RigidbodyDragMultiplier = 0.0025f;
@@ -38,6 +39,10 @@ namespace Structures {
 			Body = gameObject.AddComponent<Rigidbody>();
 			Body.angularDrag = RigidbodyAngularDrag;
 			_systems = new SystemManager(this);
+		}
+
+		private void OnDestroy() {
+			Destroy(Body);
 		}
 
 
@@ -83,7 +88,7 @@ namespace Structures {
 				Health += info.Health;
 				Mass += info.Mass;
 				_blocks.Add(position, block);
-				if (SystemFactory.Create(_systems.NextId, this, block, out BotSystem system)) {
+				if (SystemFactory.Create(this, block, out BotSystem system)) {
 					_systems.Add(position, system);
 				}
 			}
@@ -108,37 +113,72 @@ namespace Structures {
 
 
 		/// <summary>
-		/// Should only be called by a RealLiveBlock instance when it is damaged.
+		/// Called whenever the client receives the information that damage was dealt server-side.
 		/// </summary>
-		public void Damaged(RealLiveBlock block, uint damage) {
-			Health -= damage;
-			if (block.Health != 0) {
-				return;
+		public void DamagedClient(BitBuffer buffer) {
+			int count = buffer.TotalBitsLeft / (BlockPosition.SerializedBitsSize + 32);
+			KeyValuePair<RealLiveBlock, uint>[] damages = new KeyValuePair<RealLiveBlock, uint>[count];
+			for (int i = 0; i < count; i++) {
+				RealLiveBlock block = (RealLiveBlock)_blocks[BlockPosition.Deserialize(buffer)];
+				uint damage = buffer.ReadUInt();
+				block.Damage(damage);
+				damages[i] = new KeyValuePair<RealLiveBlock, uint>(block, damage);
+			}
+			DamageApply(damages);
+		}
+
+		/// <summary>
+		/// Called by the server whenever one or more RealLiveBlock instances are damaged.
+		/// </summary>
+		public void DamagedServer(KeyValuePair<RealLiveBlock, uint>[] damages) {
+			DamageApply(damages);
+			NetworkServer.SendTcpToClients(TcpPacketType.Server_Structure_Damage, buffer => {
+				buffer.Write(Id);
+				foreach (KeyValuePair<RealLiveBlock, uint> damage in damages) {
+					damage.Key.Position.Serialize(buffer);
+					buffer.Write(damage.Value);
+				}
+			});
+		}
+
+		private void DamageApply(KeyValuePair<RealLiveBlock, uint>[] damages) {
+			int status = 0;
+			foreach (KeyValuePair<RealLiveBlock, uint> damage in damages) {
+				Health -= damage.Value;
+				if (Health * 100 < MaxHealth * MinHealthPercentage) {
+					status = 1;
+					break;
+				}
+
+				RealLiveBlock block = damage.Key;
+				if (block.Health == 0) {
+					if (block.Info.Type == BlockType.Mainframe) {
+						status = 1;
+						break;
+					} else {
+						RemoveBlock(block);
+						status = 2;
+					}
+				}
 			}
 
-			if (block.Info.Type == BlockType.Mainframe || Health * 100 < MaxHealth * MinHealthPercentage) {
+			if (status == 1) {
 				Destroy(gameObject);
-				return;
+			} else if (status == 2) {
+				RemoveNotConnectedBlocks();
+				ApplyMass(true);
 			}
-
-			RemoveBlock(block);
-			RemoveNotConnectedBlocks();
-			ApplyMass(true);
 		}
 
 		private void RemoveBlock(RealLiveBlock block) {
 			Mass -= block.Info.Mass;
-			_systems.TryRemove(block.Position);
 			Destroy(block.gameObject);
 
 			Assert.IsTrue(_blocks.Remove(block.Position), "The block is not present.");
-			LiveMultiBlockParent parent = block as LiveMultiBlockParent;
-			if (parent == null) {
-				return; //block is LiveSingleBlock
-			}
-
-			foreach (LiveMultiBlockPart part in parent.Parts) {
-				Assert.IsTrue(_blocks.Remove(part.Position), "A part of the multi block is not present.");
+			if (block is LiveMultiBlockParent parent) {
+				foreach (LiveMultiBlockPart part in parent.Parts) {
+					Assert.IsTrue(_blocks.Remove(part.Position), "A part of the multi block is not present.");
+				}
 			}
 		}
 
@@ -187,10 +227,10 @@ namespace Structures {
 
 
 		/// <summary>
-		/// If a system with the specified ID is present return it, otherwise return null.
+		/// If a system is present at a position return it, otherwise return null.
 		/// </summary>
-		public BotSystem TryGetSystem(byte id) {
-			return _systems.TryGet(id);
+		public BotSystem TryGetSystem(BlockPosition position) {
+			return _systems.TryGet(position);
 		}
 
 		/// <summary>
