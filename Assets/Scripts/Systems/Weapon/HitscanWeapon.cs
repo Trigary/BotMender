@@ -42,7 +42,10 @@ namespace Systems.Weapon {
 
 			ServerFireWeapon(point, block);
 			Structure.Body.AddForceAtPosition(Turret.rotation * Constants.Kickback, TurretEnd, ForceMode.Impulse);
-			ClientFireWeapon(point);
+
+			if (NetworkUtils.IsClient) {
+				ClientFireWeapon(point);
+			}
 			NetworkServer.SendTcpToClients(TcpPacketType.Server_System_Execute, buffer => {
 				buffer.Write(Structure.Id);
 				Block.Position.Serialize(buffer);

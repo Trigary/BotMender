@@ -10,8 +10,11 @@ using DoubleSocket.Utility.BitBuffer;
 using JetBrains.Annotations;
 using Networking;
 using Playing;
+using Playing.Controller;
+using Playing.Networking;
 using UnityEngine;
 using UnityEngine.Assertions;
+using Utilities;
 
 namespace Structures {
 	/// <summary>
@@ -43,6 +46,10 @@ namespace Structures {
 
 		private void OnDestroy() {
 			Destroy(Body);
+			BotCache.Remove(Id);
+			if (NetworkUtils.LocalId == Id) {
+				Destroy(Camera.main?.GetComponent<PlayingCameraController>());
+			}
 		}
 
 
@@ -60,6 +67,7 @@ namespace Structures {
 			structure.MaxHealth = structure.Health;
 			structure._systems.Finished();
 			structure.ApplyMass(false);
+			BotCache.Add(structure);
 			return structure;
 		}
 
@@ -103,11 +111,11 @@ namespace Structures {
 		/// </summary>
 		public void SimulatedPhysicsUpdate(float timestepMultiplier) {
 			_systems.MoveRotate(MovementInput, timestepMultiplier);
+			Body.drag = Body.velocity.sqrMagnitude * RigidbodyDragMultiplier + RigidbodyDragOffset;
 		}
 
 		private void FixedUpdate() {
 			_systems.Tick();
-			Body.drag = Body.velocity.sqrMagnitude * RigidbodyDragMultiplier + RigidbodyDragOffset;
 		}
 
 
@@ -164,6 +172,7 @@ namespace Structures {
 
 			if (status == 1) {
 				Destroy(gameObject);
+				StartCoroutine(CoroutineUtils.Delay(1, () => LocalPlayingPlayerInitializer.RespawnPlayerStructure(Id)));
 			} else if (status == 2) {
 				RemoveNotConnectedBlocks();
 				ApplyMass(true);
@@ -173,6 +182,7 @@ namespace Structures {
 		private void RemoveBlock(RealLiveBlock block) {
 			Mass -= block.Info.Mass;
 			Destroy(block.gameObject);
+			_systems.TryRemove(block.Position);
 
 			Assert.IsTrue(_blocks.Remove(block.Position), "The block is not present.");
 			if (block is LiveMultiBlockParent parent) {
@@ -227,7 +237,7 @@ namespace Structures {
 
 
 		/// <summary>
-		/// If a system is present at a position return it, otherwise return null.
+		/// If a system is present at the position returns it, otherwise returns null.
 		/// </summary>
 		public BotSystem TryGetSystem(BlockPosition position) {
 			return _systems.TryGet(position);

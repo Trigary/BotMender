@@ -3,12 +3,13 @@ using Blocks;
 using Networking;
 using UnityEngine;
 
-namespace Playing {
+namespace Playing.Networking {
 	/// <summary>
-	/// Handles all networked bots on the client-side.
+	/// Handles all networkeding related things on the client-side.
+	/// Host clients also need to have an instance of this behaviour.
 	/// Only a single instance of this behaviour should be present at once.
 	/// </summary>
-	public class ClientBotsController : MonoBehaviour {
+	public class ClientNetworkingHandler : MonoBehaviour {
 		private void Start() {
 			NetworkClient.SetTcpHandler(TcpPacketType.Server_Structure_Damage,
 				buffer => BotCache.Get(buffer.ReadByte()).DamagedClient(buffer));
@@ -17,6 +18,8 @@ namespace Playing {
 				buffer => ((WeaponSystem)BotCache.Get(buffer.ReadByte()).TryGetSystem(BlockPosition.Deserialize(buffer)))
 					.ClientExecuteWeaponFiring(buffer));
 		}
+
+
 
 		private void OnDestroy() {
 			NetworkClient.SetTcpHandler(TcpPacketType.Server_Structure_Damage, null);

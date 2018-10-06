@@ -7,7 +7,7 @@ using Structures;
 using UnityEngine;
 using Utilities;
 
-namespace Playing {
+namespace Playing.Networking {
 	/// <summary>
 	/// A class which handles the phyiscs in a networked situation.
 	/// Since there is no demand for a change, currently only CompleteStructures can be networked.
@@ -63,10 +63,11 @@ namespace Playing {
 		/// Not all input is specified in the parameters.
 		/// </summary>
 		public void UpdateLocalInput(Vector3 trackedPosition) {
-			Vector3 movementInput = PlayerInput.ReadMovementInput();
-			byte[] payload = new byte[(PlayerInput.SerializedBitsSize + 7) / 8];
+			Vector3 movementInput = new Vector3(Input.GetAxisRaw("Rightward"),
+				Input.GetAxisRaw("Upward"), Input.GetAxisRaw("Forward"));
+			byte[] payload = new byte[(BotState.InputSerializedBitsSize + 7) / 8];
 			_sharedBuffer.ClearContents(payload);
-			PlayerInput.Serialize(_sharedBuffer, movementInput, trackedPosition);
+			BotState.SerializePlayerInput(_sharedBuffer, movementInput, trackedPosition);
 
 			if (NetworkUtils.IsServer) {
 				BotCache.SetExtra(NetworkUtils.LocalId, BotCache.Extra.NetworkedPhysics, payload);
@@ -90,20 +91,20 @@ namespace Playing {
 
 		private void ServerFixedUpdate() {
 			BotCache.ForEachId(id => {
-				byte[] packet = (byte[])BotCache.TakeExtra(id, BotCache.Extra.NetworkedPhysics);
+				byte[] packet = BotCache.TakeExtra<byte[]>(id, BotCache.Extra.NetworkedPhysics);
 				if (packet == null) {
 					return;
 				}
 
 				_sharedBuffer.SetContents(packet);
-				if (_sharedBuffer.TotalBitsLeft >= PlayerInput.SerializedBitsSize) {
-					PlayerInput.Deserialize(_sharedBuffer, out Vector3 movementInput, out Vector3 trackedPosition);
+				if (_sharedBuffer.TotalBitsLeft >= BotState.InputSerializedBitsSize) {
+					BotState.DeserializePlayerInput(_sharedBuffer, out Vector3 movementInput, out Vector3 trackedPosition);
 					BotCache.Get(id).UpdateInputOnly(movementInput, trackedPosition);
 				}
 			});
 			Simulate(TimestepMillis);
 
-			if (NetworkServer.HasClients) {
+			if (NetworkServer.ClientCount > 0) {
 				int bitSize = 48 + BotState.SerializedBitsSize * BotCache.Count;
 				_sharedBuffer.ClearContents(new byte[(bitSize + 7) / 8]);
 				_sharedBuffer.WriteTimestamp(DoubleProtocol.TimeMillis);

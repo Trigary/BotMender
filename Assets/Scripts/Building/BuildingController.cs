@@ -5,7 +5,7 @@ using Blocks;
 using Blocks.Info;
 using Blocks.Placed;
 using DoubleSocket.Utility.BitBuffer;
-using Playing;
+using Playing.Controller;
 using Structures;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -92,8 +92,7 @@ namespace Building {
 
 					complete.transform.position = new Vector3(0, 10, 0);
 					complete.gameObject.AddComponent<LocalBotController>();
-					_camera.gameObject.AddComponent<PlayingCameraController>()
-						.Initialize(complete.GetComponent<Rigidbody>());
+					_camera.gameObject.AddComponent<PlayingCameraController>().Initialize(complete);
 
 					Destroy(_camera.gameObject.GetComponent<BuildingCameraController>());
 					Destroy(gameObject);

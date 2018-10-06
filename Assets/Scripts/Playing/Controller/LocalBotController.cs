@@ -1,17 +1,17 @@
 ﻿using Systems.Weapon;
 using Networking;
+using Playing.Networking;
 using Structures;
 using UnityEngine;
 
-namespace Playing {
+namespace Playing.Controller {
 	/// <summary>
-	/// Gives the player controls over the structure it is attached to.
+	/// Gives the local player control over the structure it is attached to.
 	/// </summary>
 	public class LocalBotController : MonoBehaviour {
 		private Camera _camera;
 		private CompleteStructure _structure;
 		private NetworkedPhyiscs _networkedPhyiscs;
-		private Vector3 _lastTrackedPosition;
 
 		private void Awake() {
 			_camera = Camera.main;
@@ -42,13 +42,8 @@ namespace Playing {
 			}
 
 			Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
-			if (Physics.Raycast(ray, out RaycastHit hit)) {
-				_lastTrackedPosition = hit.point;
-			} else {
-				_lastTrackedPosition = ray.origin + ray.direction * 500;
-			}
-
-			_networkedPhyiscs.UpdateLocalInput(_lastTrackedPosition);
+			_networkedPhyiscs.UpdateLocalInput(Physics.Raycast(ray, out RaycastHit hit)
+				? hit.point : ray.origin + ray.direction * 500);
 		}
 	}
 }

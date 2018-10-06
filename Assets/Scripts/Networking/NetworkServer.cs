@@ -41,11 +41,6 @@ namespace Networking {
 		/// </summary>
 		public static int ClientCount => _clients?.Count ?? -1;
 
-		/// <summary>
-		/// Returns true if the ClientCount is bigger than 0.
-		/// </summary>
-		public static bool HasClients => _clients != null && _clients.Count > 0;
-
 
 
 		public static OnPacketReceived UdpHandler { get; set; }

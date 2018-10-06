@@ -41,8 +41,8 @@ namespace Playing {
 		/// Returns the extra data associated with the speicified player/bot id and owner.
 		/// Returns null if the associated value is null or if no value was set.
 		/// </summary>
-		public static object GetExtra(byte id, Extra owner) {
-			return ExtraData[id, (int)owner];
+		public static T GetExtra<T>(byte id, Extra owner) {
+			return (T)ExtraData[id, (int)owner];
 		}
 
 		/// <summary>
@@ -50,13 +50,13 @@ namespace Playing {
 		/// or the value returned by the specified supplier if the extra data is null.
 		/// If the provider was called then the returned value will be stored in this cache.
 		/// </summary>
-		public static object GetExtra(byte id, Extra owner, Func<object> defaultSupplier) {
+		public static T GetExtra<T>(byte id, Extra owner, Func<T> defaultSupplier) {
 			object value = ExtraData[id, (int)owner];
 			if (value == null) {
 				value = defaultSupplier();
 				ExtraData[id, (int)owner] = value;
 			}
-			return value;
+			return (T)value;
 		}
 
 		/// <summary>
@@ -64,16 +64,17 @@ namespace Playing {
 		/// while also setting it to null afterward.
 		/// Returns null if the associated value is null or if no value was set.
 		/// </summary>
-		public static object TakeExtra(byte id, Extra owner) {
+		public static T TakeExtra<T>(byte id, Extra owner) {
 			object value = ExtraData[id, (int)owner];
 			ExtraData[id, (int)owner] = null;
-			return value;
+			return (T)value;
 		}
 
 
 
 		/// <summary>
-		/// Registered the specified structure in this cache.
+		/// Registers the specified structure in this cache.
+		/// Should only be called by the CompleteStructure class.
 		/// </summary>
 		public static void Add(CompleteStructure structure) {
 			Assert.IsNull(Cache[structure.Id], "A structure with that id is already registered.");
@@ -84,8 +85,9 @@ namespace Playing {
 		/// <summary>
 		/// Remove the structure with the specified player/bot id and returns it.
 		/// Fails if the structure isn't registered.
+		/// Should only be called by the CompleteStructure class.
 		/// </summary>
-		public static CompleteStructure Remove(byte id) {
+		public static void Remove(byte id) {
 			CompleteStructure structure = Cache[id];
 			Assert.IsNotNull(structure, "No structure with that id is registered.");
 			Cache[id] = null;
@@ -93,7 +95,6 @@ namespace Playing {
 			for (int i = 0; i < ExtraCount; i++) {
 				ExtraData[id, i] = null;
 			}
-			return structure;
 		}
 
 		/// <summary>
@@ -159,7 +160,7 @@ namespace Playing {
 		/// </summary>
 		public enum Extra : byte {
 			NetworkedPhysics,
-			ServerBotsController
+			NetworkedBotController
 		}
 	}
 }
