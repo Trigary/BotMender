@@ -40,7 +40,7 @@ namespace Utilities {
 		/// Queues the specfied action to be invoked on the main Unity thread.
 		/// This method delayed the execution by the specified amount of milliseconds.
 		/// </summary>
-		public static void InvokeDelayed(Action action, int delay) {
+		public static void InvokeDelayed(int delay, Action action) {
 			Task.Delay(delay).ContinueWith(task => {
 				lock (_instance._actions) {
 					_instance._actions.Enqueue(action);

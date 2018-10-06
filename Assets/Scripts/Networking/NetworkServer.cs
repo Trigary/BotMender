@@ -271,7 +271,7 @@ namespace Networking {
 				if (!NetworkUtils.SimulateNetworkConditions || NetworkUtils.IsLocal(serverClient.Id)) {
 					UnityFixedDispatcher.InvokeNoDelay(handler);
 				} else {
-					UnityFixedDispatcher.InvokeDelayed(handler, NetworkUtils.SimulatedNetDelay);
+					UnityFixedDispatcher.InvokeDelayed(NetworkUtils.SimulatedNetDelay, handler);
 				}
 			}
 
@@ -295,7 +295,7 @@ namespace Networking {
 				if (!NetworkUtils.SimulateNetworkConditions || NetworkUtils.IsLocal(serverClient.Id)) {
 					UnityFixedDispatcher.InvokeNoDelay(handler);
 				} else {
-					UnityFixedDispatcher.InvokeDelayed(handler, NetworkUtils.SimulatedNetDelay);
+					UnityFixedDispatcher.InvokeDelayed(NetworkUtils.SimulatedNetDelay, handler);
 				}
 			}
 

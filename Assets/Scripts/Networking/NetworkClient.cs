@@ -239,7 +239,7 @@ namespace Networking {
 				if (!NetworkUtils.SimulateNetworkConditions || NetworkUtils.IsServer) {
 					UnityFixedDispatcher.InvokeNoDelay(handler);
 				} else {
-					UnityFixedDispatcher.InvokeDelayed(handler, NetworkUtils.SimulatedNetDelay);
+					UnityFixedDispatcher.InvokeDelayed(NetworkUtils.SimulatedNetDelay, handler);
 				}
 			}
 
@@ -273,7 +273,7 @@ namespace Networking {
 				} else if (!NetworkUtils.SimulateLosingPacket) {
 					int delay = NetworkUtils.SimulatedNetDelay;
 					netDelayIncrease += delay;
-					UnityFixedDispatcher.InvokeDelayed(handler, delay);
+					UnityFixedDispatcher.InvokeDelayed(delay, handler);
 				} else {
 					return;
 				}

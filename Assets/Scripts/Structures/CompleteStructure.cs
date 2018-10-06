@@ -172,7 +172,7 @@ namespace Structures {
 
 			if (status == 1) {
 				Destroy(gameObject);
-				StartCoroutine(CoroutineUtils.Delay(1, () => LocalPlayingPlayerInitializer.RespawnPlayerStructure(Id)));
+				UnityFixedDispatcher.InvokeDelayed(1000, () => LocalPlayingPlayerInitializer.RespawnPlayerStructure(Id));
 			} else if (status == 2) {
 				RemoveNotConnectedBlocks();
 				ApplyMass(true);
