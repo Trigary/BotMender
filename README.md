@@ -25,16 +25,7 @@ Since the systems are defined by the blocks, a bot can be serialized just by ser
 The health of a bot is the sum of its blocks' health.
 
 # Current state
-
-This project is currently an early prototype.
-Nothing is final and everything which has been implemented is subject to improvement.
-The current goal is to implement a basic version of as many of the features as possible.
-This allows design errors to be spotted early on,
-before any radical would be required when fixing them.
-This also means that all front-end development is kept to a bare minimum.
-At the moment the short-term goal is to make the already implemented features
-smoothly work in a networked environment.
-
+This project is currently an early prototype. Nothing is final, and everything which has been implemented is subject to improvement. The current goal is to implement a basic version of as many of the features as possible. This allows design errors to be spotted early on before any radical would be required when fixing them. This also means that all front-end development is kept to a bare minimum. At the moment the short-term goal is to make the already implemented features smoothly work in a networked environment.
 # Contributing
 
 If you are thinking of contributing, feel free to do so, no need to be shy!
