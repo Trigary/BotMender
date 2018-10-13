@@ -25,3 +25,10 @@ If you are still interested in contributing, you may want to consider heading ov
 You should select an issue labeled with "help wanted".
 If an issue is also labeled with "good first issue", then it requires very little knowledge
 regarding the project - great for first time contributors!
+
+##Project dependencies
+
+To contribute this project you should have installed the following pakages:
+
+* [Unity 2018.2.1](https://unity3d.com/es/get-unity/download/archive) 
+* [Blender](https://www.blender.org/download/)
