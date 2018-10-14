@@ -149,12 +149,12 @@ namespace Blocks {
 
 
 		private static void AddSingle(BlockType type, uint health, uint mass, BlockSides connectSides) {
-			Blocks[(ushort)type] = new SingleBlockInfo(type, health, mass, Resources.Load("Blocks/" + type) as GameObject,
+			Blocks[(ushort)type] = new SingleBlockInfo(type, health, mass, Resources.Load<GameObject>("Blocks/" + type),
 				connectSides);
 		}
 
 		private static MultiBlockInfo AddMulti(BlockType type, uint health, uint mass) {
-			MultiBlockInfo info = new MultiBlockInfo(type, health, mass, Resources.Load("Blocks/" + type) as GameObject);
+			MultiBlockInfo info = new MultiBlockInfo(type, health, mass, Resources.Load<GameObject>("Blocks/" + type));
 			Blocks[(ushort)type] = info;
 			return info;
 		}

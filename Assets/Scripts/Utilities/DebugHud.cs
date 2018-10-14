@@ -36,7 +36,7 @@ namespace Utilities {
 				: NetworkUtils.IsClient ? "Client-Only" : "Disconnected";
 
 			_hud.text = $@"Status: {status}
-UDP RTT: {Mathf.RoundToInt(2 * NetworkClient.UdpNetDelay)}
+(UDP) RTT: {Mathf.RoundToInt(2 * NetworkClient.UdpNetDelay)}
 UDP loss: {_udpLoss}%
 FPS: {(int)(1 / _fpsDeltaTime)}";
 		}

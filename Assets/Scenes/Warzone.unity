@@ -367,7 +367,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: 'Status: Disconnected
 
-    UDP RTT: 00
+    (UDP) RTT: 00
 
     UDP loss: 00%
 
