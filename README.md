@@ -8,7 +8,7 @@ Here are two examples of bots: *(authentic programmer graphics)*
 ![example-bot](example-bot.png)  
 ![bot-showcase](bot-showcase.gif)
 
-And a showcase of the custom networking implementation:  
+And a showcase of the custom networking implementation (the server is fully authoritative):  
 ![bot-fight](bot-fight.gif)
 
 ## Blocks, building, systems
@@ -58,6 +58,14 @@ This allows the bypassing of Unity's limited and poorly documented HLAPI and LLA
 The library uses a synchronized TCP and UDP socket for each party,
 therefore taking advantage of TCP's flow and congestion control while also allowing
 UDP packets to be used when reliability and ordered packets are not required.
+
+Most importantly of all, the servers are fully authoritative in this implementation.
+For example, this is how movement is networking is done in this project:
+all parties extrapolate the position of the networked objects using physics and the last input.
+The local client knows that the server also does this extrapolation,
+therefore it only applies the input change with a delay (of trip time): this minimizes the time
+difference between the time the server and the time the client applies the input change,
+leading to near identical predictions, therefore only unnoticeable state corrections.
 
 The game is designed with both dedicated servers and player hosted games in mind.
 This means that the server may or may not be a client as well.
