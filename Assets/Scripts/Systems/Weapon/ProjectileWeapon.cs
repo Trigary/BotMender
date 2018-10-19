@@ -6,7 +6,7 @@ using Structures;
 namespace Systems.Weapon {
 	/// <summary>
 	/// A weapon system which fires physics-controlled projectile shots.
-	/// The impact point is unkown, since colliders may enter the path of the projectile durings its flight.
+	/// The impact point is unknown, since colliders may enter the path of the projectile during its flight.
 	/// These projectiles may be affected by gravity, etc.
 	/// This is the alternative to the HitscanWeapon system base.
 	/// </summary>
@@ -19,7 +19,7 @@ namespace Systems.Weapon {
 
 		public override bool ServerTryExecuteWeaponFiring(float inaccuracy) {
 			//server returns an initial state of the projectile
-			//the server should send a networkedphysics state update and the projectile state,
+			//the server should send a NetworkedPhysics state update and the projectile state,
 			//then I can use NetworkedPhysics
 			throw new NotImplementedException();
 		}

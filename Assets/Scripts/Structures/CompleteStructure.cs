@@ -18,7 +18,7 @@ using Utilities;
 
 namespace Structures {
 	/// <summary>
-	/// A structure which is no longer editable, but is damagable and destructable.
+	/// A structure which is no longer editable, but is damageable and destructible.
 	/// Internally creates a Rigidbody which is destroyed when the behaviour is destroyed.
 	/// </summary>
 	public class CompleteStructure : MonoBehaviour {
@@ -105,7 +105,7 @@ namespace Structures {
 
 
 		/// <summary>
-		/// Should only be called by the NetworkedPhyiscs class.
+		/// Should only be called by the NetworkedPhysics class.
 		/// This method applies the player input, simulating a part of or a while FixedUpdate (see: timestepMultiplier).
 		/// Does not replace the FixedUpdate call, this method relies on it being called before the next normal physics step.
 		/// </summary>
@@ -227,7 +227,7 @@ namespace Structures {
 		}
 
 		/// <summary>
-		/// Serializeses this bot's current state and its ID into the specified buffer.
+		/// Serializes this structure's current state and its ID into the specified buffer.
 		/// Should only be called by the server.
 		/// </summary>
 		public void SerializeState(BitBuffer buffer) {

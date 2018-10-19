@@ -67,7 +67,7 @@ namespace Playing.Controller {
 			transform.RotateAround(_structure.position + _offset, Vector3.up, Input.GetAxisRaw("MouseX") * YawFactor);
 
 			float newPitch = Mathf.Clamp(_pitch + Input.GetAxisRaw("MouseY") * PitchFactor, MinPitch, MaxPitch);
-			transform.RotateAround(_structure.position, transform.right, (newPitch - _pitch));
+			transform.RotateAround(_structure.position, transform.right, newPitch - _pitch);
 			_pitch = newPitch;
 		}
 	}

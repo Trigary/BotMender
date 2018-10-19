@@ -12,7 +12,7 @@ namespace Playing.Networking {
 	/// A temporary class (read: should get deleted later) which sets the server/local client up.
 	/// </summary>
 	public class LocalPlayingPlayerInitializer : MonoBehaviour {
-		private static NetworkedPhyiscs _networkedPhysics;
+		private static NetworkedPhysics _networkedPhysics;
 
 		/// <summary>
 		/// Recreates the specified player's structure.
@@ -39,7 +39,7 @@ namespace Playing.Networking {
 
 
 		private void Start() {
-			Debug.Log("Initializating networking...");
+			Debug.Log("Initializing networking...");
 			NetworkClient.Start(IPAddress.Loopback, OnClientOnlyConnected);
 			Destroy(gameObject);
 		}
@@ -76,7 +76,7 @@ namespace Playing.Networking {
 
 
 		private void OnSuccess() {
-			_networkedPhysics = NetworkedPhyiscs.Create();
+			_networkedPhysics = NetworkedPhysics.Create();
 			_networkedPhysics.gameObject.AddComponent<ClientNetworkingHandler>();
 			if (NetworkUtils.IsServer) {
 				_networkedPhysics.gameObject.AddComponent<ServerNetworkingHandler>();

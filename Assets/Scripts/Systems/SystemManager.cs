@@ -10,7 +10,7 @@ using Utilities;
 
 namespace Systems {
 	/// <summary>
-	/// A class which manages a bot's systems.
+	/// A class which manages a structure's systems.
 	/// </summary>
 	public class SystemManager {
 		public const float FiringPause = 0.075f; //in seconds
@@ -136,7 +136,7 @@ namespace Systems {
 
 		/// <summary>
 		/// This method informs the server that the client currently wishes to fire weapons.
-		/// The server determines whether a weapon can be fired towards the specfied position in its current state.
+		/// The server determines whether a weapon can be fired towards the specified position in its current state.
 		/// If it can, the weapon is fired and the client gets notified with all necessary information.
 		/// </summary>
 		public void ServerTryWeaponFiring() {

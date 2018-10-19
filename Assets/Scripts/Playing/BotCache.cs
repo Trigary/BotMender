@@ -38,7 +38,7 @@ namespace Playing {
 
 
 		/// <summary>
-		/// Returns the extra data associated with the speicified player/bot id and owner.
+		/// Returns the extra data associated with the specified player/bot id and owner.
 		/// Returns null if the associated value is null or if no value was set.
 		/// </summary>
 		public static T GetExtra<T>(byte id, Extra owner) {
@@ -46,7 +46,7 @@ namespace Playing {
 		}
 
 		/// <summary>
-		/// Returns the extra data associated with the speicified player/bot id and owner
+		/// Returns the extra data associated with the specified player/bot id and owner
 		/// or the value returned by the specified supplier if the extra data is null.
 		/// If the provider was called then the returned value will be stored in this cache.
 		/// </summary>
@@ -60,7 +60,7 @@ namespace Playing {
 		}
 
 		/// <summary>
-		/// Returns the extra data associated with the speicified player/bot id and owner
+		/// Returns the extra data associated with the specified player/bot id and owner
 		/// while also setting it to null afterward.
 		/// Returns null if the associated value is null or if no value was set.
 		/// </summary>
@@ -98,7 +98,7 @@ namespace Playing {
 		}
 
 		/// <summary>
-		/// Sets the extra data associated with the speicified player/bot id and owner.
+		/// Sets the extra data associated with the specified player/bot id and owner.
 		/// In order to simulate the removal of the data, set associate the keys with null.
 		/// </summary>
 		public static void SetExtra(byte id, Extra owner, [CanBeNull] object value) {

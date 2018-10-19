@@ -2,7 +2,7 @@
 
 namespace Blocks.Shared {
 	/// <summary>
-	/// The base class of placed and live mutli block parents.
+	/// The base class of placed and live multi block parents.
 	/// </summary>
 	public interface IMultiBlockParent {
 		void Initialize(BlockSides connectSides, BlockPosition position, MultiBlockInfo info,

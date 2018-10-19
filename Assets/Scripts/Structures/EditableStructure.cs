@@ -212,7 +212,7 @@ namespace Structures {
 
 		/// <summary>
 		/// Overrides the current structure (read: removes all previous blocks) with the serialized one in the buffer.
-		/// Lazely validates the data and returns false, if it is found invalid.
+		/// Lazily validates the data and returns false, if it is found invalid.
 		/// No checks are not made, #GetStructureErrors and #GetNotConnectedBlocks should be called after this method.
 		/// </summary>
 		public bool Deserialize(BitBuffer buffer) {
@@ -255,8 +255,8 @@ namespace Structures {
 			for (int bit = 0; bit < 6; bit++) {
 				BlockSides side = rotatedConnectSides & (BlockSides)(1 << bit);
 				if (side == BlockSides.None
-					|| !position.GetOffseted(side, out BlockPosition offseted)
-					|| !_blocks.TryGetValue(offseted, out IPlacedBlock block)) {
+					|| !position.GetOffset(side, out BlockPosition offset)
+					|| !_blocks.TryGetValue(offset, out IPlacedBlock block)) {
 					continue;
 				}
 

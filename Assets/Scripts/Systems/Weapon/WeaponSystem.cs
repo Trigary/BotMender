@@ -1,7 +1,6 @@
 ﻿using Blocks.Live;
 using DoubleSocket.Utility.BitBuffer;
 using Networking;
-using Playing;
 using Playing.Networking;
 using Structures;
 using UnityEngine;
@@ -42,7 +41,7 @@ namespace Systems.Weapon {
 		}
 
 		/// <summary>
-		/// Called whenver the weapon was fired. Internally calculates sets the cooldonw end timestamp.
+		/// Called whenever the weapon was fired. Internally calculates sets the cooldown end timestamp.
 		/// </summary>
 		public void UpdateCooldown() {
 			_cooldownEnds = Time.time + Constants.Cooldown;
@@ -76,7 +75,7 @@ namespace Systems.Weapon {
 
 
 		/// <summary>
-		/// Returns whether the weapon can be fired towards the specfied position in its current state.
+		/// Returns whether the weapon can be fired towards the specified position in its current state.
 		/// If it can, the weapon is fired and the client gets notified with all necessary information.
 		/// A weapon can't be fired it it would hit the bot itself or if the angle between
 		/// the desired and the actual facing is too great.
@@ -111,7 +110,7 @@ namespace Systems.Weapon {
 
 		/// <summary>
 		/// A single firing weapon type only fires when the fire button is clicked.
-		/// Other weapon types firing continiously until the fire button is released.
+		/// Other weapon types firing continuously until the fire button is released.
 		/// </summary>
 		public static bool IsSingleFiringType(Type type) {
 			return type == Type.Plasma || type == Type.Beam;
@@ -138,7 +137,7 @@ namespace Systems.Weapon {
 				YawLimit = yawLimit;
 				MinPitch = minPitch;
 				MaxPitch = maxPitch;
-				RotationSpeed = rotationSpeed * NetworkedPhyiscs.TimestepSeconds;
+				RotationSpeed = rotationSpeed * NetworkedPhysics.TimestepSeconds;
 				Kickback = new Vector3(0, 0, kickback * -1);
 				Cooldown = cooldown;
 				Energy = energy;

@@ -27,8 +27,8 @@ namespace Utilities {
 
 
 		/// <summary>
-		/// Queues the specfied action to be invoked on the main Unity thread.
-		/// This method doesn't add any artifical latency.
+		/// Queues the specified action to be invoked on the main Unity thread.
+		/// This method doesn't add any artificial latency.
 		/// </summary>
 		public static void InvokeNoDelay(Action action) {
 			lock (_instance._actions) {
@@ -37,7 +37,7 @@ namespace Utilities {
 		}
 
 		/// <summary>
-		/// Queues the specfied action to be invoked on the main Unity thread.
+		/// Queues the specified action to be invoked on the main Unity thread.
 		/// This method delayed the execution by the specified amount of milliseconds.
 		/// </summary>
 		public static void InvokeDelayed(int delay, Action action) {

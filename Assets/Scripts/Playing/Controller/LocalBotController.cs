@@ -11,7 +11,7 @@ namespace Playing.Controller {
 	public class LocalBotController : MonoBehaviour {
 		private Camera _camera;
 		private CompleteStructure _structure;
-		private NetworkedPhyiscs _networkedPhyiscs;
+		private NetworkedPhysics _networkedPhysics;
 
 		private void Awake() {
 			_camera = Camera.main;
@@ -23,8 +23,8 @@ namespace Playing.Controller {
 		/// <summary>
 		/// Initializes this LocalBotController instance. Should only be called once, directly after instantiation.
 		/// </summary>
-		public void Initialize(NetworkedPhyiscs networkedPhyiscs) {
-			_networkedPhyiscs = networkedPhyiscs;
+		public void Initialize(NetworkedPhysics networkedPhysics) {
+			_networkedPhysics = networkedPhysics;
 		}
 
 
@@ -42,7 +42,7 @@ namespace Playing.Controller {
 			}
 
 			Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
-			_networkedPhyiscs.UpdateLocalInput(Physics.Raycast(ray, out RaycastHit hit)
+			_networkedPhysics.UpdateLocalInput(Physics.Raycast(ray, out RaycastHit hit)
 				? hit.point : ray.origin + ray.direction * 500);
 		}
 	}

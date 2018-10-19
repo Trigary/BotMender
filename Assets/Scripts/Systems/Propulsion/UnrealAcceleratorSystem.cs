@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Systems.Propulsion {
 	/// <summary>
-	/// Changes the bot's velocity directly: doesn't apply any forces.
+	/// Changes the structure's velocity directly: doesn't apply any forces.
 	/// </summary>
 	public class UnrealAcceleratorSystem : PropulsionSystem {
 		public UnrealAcceleratorSystem(CompleteStructure structure, RealLiveBlock block) : base(structure, block) { }

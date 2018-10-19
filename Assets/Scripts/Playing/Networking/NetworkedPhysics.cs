@@ -9,9 +9,9 @@ using Utilities;
 
 namespace Playing.Networking {
 	/// <summary>
-	/// A class which handles the phyiscs in a networked situation.
+	/// A class which handles the physics in a networked situation.
 	/// Since there is no demand for a change, currently only CompleteStructures can be networked.
-	/// All of them need to be registeres in this class.
+	/// All of them need to be registered in this class.
 	/// 
 	/// This class takes over the UDP packet creation and handling of the client and/or the server.
 	/// This control is released when the behaviour is destroyed.
@@ -19,7 +19,7 @@ namespace Playing.Networking {
 	/// Client-to-server UDP packet contents: PlayerInput
 	/// Server-to-client UDP packet contents: compressed timestamp + player count * BotState
 	/// </summary>
-	public class NetworkedPhyiscs : MonoBehaviour {
+	public class NetworkedPhysics : MonoBehaviour {
 		public const int TimestepMillis = 20;
 		public const float TimestepSeconds = 0.02f;
 		private const float MaxNonNetDelayMillis = TimestepMillis + 1000f / NetworkUtils.UdpSendFrequency;
@@ -28,8 +28,8 @@ namespace Playing.Networking {
 		/// <summary>
 		/// Creates a new GameObject containing this component and also initializes, returns itself.
 		/// </summary>
-		public static NetworkedPhyiscs Create() {
-			NetworkedPhyiscs instance = new GameObject("NetworkedPhysics").AddComponent<NetworkedPhyiscs>();
+		public static NetworkedPhysics Create() {
+			NetworkedPhysics instance = new GameObject("NetworkedPhysics").AddComponent<NetworkedPhysics>();
 			if (NetworkUtils.IsServer) {
 				NetworkClient.UdpHandler = buffer => { };
 				NetworkServer.UdpHandler = (sender, buffer) => BotCache.SetExtra(sender.Id,

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Playing.Networking {
 	/// <summary>
-	/// Handles all networkeding related things on the client-side.
+	/// Handles all networking related things on the client-side.
 	/// Host clients also need to have an instance of this behaviour.
 	/// Only a single instance of this behaviour should be present at once.
 	/// </summary>

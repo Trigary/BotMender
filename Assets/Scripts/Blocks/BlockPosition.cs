@@ -63,17 +63,17 @@ namespace Blocks {
 
 
 		/// <summary>
-		/// Returns false if the offseted value is out of bounds.
+		/// Returns false if the offset value is out of bounds.
 		/// </summary>
-		public bool GetOffseted(int x, int y, int z, out BlockPosition output) {
+		public bool GetOffset(int x, int y, int z, out BlockPosition output) {
 			return FromComponents(X + x, Y + y, Z + z, out output);
 		}
 
 		/// <summary>
-		/// Returns false if the offseted value is out of bounds.
+		/// Returns false if the offset value is out of bounds.
 		/// </summary>
 		// ReSharper disable once AnnotateCanBeNullParameter
-		public bool GetOffseted(BlockSides side, out BlockPosition output) {
+		public bool GetOffset(BlockSides side, out BlockPosition output) {
 			switch (side) {
 				case BlockSides.Right:
 					output = X == MaxAxisValue ? null : new BlockPosition(X + 1, Y, Z);

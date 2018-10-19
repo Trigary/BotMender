@@ -65,7 +65,7 @@ namespace Blocks {
 		/// (except 'extra', which specifies extra information).
 		/// </summary>
 		private static byte GetByte(int x, int y, int z, int extra) {
-			return (byte)(((x % 4) | ((y % 4) << 2) | ((z % 4) << 4)) | (extra << 6));
+			return (byte)((x % 4) | ((y % 4) << 2) | ((z % 4) << 4) | (extra << 6));
 		}
 
 		/// <summary>

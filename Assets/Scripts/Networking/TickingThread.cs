@@ -6,7 +6,11 @@ namespace Networking {
 	/// A class which controls a thread which periodically executes an action.
 	/// </summary>
 	public class TickingThread {
-		public int Frequency { get { return 1000 / _delay; } set { _delay = 1000 / value; } }
+		public int Frequency {
+			get => 1000 / _delay;
+			set => _delay = 1000 / value;
+		}
+
 		private volatile int _delay;
 		private readonly Thread _thread;
 

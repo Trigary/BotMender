@@ -13,7 +13,7 @@ namespace Playing {
 
 
 		/// <summary>
-		/// Serializeses the player input into the specified buffer.
+		/// Serializes the player input into the specified buffer.
 		/// </summary>
 		public static void SerializePlayerInput(BitBuffer buffer, Vector3 movementInput, Vector3 trackedPosition) {
 			int serialized = 0;
@@ -35,7 +35,7 @@ namespace Playing {
 
 
 		/// <summary>
-		/// Deserializeses the player input from the specified buffer.
+		/// Deserializes the player input from the specified buffer.
 		/// </summary>
 		public static void DeserializePlayerInput(BitBuffer buffer, out Vector3 movementInput, out Vector3 trackedPosition) {
 			int input = (int)buffer.ReadBits(6);
@@ -44,9 +44,9 @@ namespace Playing {
 		}
 
 		private static float GetInputAxis(int input, int offset) {
-			if ((input & (1 << offset)) == (1 << offset)) {
+			if ((input & (1 << offset)) == 1 << offset) {
 				return 1;
-			} else if ((input & (1 << (offset + 1))) == (1 << (offset + 1))) {
+			} else if ((input & (1 << (offset + 1))) == 1 << (offset + 1)) {
 				return -1;
 			} else {
 				return 0;

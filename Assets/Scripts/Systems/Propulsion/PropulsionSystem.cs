@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Systems.Propulsion {
 	/// <summary>
-	/// A system which affects the bot's movement and/or rotation.
+	/// A system which affects the structure's movement and/or rotation.
 	/// </summary>
 	public abstract class PropulsionSystem : BotSystem {
 		protected PropulsionSystem(CompleteStructure structure, RealLiveBlock block) : base(structure, block) { }
