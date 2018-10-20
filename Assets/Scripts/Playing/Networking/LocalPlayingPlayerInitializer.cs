@@ -25,7 +25,7 @@ namespace Playing.Networking {
 		}
 
 		private static CompleteStructure CreateStructure(byte playerId) {
-			CompleteStructure structure = CompleteStructure.Create(BuildingController.ExampleStructure, playerId);
+			CompleteStructure structure = CompleteStructure.Create(MenuController.ExampleStructure, playerId);
 			Assert.IsNotNull(structure, "The example structure creation must be successful.");
 			structure.transform.position = new Vector3(0, 10, 0);
 			return structure;

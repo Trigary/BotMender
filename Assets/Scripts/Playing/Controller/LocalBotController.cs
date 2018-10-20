@@ -16,6 +16,7 @@ namespace Playing.Controller {
 		private void Awake() {
 			_camera = Camera.main;
 			_structure = GetComponent<CompleteStructure>();
+			Cursor.lockState = CursorLockMode.Locked;
 		}
 
 
@@ -30,6 +31,10 @@ namespace Playing.Controller {
 
 
 		private void Update() {
+			if (Input.GetButtonDown("Escape")) {
+				//TODO switch back to menu scene
+			}
+
 			if (Input.GetButtonDown("Fire1")) {
 				NetworkClient.SendTcp(TcpPacketType.Client_System_StartFiring, buffer => { });
 			}

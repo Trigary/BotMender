@@ -252,7 +252,7 @@ namespace Structures {
 
 
 
-		private void ApplyMass(bool keepLocation) {
+		private void ApplyMass(bool keepLocation) { //TODO can I make this always true?
 			Vector3 center = new Vector3();
 			uint mass = 0;
 			foreach (RealLiveBlock real in _blocks.Values.OfType<RealLiveBlock>()) {

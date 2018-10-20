@@ -20,6 +20,10 @@ namespace Building {
 
 
 		private void FixedUpdate() {
+			if (Cursor.lockState == CursorLockMode.None) {
+				return;
+			}
+
 			_pitch += Input.GetAxisRaw("MouseY") * PitchFactor;
 			if (_pitch < -90) {
 				_pitch = -90;
@@ -31,9 +35,9 @@ namespace Building {
 			transform.rotation = Quaternion.Euler(_pitch, _yaw, 0);
 
 			transform.position += transform.rotation * new Vector3(
-				Input.GetAxisRaw("Rightward") * HorizontalFactor,
-				Input.GetAxisRaw("Upward") * VerticalFactor,
-				Input.GetAxisRaw("Forward") * HorizontalFactor
+					Input.GetAxisRaw("Rightward") * HorizontalFactor,
+					Input.GetAxisRaw("Upward") * VerticalFactor,
+					Input.GetAxisRaw("Forward") * HorizontalFactor
 			);
 		}
 	}
