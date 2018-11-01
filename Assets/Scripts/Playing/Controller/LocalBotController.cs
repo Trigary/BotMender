@@ -3,6 +3,7 @@ using Networking;
 using Playing.Networking;
 using Structures;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Playing.Controller {
 	/// <summary>
@@ -32,7 +33,13 @@ namespace Playing.Controller {
 
 		private void Update() {
 			if (Input.GetButtonDown("Escape")) {
-				//TODO switch back to menu scene
+				SceneManager.LoadScene("Building");
+				if (NetworkClient.Initialized) {
+					NetworkClient.Stop();
+				}
+				if (NetworkServer.Initialized) {
+					NetworkServer.Stop();
+				}
 			}
 
 			if (Input.GetButtonDown("Fire1")) {

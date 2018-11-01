@@ -1,5 +1,6 @@
 ﻿using Networking;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Utilities {
 	/// <summary>
@@ -10,6 +11,7 @@ namespace Utilities {
 			DontDestroyOnLoad(this);
 			Application.runInBackground = true;
 			Physics.autoSimulation = false;
+			SceneManager.LoadScene(1);
 		}
 
 		private void OnApplicationQuit() {

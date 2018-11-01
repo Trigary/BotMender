@@ -14,7 +14,9 @@ namespace Building {
 		private float _yaw;
 
 		private void Start() {
-			transform.rotation = Quaternion.Euler(_pitch, _yaw, 0);
+			Vector3 euler = transform.rotation.eulerAngles;
+			_pitch = euler.x;
+			_yaw = euler.y;
 		}
 
 

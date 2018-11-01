@@ -6,8 +6,12 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Warzone.unity
+    path: Assets/Scenes/First.unity
+    guid: d6730096006ea554e9c269d58302c2b3
+  - enabled: 1
+    path: Assets/Scenes/Building.unity
+    guid: 1443d33b66971ab44ac7f742800a8e17
+  - enabled: 1
+    path: Assets/Scenes/Playing.unity
     guid: 9a5bafbd741e2974091ac3cae12fa2ff
-  - enabled: 0
-    path: Assets/Scenes/Editor.unity
-    guid: 6666ac00adc4e78469e7c282ebaa193e
+  m_configObjects: {}
