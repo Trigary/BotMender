@@ -1,4 +1,4 @@
-# Disclamer
+# Disclaimer
 
 I have unfortunately lost interest in continuing this project.
 It has been a great learning experience, but I have reached my goal and therefore lost my motivation.
