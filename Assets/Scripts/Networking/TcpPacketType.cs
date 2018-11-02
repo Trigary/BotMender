@@ -11,8 +11,13 @@ namespace Networking {
 	[SuppressMessage("ReSharper", "InconsistentNaming")]
 	public enum TcpPacketType : byte {
 		/// <summary>
-		/// Contains the ID of the player who joined if it is sent to an already connected player,
-		/// otherwise it contains the IDs of the players who have connected before the recipient.
+		/// The client sends the data required for full initialization to the server.
+		/// </summary>
+		Client_State_Join,
+
+		/// <summary>
+		/// Contains the data of the player who joined if it is sent to an already connected player,
+		/// otherwise it contains the data of the players who have connected before the recipient.
 		/// </summary>
 		Server_State_Joined,
 

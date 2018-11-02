@@ -58,6 +58,7 @@ namespace Structures {
 		/// Loads the structure created from the given buffer into a new GameObject.
 		/// Also creates all required components for the GameObject.
 		/// No validation is done, the EditableStructure should be used for that.
+		/// The position of the GameObject is undefined.
 		/// </summary>
 		[CanBeNull]
 		public static CompleteStructure Create(BitBuffer buffer, byte id) {
@@ -66,7 +67,7 @@ namespace Structures {
 			structure.Deserialize(buffer);
 			structure.MaxHealth = structure.Health;
 			structure._systems.Finished();
-			structure.ApplyMass(false);
+			structure.ApplyMass();
 			BotCache.Add(structure);
 			return structure;
 		}
@@ -172,10 +173,10 @@ namespace Structures {
 
 			if (status == 1) {
 				Destroy(gameObject);
-				UnityFixedDispatcher.InvokeDelayed(1000, () => LocalPlayingPlayerInitializer.RespawnPlayerStructure(Id));
+				UnityFixedDispatcher.InvokeDelayed(1000, () => PlayingPlayerInitializer.RespawnPlayerStructure(Id));
 			} else if (status == 2) {
 				RemoveNotConnectedBlocks();
-				ApplyMass(true);
+				ApplyMass();
 			}
 		}
 
@@ -252,7 +253,7 @@ namespace Structures {
 
 
 
-		private void ApplyMass(bool keepLocation) { //TODO can I make this always true?
+		private void ApplyMass() {
 			Vector3 center = new Vector3();
 			uint mass = 0;
 			foreach (RealLiveBlock real in _blocks.Values.OfType<RealLiveBlock>()) {
@@ -261,9 +262,7 @@ namespace Structures {
 			}
 
 			center /= mass;
-			if (keepLocation) {
-				transform.position += center;
-			}
+			transform.position += center;
 
 			foreach (RealLiveBlock real in _blocks.Values.OfType<RealLiveBlock>()) {
 				real.transform.position -= center;

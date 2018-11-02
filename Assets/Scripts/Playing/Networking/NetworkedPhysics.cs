@@ -104,7 +104,7 @@ namespace Playing.Networking {
 			});
 			Simulate(TimestepMillis);
 
-			if (NetworkServer.ClientCount > 0) {
+			if (BotCache.Count > 0) {
 				int bitSize = 48 + BotState.SerializedBitsSize * BotCache.Count;
 				_sharedBuffer.ClearContents(new byte[(bitSize + 7) / 8]);
 				_sharedBuffer.WriteTimestamp(DoubleProtocol.TimeMillis);
@@ -172,7 +172,7 @@ namespace Playing.Networking {
 			toSimulate = (int)(currentMillis - lastMillis);
 			while (_sharedBuffer.TotalBitsLeft >= BotState.SerializedBitsSize) {
 				_tempBotState.Update(_sharedBuffer);
-				BotCache.Get(_tempBotState.Id).UpdateWholeState(_tempBotState);
+				BotCache.Get(_tempBotState.Id)?.UpdateWholeState(_tempBotState);
 			}
 
 			if (toSimulate <= 0) {

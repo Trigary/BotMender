@@ -11,6 +11,8 @@ namespace Blocks {
 		public static void SetColor(GameObject block, Color color, bool enableTransparency) {
 			Material material = block.GetComponent<Renderer>().material;
 			if (enableTransparency) {
+				//TODO transparency doesn't work outside editor:
+				//https://answers.unity.com/questions/1103298/shaders-work-in-editor-but-not-outside-editor.html
 				material.SetInt("_Mode", 3);
 				material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
 				material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);

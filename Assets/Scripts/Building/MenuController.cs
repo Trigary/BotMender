@@ -20,7 +20,7 @@ namespace Building {
 	/// Handles all actions in connection with the building mode UI.
 	/// </summary>
 	public class MenuController : MonoBehaviour {
-		public static BitBuffer DefaultStructure {
+		private static BitBuffer DefaultStructure {
 			get {
 				_defaultStructure.SetContents(_defaultStructure.Array);
 				return _defaultStructure;
@@ -56,6 +56,7 @@ namespace Building {
 					.Where(type => type != BlockType.Mainframe)
 					.Select(type => type.ToString())
 					.ToList());
+			SelectBlock();
 			ResetStructure();
 		}
 
@@ -143,12 +144,12 @@ namespace Building {
 				}
 
 				_displayText.text = "Loading world...";
-				//TODO send the serialized structure & get the structure of other players
+				byte[] structure = SerializeStructure().Array;
 
 				// ReSharper disable once ConvertToLocalFunction
 				UnityAction<Scene, LoadSceneMode> action = null;
 				action = (scene, mode) => {
-					LocalPlayingPlayerInitializer.OnNetworkingInitialized();
+					PlayingPlayerInitializer.OnNetworkingInitialized(structure);
 					SceneManager.sceneLoaded -= action;
 				};
 

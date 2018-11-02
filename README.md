@@ -1,8 +1,15 @@
+# Disclamer
+
+I have unfortunately lost interest in continuing this project.
+It has been a great learning experience, but I have reached my goal and therefore lost my motivation.
+I was able to do what I wanted to do: block/system based structures in a networked environment.
+The project does not have any special ideas, game mechanics which would justify further work.
+Expect no further commits.
+
 # BotMender
 
 A TPS Unity game where bots can be built from blocks and then taken into (PvP) action.
 The current version is an early prototype and is continuously being updated.
-There is no playable build, the project has to be imported into Unity to run it.
 
 Here are two examples of bots: *(authentic programmer graphics)*  
 ![example-bot](example-bot.png)  
